@@ -1,0 +1,38 @@
+name: veriframe_app
+description: "A new Flutter project."
+publish_to: 'none'
+version: 0.1.0+1
+
+environment:
+  sdk: ^3.11.3
+
+dependencies:
+  cached_network_image: ^3.4.1
+  cloud_firestore: ^6.3.0
+  file_picker: ^11.0.2
+  firebase_auth: ^6.4.0
+  firebase_core: ^4.7.0
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+  flutter_map: ^8.3.0
+  google_sign_in: ^6.2.1
+  http: ^1.6.0
+  image_picker: ^1.2.2
+  intl: ^0.20.2
+  latlong2: ^0.9.1
+  shared_preferences: ^2.5.5
+  url_launcher: ^6.3.2
+  video_player: ^2.11.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
+  generate: true
+  assets:
+    - assets/images/

@@ -1,0 +1,99 @@
+{
+  "project_info": {
+    "project_number": "179468915929",
+    "firebase_url": "https://fir-f7fcf-default-rtdb.firebaseio.com",
+    "project_id": "fir-f7fcf",
+    "storage_bucket": "fir-f7fcf.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:179468915929:android:df0b3f71ca9f2063dbdac8",
+        "android_client_info": {
+          "package_name": "com.example.health_project"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "179468915929-6q5m8lsjua6g9ni91s856v3htkoh1t2i.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.health_project",
+            "certificate_hash": "d60bf3645bd105985c3019ef6ef655c6b687a707"
+          }
+        },
+        {
+          "client_id": "179468915929-fuvf84038b3gfti2pkpmbpr8qqf6pgao.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.health_project",
+            "certificate_hash": "9987e789cbd94390951e7aa48052da56b2203760"
+          }
+        },
+        {
+          "client_id": "179468915929-1n9ea8vgjt1p5gputvbd431tf8o47v7d.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBdgOpOUKWGJvi2_YoQaKsmuVW7-YS3WIg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "179468915929-1n9ea8vgjt1p5gputvbd431tf8o47v7d.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "179468915929-efe4ko8arlbberbenhrlr5abtuucg087.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.healthProject"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:179468915929:android:f686c3442eee0e9bdbdac8",
+        "android_client_info": {
+          "package_name": "vcom.verifare.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "179468915929-1n9ea8vgjt1p5gputvbd431tf8o47v7d.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBdgOpOUKWGJvi2_YoQaKsmuVW7-YS3WIg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "179468915929-1n9ea8vgjt1p5gputvbd431tf8o47v7d.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "179468915929-efe4ko8arlbberbenhrlr5abtuucg087.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.healthProject"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
