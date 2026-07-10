@@ -1,0 +1,56 @@
+# =========================
+# Flutter
+# =========================
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+**/build/
+
+# =========================
+# Android
+# =========================
+.gradle/
+**/.gradle/
+local.properties
+**/android/build/
+*.apk
+*.aab
+
+# =========================
+# iOS
+# =========================
+ios/Pods/
+ios/.symlinks/
+ios/Flutter/Flutter.framework
+ios/Flutter/Flutter.podspec
+
+# =========================
+# IDE
+# =========================
+.idea/
+.vscode/
+*.iml
+
+# =========================
+# VERIFRAME AI DATA
+# =========================
+model_training/
+datasets/
+*.mp4
+*.avi
+*.mov
+*.zip
+
+# =========================
+# Python
+# =========================
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+
+# =========================
+# Logs
+# =========================
+*.log
