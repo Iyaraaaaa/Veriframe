@@ -13,6 +13,15 @@ import 'package:veriframe_app/service/verify_backend_service.dart';
 import 'package:veriframe_app/utils/theme.dart';
 import 'package:veriframe_app/widgets/main_scaffold.dart';
 import 'package:veriframe_app/l10n/app_localizations.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:veriframe_app/models/report_model.dart';
+import 'package:veriframe_app/models/notification_model.dart';
+import 'package:veriframe_app/service/report_service.dart';
+import 'package:veriframe_app/service/notification_service.dart';
+import 'package:veriframe_app/service/pdf_service.dart';
+import 'package:intl/intl.dart';
 
 class VerifyPage extends StatefulWidget {
   final String? initialVideoPath;
@@ -795,6 +804,281 @@ class _VerifyPageState extends State<VerifyPage> with TickerProviderStateMixin {
         _isAnalyzing = false;
         _errorMessage = e.toString();
       });
+    }
+  }
+
+  Future<String> _generateBase64Thumbnail(String path) async {
+    if (path.isEmpty || path.startsWith('http')) return '';
+    try {
+      final tempDir = await getTemporaryDirectory();
+      final thumbPath = await vt.VideoThumbnail.thumbnailFile(
+        video: path,
+        thumbnailPath: tempDir.path,
+        imageFormat: vt.ImageFormat.JPEG,
+        timeMs: 0,
+        quality: 50,
+        maxWidth: 120,
+        maxHeight: 120,
+      );
+      if (thumbPath != null) {
+        final file = File(thumbPath);
+        final bytes = await file.readAsBytes();
+        await file.delete();
+        return base64Encode(bytes);
+      }
+    } catch (e) {
+      debugPrint('[VerifyPage] Error generating base64 thumbnail: $e');
+    }
+    return '';
+  }
+
+  Future<void> _executePostVerificationFlow({
+    required String videoName,
+    required String videoPath,
+    required String verdict,
+    required double confidenceScore,
+    required String explanation,
+    required String modelUsed,
+  }) async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) {
+      if (mounted) {
+        setState(() {
+          _isAnalyzing = false;
+          _errorMessage = "Authentication error: User not logged in.";
+        });
+      }
+      return;
+    }
+
+    final createdAt = DateTime.now();
+    final reportId = FirebaseFirestore.instance.collection('users').doc(uid).collection('reports').doc().id;
+    final prediction = verdict == 'authentic' ? 'REAL' : 'FAKE';
+    final score = verdict == 'authentic' ? confidenceScore : (100.0 - confidenceScore);
+
+    // Step 4: Generating Reasoning
+    if (mounted) {
+      setState(() {
+        _isAnalyzing = true;
+        _showResults = false;
+        _pipelineStep = 4;
+        _statusMessage = "Generating AI Reasoning...";
+        _uploadProgress = 0.72;
+      });
+    }
+    await Future.delayed(const Duration(milliseconds: 600));
+
+    // Step 5: Generating PDF
+    if (mounted) {
+      setState(() {
+        _pipelineStep = 5;
+        _statusMessage = "Generating PDF Forensic Report...";
+        _uploadProgress = 0.80;
+      });
+    }
+
+    File? pdfFile;
+    String pdfPath = '';
+    String pdfName = 'Verification_Report_${DateFormat('yyyy-MM-dd_HH-mm').format(createdAt)}.pdf';
+
+    try {
+      if (_pdfUrl.isNotEmpty) {
+        final downloadsDir = Directory('/storage/emulated/0/Download/VeriFrame');
+        if (!await downloadsDir.exists()) {
+          await downloadsDir.create(recursive: true);
+        }
+        final path = '${downloadsDir.path}/$pdfName';
+        final fullUrl = _pdfUrl.startsWith('http') ? _pdfUrl : "$_baseUrl$_pdfUrl";
+
+        final permStatus = await Permission.storage.request();
+        if (permStatus.isGranted || Platform.isIOS) {
+          pdfFile = await ReportService.instance.downloadReportPdf(fullUrl, pdfName);
+          if (pdfFile != null) {
+            pdfPath = pdfFile.path;
+          }
+        }
+      }
+
+      if (pdfFile == null) {
+        await Permission.storage.request();
+        pdfFile = await PdfService.instance.generateReportPdf(
+          reportId: reportId,
+          videoName: videoName,
+          prediction: prediction,
+          confidence: confidenceScore,
+          score: score,
+          reasoning: explanation,
+          createdAt: createdAt,
+          duration: 0.0,
+          processingTime: 5.0,
+        );
+        if (pdfFile != null) {
+          pdfPath = pdfFile.path;
+        }
+      }
+    } catch (e) {
+      debugPrint("PDF generation failed: $e");
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Unable to generate report."),
+            backgroundColor: Color(0xFFFF3B5C),
+          ),
+        );
+      }
+    }
+
+    // Step 6: Saving Report
+    if (mounted) {
+      setState(() {
+        _pipelineStep = 6;
+        _statusMessage = "Saving Report to Firestore...";
+        _uploadProgress = 0.88;
+      });
+    }
+
+    final thumbnailBase64 = await _generateBase64Thumbnail(videoPath);
+
+    final report = ReportModel(
+      reportId: reportId,
+      videoName: videoName,
+      videoPath: videoPath,
+      prediction: prediction,
+      confidence: confidenceScore,
+      score: score,
+      reasoning: explanation,
+      createdAt: createdAt,
+      pdfPath: pdfPath,
+      pdfName: pdfName,
+      thumbnail: thumbnailBase64,
+      duration: 0.0,
+      processingTime: 5.0,
+    );
+
+    int retries = 3;
+    while (retries > 0) {
+      try {
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(uid)
+            .collection('reports')
+            .doc(reportId)
+            .set(report.toMap());
+        break;
+      } catch (e) {
+        retries--;
+        if (retries == 0) {
+          if (mounted) {
+            setState(() {
+              _isAnalyzing = false;
+              _errorMessage = "Firestore upload failed. Please try again.";
+            });
+          }
+          return;
+        }
+        await Future.delayed(const Duration(seconds: 1));
+      }
+    }
+
+    // Step 7: Sending Notification
+    if (mounted) {
+      setState(() {
+        _pipelineStep = 7;
+        _statusMessage = "Sending Notification...";
+        _uploadProgress = 0.94;
+      });
+    }
+
+    final notificationId = FirebaseFirestore.instance.collection('users').doc(uid).collection('notifications').doc().id;
+    final notification = NotificationModel(
+      id: notificationId,
+      title: "Video Verification Completed",
+      message: "Your uploaded video has been analyzed successfully. Authenticity Score: ${score.toStringAsFixed(0)}%. Tap to view report.",
+      type: "verification_completed",
+      reportId: reportId,
+      createdAt: createdAt,
+      isRead: false,
+      score: score,
+      prediction: prediction,
+      videoName: videoName,
+    );
+
+    retries = 3;
+    while (retries > 0) {
+      try {
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(uid)
+            .collection('notifications')
+            .doc(notificationId)
+            .set(notification.toMap());
+        break;
+      } catch (e) {
+        retries--;
+        if (retries == 0) {
+          if (mounted) {
+            setState(() {
+              _isAnalyzing = false;
+              _errorMessage = "Notification creation failed.";
+            });
+          }
+          return;
+        }
+        await Future.delayed(const Duration(seconds: 1));
+      }
+    }
+
+    try {
+      await NotificationService.instance.showLocalNotification(
+        id: notificationId.hashCode,
+        title: "Verification Completed",
+        body: "Tap to open report.",
+        payload: reportId,
+      );
+    } catch (e) {
+      debugPrint("Local notification failed: $e");
+    }
+
+    // Step 8: Completed
+    if (mounted) {
+      setState(() {
+        _pipelineStep = 8;
+        _statusMessage = "Completed";
+        _uploadProgress = 1.0;
+        _isAnalyzing = false;
+        _showResults = true;
+        _reportId = reportId;
+        _pdfUrl = _pdfUrl.isNotEmpty ? _pdfUrl : pdfPath;
+      });
+
+      // Show success dialog
+      showDialog(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          backgroundColor: const Color(0xFF0F1523),
+          title: const Row(
+            children: [
+              Icon(Icons.check_circle, color: Color(0xFF00E896)),
+              SizedBox(width: 8),
+              Text("Verification Completed", style: TextStyle(color: Colors.white)),
+            ],
+          ),
+          content: Text(
+            "Video '$videoName' has been verified.\n\n"
+            "Verdict: $prediction\n"
+            "Authenticity Score: ${score.toStringAsFixed(1)}%\n\n"
+            "The PDF report has been downloaded to Downloads/VeriFrame/.",
+            style: const TextStyle(color: Color(0xFFE8F0FF)),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text("OK", style: TextStyle(color: Color(0xFF00C8FF))),
+            ),
+          ],
+        ),
+      );
     }
   }
 

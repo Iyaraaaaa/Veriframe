@@ -9,12 +9,18 @@ import 'package:veriframe_app/screens/privacy.dart';
 import 'package:veriframe_app/screens/delete_account.dart';
 import 'package:veriframe_app/screens/edit_profile.dart';
 import 'package:veriframe_app/screens/verify.dart';
+import 'package:veriframe_app/screens/reports_page.dart';
+import 'package:veriframe_app/screens/report_detail_page.dart';
+import 'package:veriframe_app/models/report_model.dart';
+import 'package:veriframe_app/models/notification_model.dart';
+import 'package:veriframe_app/service/notification_service.dart';
 import 'package:veriframe_app/l10n/app_localizations.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:veriframe_app/utils/theme.dart';
 import 'package:veriframe_app/widgets/main_scaffold.dart';
 import 'package:veriframe_app/widgets/home_top_bar.dart';
+import 'package:intl/intl.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -188,6 +194,396 @@ class _HomePageState extends State<HomePage> {
     if (result == true) await _loadUserData();
   }
 
+  Widget _buildLastScanOverview(bool isDark, Color cardBg, Color text, Color muted) {
+    if (_userId.isEmpty) return const SizedBox();
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection('users')
+          .doc(_userId)
+          .collection('reports')
+          .orderBy('createdAt', descending: true)
+          .limit(1)
+          .snapshots(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Container(
+            height: 100,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: cardBg,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const CircularProgressIndicator(),
+          );
+        }
+        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+          return Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: cardBg,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: isDark ? VFColors.gray800 : VFColors.gray200),
+            ),
+            child: Column(
+              children: [
+                Text(
+                  "No scans performed yet",
+                  style: TextStyle(fontWeight: FontWeight.bold, color: text, fontSize: 14),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  "Verify a video in the Verify tab to generate reports.",
+                  style: TextStyle(color: muted, fontSize: 12),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+          );
+        }
+        final doc = snapshot.data!.docs.first;
+        final report = ReportModel.fromMap(doc.data() as Map<String, dynamic>, doc.id);
+        final isReal = report.prediction == 'REAL';
+        final scoreColor = isReal ? VFColors.emerald600 : VFColors.red600;
+        return Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: cardBg,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: isDark ? VFColors.gray800 : VFColors.gray200),
+          ),
+          child: Row(
+            children: [
+              Stack(
+                alignment: Alignment.center,
+                children: [
+                  SizedBox(
+                    width: 60,
+                    height: 60,
+                    child: CircularProgressIndicator(
+                      value: report.score / 100.0,
+                      strokeWidth: 5,
+                      backgroundColor: isDark ? VFColors.gray800 : VFColors.gray200,
+                      valueColor: AlwaysStoppedAnimation<Color>(scoreColor),
+                    ),
+                  ),
+                  Text(
+                    "${report.score.toStringAsFixed(0)}%",
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w800,
+                      color: scoreColor,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "LAST VERIFICATION RESULT",
+                      style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: muted, letterSpacing: 1.1),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      report.videoName,
+                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: text),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        Text(
+                          isReal ? "Authentic" : "Manipulated",
+                          style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: scoreColor),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          DateFormat('yyyy-MM-dd HH:mm').format(report.createdAt),
+                          style: TextStyle(fontSize: 11, color: muted),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              IconButton(
+                icon: Icon(Icons.arrow_forward_ios, size: 14, color: muted),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => ReportDetailPage(report: report),
+                    ),
+                  );
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildRecentReportsList(bool isDark, Color cardBg, Color text, Color muted) {
+    if (_userId.isEmpty) return const SizedBox();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              "Recent Forensic Scans",
+              style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: text),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pushNamed(context, '/reports'),
+              child: const Text("View All", style: TextStyle(fontSize: 12, color: VFColors.blue600)),
+            ),
+          ],
+        ),
+        const SizedBox(height: 6),
+        StreamBuilder<QuerySnapshot>(
+          stream: FirebaseFirestore.instance
+              .collection('users')
+              .doc(_userId)
+              .collection('reports')
+              .orderBy('createdAt', descending: true)
+              .limit(3)
+              .snapshots(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            }
+            if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8.0),
+                child: Text("No scan reports found.", style: TextStyle(color: muted, fontSize: 12)),
+              );
+            }
+            final docs = snapshot.data!.docs;
+            return ListView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: docs.length,
+              itemBuilder: (context, index) {
+                final report = ReportModel.fromMap(docs[index].data() as Map<String, dynamic>, docs[index].id);
+                final isReal = report.prediction == 'REAL';
+                Widget thumbnailWidget;
+                if (report.thumbnail.isNotEmpty) {
+                  try {
+                    final bytes = base64Decode(report.thumbnail);
+                    thumbnailWidget = ClipRRect(
+                      borderRadius: BorderRadius.circular(6),
+                      child: Image.memory(bytes, width: 36, height: 36, fit: BoxFit.cover),
+                    );
+                  } catch (_) {
+                    thumbnailWidget = _buildHomePlaceholderThumbnail(isReal);
+                  }
+                } else {
+                  thumbnailWidget = _buildHomePlaceholderThumbnail(isReal);
+                }
+                return Card(
+                  margin: const EdgeInsets.only(bottom: 8),
+                  color: cardBg,
+                  elevation: 1,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    side: BorderSide(color: isDark ? VFColors.gray800 : VFColors.gray200),
+                  ),
+                  child: ListTile(
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
+                    leading: thumbnailWidget,
+                    title: Text(
+                      report.videoName,
+                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: text),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    subtitle: Row(
+                      children: [
+                        Text(
+                          isReal ? "REAL" : "FAKE",
+                          style: TextStyle(
+                            fontSize: 9,
+                            fontWeight: FontWeight.bold,
+                            color: isReal ? VFColors.emerald600 : VFColors.red600,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          "Score: ${report.score.toStringAsFixed(0)}%",
+                          style: TextStyle(fontSize: 11, color: muted),
+                        ),
+                      ],
+                    ),
+                    trailing: Icon(Icons.arrow_forward_ios, size: 12, color: muted),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => ReportDetailPage(report: report),
+                        ),
+                      );
+                    },
+                  ),
+                );
+              },
+            );
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildHomePlaceholderThumbnail(bool isReal) {
+    return Container(
+      width: 36,
+      height: 36,
+      decoration: BoxDecoration(
+        color: (isReal ? VFColors.emerald600 : VFColors.red600).withOpacity(0.15),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Icon(
+        isReal ? Icons.verified_user : Icons.gavel,
+        color: isReal ? VFColors.emerald600 : VFColors.red600,
+        size: 18,
+      ),
+    );
+  }
+
+  Widget _buildRecentNotificationsList(bool isDark, Color cardBg, Color text, Color muted) {
+    if (_userId.isEmpty) return const SizedBox();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              "Recent Notifications",
+              style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: text),
+            ),
+            TextButton(
+              onPressed: _openNotifications,
+              child: const Text("View All", style: TextStyle(fontSize: 12, color: VFColors.blue600)),
+            ),
+          ],
+        ),
+        const SizedBox(height: 6),
+        StreamBuilder<QuerySnapshot>(
+          stream: FirebaseFirestore.instance
+              .collection('users')
+              .doc(_userId)
+              .collection('notifications')
+              .orderBy('createdAt', descending: true)
+              .limit(3)
+              .snapshots(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            }
+            if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8.0),
+                child: Text("No recent notifications.", style: TextStyle(color: muted, fontSize: 12)),
+              );
+            }
+            final docs = snapshot.data!.docs;
+            return ListView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: docs.length,
+              itemBuilder: (context, index) {
+                final notif = NotificationModel.fromMap(docs[index].data() as Map<String, dynamic>, docs[index].id);
+                return Card(
+                  margin: const EdgeInsets.only(bottom: 8),
+                  color: cardBg,
+                  elevation: 1,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    side: BorderSide(
+                      color: notif.isRead 
+                          ? (isDark ? VFColors.gray800 : VFColors.gray200)
+                          : VFColors.blue600.withOpacity(0.4),
+                    ),
+                  ),
+                  child: ListTile(
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
+                    leading: CircleAvatar(
+                      backgroundColor: notif.isRead 
+                          ? VFColors.slate400.withOpacity(0.1) 
+                          : VFColors.blue600.withOpacity(0.1),
+                      radius: 14,
+                      child: Icon(
+                        Icons.notifications_outlined, 
+                        color: notif.isRead ? VFColors.slate400 : VFColors.blue600, 
+                        size: 14
+                      ),
+                    ),
+                    title: Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            notif.title,
+                            style: TextStyle(
+                              fontSize: 12, 
+                              fontWeight: notif.isRead ? FontWeight.normal : FontWeight.bold,
+                              color: text
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        if (!notif.isRead)
+                          Container(
+                            width: 6,
+                            height: 6,
+                            decoration: const BoxDecoration(
+                              color: Colors.blue,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                      ],
+                    ),
+                    subtitle: Text(
+                      notif.message,
+                      style: TextStyle(fontSize: 11, color: muted),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    trailing: Icon(Icons.arrow_forward_ios, size: 12, color: muted),
+                    onTap: () async {
+                      await NotificationService.instance.markAsRead(_userId, notif.id);
+                      final reportDoc = await FirebaseFirestore.instance
+                          .collection('users')
+                          .doc(_userId)
+                          .collection('reports')
+                          .doc(notif.reportId)
+                          .get();
+                      if (reportDoc.exists && mounted) {
+                        final report = ReportModel.fromMap(reportDoc.data()!, reportDoc.id);
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => ReportDetailPage(report: report),
+                          ),
+                        );
+                      }
+                    },
+                  ),
+                );
+              },
+            );
+          },
+        ),
+      ],
+    );
+  }
+
   // ══════════════════════════════════════════
   //  HOME CONTENT
   // ══════════════════════════════════════════
@@ -292,7 +688,13 @@ class _HomePageState extends State<HomePage> {
               ),
             ],
           ),
-          const SizedBox(height: 32),
+          const SizedBox(height: 24),
+          _buildLastScanOverview(isDark, cardBg, text, muted),
+          const SizedBox(height: 24),
+          _buildRecentReportsList(isDark, cardBg, text, muted),
+          const SizedBox(height: 24),
+          _buildRecentNotificationsList(isDark, cardBg, text, muted),
+          const SizedBox(height: 28),
 
           // ── Hero Section ──
           Center(
@@ -731,7 +1133,13 @@ class _HomePageState extends State<HomePage> {
 
           const SizedBox(height: 4),
 
-          // Privacy, About Us, Contact Us only
+          // Reports, Privacy, About Us, Contact Us
+          _buildDrawerItem(
+            Icons.assessment_outlined,
+            "Forensic Reports",
+            VFColors.blue600,
+            const ReportsPage(),
+          ),
           _buildDrawerItem(
             Icons.privacy_tip_outlined,
             loc.privacy,

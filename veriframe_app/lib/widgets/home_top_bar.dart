@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:veriframe_app/controllers/settings_controller.dart';
+import 'package:veriframe_app/service/notification_service.dart';
 import 'package:veriframe_app/utils/theme.dart';
 
 class HomeTopBar extends StatelessWidget implements PreferredSizeWidget {
@@ -69,10 +71,42 @@ class HomeTopBar extends StatelessWidget implements PreferredSizeWidget {
       iconTheme: IconThemeData(color: scheme.onPrimary),
       actions: [
         if (onNotificationTap != null)
-          IconButton(
-            icon: const Icon(Icons.notifications_outlined, color: Colors.white),
-            onPressed: onNotificationTap,
-            tooltip: 'Notifications',
+          StreamBuilder<User?>(
+            stream: FirebaseAuth.instance.authStateChanges(),
+            builder: (context, authSnapshot) {
+              final uid = authSnapshot.data?.uid ?? FirebaseAuth.instance.currentUser?.uid;
+              if (uid == null) {
+                return IconButton(
+                  icon: const Icon(Icons.notifications_outlined, color: Colors.white),
+                  onPressed: onNotificationTap,
+                  tooltip: 'Notifications',
+                );
+              }
+              return StreamBuilder<int>(
+                stream: NotificationService.instance.getUnreadCountStream(uid),
+                builder: (context, countSnapshot) {
+                  final count = countSnapshot.data ?? 0;
+                  if (count > 0) {
+                    return IconButton(
+                      icon: Badge(
+                        label: Text('$count'),
+                        backgroundColor: Colors.blue,
+                        textColor: Colors.white,
+                        child: const Icon(Icons.notifications_outlined, color: Colors.white),
+                      ),
+                      onPressed: onNotificationTap,
+                      tooltip: 'Notifications',
+                    );
+                  } else {
+                    return IconButton(
+                      icon: const Icon(Icons.notifications_outlined, color: Colors.white),
+                      onPressed: onNotificationTap,
+                      tooltip: 'Notifications',
+                    );
+                  }
+                },
+              );
+            },
           ),
         PopupMenuButton<Locale>(
           icon: Icon(Icons.language, color: scheme.onPrimary),

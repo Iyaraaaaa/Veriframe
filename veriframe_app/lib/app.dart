@@ -11,7 +11,9 @@ import 'package:veriframe_app/screens/about_us.dart';
 import 'package:veriframe_app/screens/contact_us.dart';
 import 'package:veriframe_app/screens/privacy.dart';
 import 'package:veriframe_app/screens/settings_page.dart';
+import 'package:veriframe_app/screens/reports_page.dart';
 import 'package:veriframe_app/theme/app_theme.dart';
+import 'package:veriframe_app/utils/navigator_key.dart';
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -27,6 +29,7 @@ class MyApp extends StatelessWidget {
         builder: (context, _) => MaterialApp(
           title: 'VeriFrame',
           debugShowCheckedModeBanner: false,
+          navigatorKey: navigatorKey,
           locale: controller.locale,
           supportedLocales: AppLocalizations.supportedLocales,
           localizationsDelegates: AppLocalizations.localizationsDelegates,
@@ -56,6 +59,7 @@ class MyApp extends StatelessWidget {
             '/privacy': (_) => const PrivacyPage(),
             '/contact': (_) => const ContactUsPage(),
             '/settings': (_) => const SettingsPage(),
+            '/reports': (_) => const ReportsPage(),
           },
         ),
       ),
