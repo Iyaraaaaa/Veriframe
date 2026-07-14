@@ -266,7 +266,7 @@ class _VerifyPageState extends State<VerifyPage> with TickerProviderStateMixin {
       if (!_isAnalyzing) return; // User canceled
 
       setState(() {
-        _pipelineStep = 4;
+        _pipelineStep = 3;
         _uploadProgress = 0.9;
         _statusMessage = "Aggregating predictions...";
       });
@@ -277,18 +277,28 @@ class _VerifyPageState extends State<VerifyPage> with TickerProviderStateMixin {
       final confidence = (res['confidence'] ?? 0.0).toDouble();
       final frames = res['frames_analyzed'] ?? 0;
       final verdict = prediction == 'fake' ? 'manipulated' : 'authentic';
+      final explanation = "Analyzed $frames face frame(s) using cloud-based Ensemble models. "
+          "Model verdict is class '$prediction' with a confidence rating of ${(confidence * 100).toStringAsFixed(1)}%.";
+      final finalConfidence = (confidence * 100).clamp(0.0, 100.0);
+      final videoName = file.path.split(Platform.pathSeparator).last;
 
+      // Update preliminary display values
       setState(() {
-        _isAnalyzing = false;
-        _showResults = true;
-        _uploadProgress = 1.0;
-        _pipelineStep = 5;
-        _confidenceScore = (confidence * 100).clamp(0.0, 100.0);
+        _confidenceScore = finalConfidence;
         _verdict = verdict;
         _modelUsed = "MobileNet Ensemble (Cloud Server)";
-        _explanation = "Analyzed $frames face frame(s) using cloud-based Ensemble models. "
-            "Model verdict is class '$prediction' with a confidence rating of ${(confidence * 100).toStringAsFixed(1)}%.";
+        _explanation = explanation;
       });
+
+      // Trigger the full post-verification pipeline (PDF, Firestore, notification)
+      await _executePostVerificationFlow(
+        videoName: videoName,
+        videoPath: file.path,
+        verdict: verdict,
+        confidenceScore: finalConfidence,
+        explanation: explanation,
+        modelUsed: "MobileNet Ensemble (Cloud Server)",
+      );
 
     } catch (e) {
       if (mounted) {
@@ -442,19 +452,29 @@ class _VerifyPageState extends State<VerifyPage> with TickerProviderStateMixin {
     final finalConfidence = (avgFakeScore * 100).clamp(0.0, 100.0);
     final verdict = avgFakeScore >= 0.5 ? 'manipulated' : 'authentic';
     final filename = videoFile.path.split(Platform.pathSeparator).last;
+    final explanation = "Analyzed ${scores.length} real frame(s) extracted from '$filename'. "
+        "Verdict: '$verdict' with ${finalConfidence.toStringAsFixed(1)}% deepfake confidence. "
+        "Average inference time: ${avgInferenceMs}ms per frame.";
 
+    // Update preliminary display values
     setState(() {
-      _pipelineStep = 5;
-      _uploadProgress = 1.0;
-      _isAnalyzing = false;
-      _showResults = true;
+      _pipelineStep = 3;
+      _uploadProgress = 0.70;
       _confidenceScore = finalConfidence;
       _verdict = verdict;
       _modelUsed = "On-Device TFLite (veriframe_model)";
-      _explanation = "Analyzed ${scores.length} real frame(s) extracted from '$filename'. "
-          "Verdict: '$verdict' with ${finalConfidence.toStringAsFixed(1)}% deepfake confidence. "
-          "Average inference time: ${avgInferenceMs}ms per frame.";
+      _explanation = explanation;
     });
+
+    // Trigger the full post-verification pipeline (PDF, Firestore, notification)
+    await _executePostVerificationFlow(
+      videoName: filename,
+      videoPath: videoFile.path,
+      verdict: verdict,
+      confidenceScore: finalConfidence,
+      explanation: explanation,
+      modelUsed: "On-Device TFLite (veriframe_model)",
+    );
   }
 
   void _cancelAnalysis() {
@@ -561,16 +581,30 @@ class _VerifyPageState extends State<VerifyPage> with TickerProviderStateMixin {
         } else if (status == 'completed' || status == 'stopped') {
           timer.cancel();
           final results = res['result'] ?? {};
+          final linkVerdict = results['verdict'] ?? 'authentic';
+          final linkConfidence = (results['confidence_score'] ?? 0.0).toDouble();
+          final linkModelUsed = results['model_used'] ?? 'Ensemble Model';
+          final linkExplanation = results['explanation'] ?? 'Analysis completed successfully.';
+          final linkUrl = _urlController.text.trim();
+
           setState(() {
-            _linkStep = 5;
-            _uploadProgress = 1.0;
-            _isAnalyzing = false;
-            _showResults = true;
-            _confidenceScore = (results['confidence_score'] ?? 0.0).toDouble();
-            _verdict = results['verdict'] ?? 'authentic';
-            _modelUsed = results['model_used'] ?? 'Ensemble Model';
-            _explanation = results['explanation'] ?? 'Analysis completed successfully.';
+            _linkStep = 4;
+            _uploadProgress = 0.70;
+            _confidenceScore = linkConfidence;
+            _verdict = linkVerdict;
+            _modelUsed = linkModelUsed;
+            _explanation = linkExplanation;
           });
+
+          // Trigger the full post-verification pipeline (PDF, Firestore, notification)
+          await _executePostVerificationFlow(
+            videoName: linkUrl.length > 60 ? '${linkUrl.substring(0, 57)}...' : linkUrl,
+            videoPath: linkUrl,
+            verdict: linkVerdict,
+            confidenceScore: linkConfidence,
+            explanation: linkExplanation,
+            modelUsed: linkModelUsed,
+          );
         } else if (status == 'failed') {
           timer.cancel();
           throw Exception(res['error'] ?? "Forensic server failed to process link.");
@@ -777,28 +811,52 @@ class _VerifyPageState extends State<VerifyPage> with TickerProviderStateMixin {
     if (!isOnline) {
       // Local report calculation
       await Future.delayed(const Duration(milliseconds: 1000));
+      final streamExplanation = "Forensic camera review complete. Aggregated $_framesAnalyzed frame(s) processed locally. "
+          "Calculated rolling average fake rating: ${_rollingStreamScore.toStringAsFixed(1)}%.";
+      final streamVerdict = _rollingStreamScore >= 50.0 ? 'manipulated' : 'authentic';
+
       setState(() {
-        _isAnalyzing = false;
-        _showResults = true;
         _confidenceScore = _rollingStreamScore;
-        _explanation = "Forensic camera review complete. Aggregated $_framesAnalyzed frame(s) processed locally. "
-            "Calculated rolling average fake rating: ${_rollingStreamScore.toStringAsFixed(1)}%.";
+        _verdict = streamVerdict;
+        _explanation = streamExplanation;
+        _modelUsed = 'On-Device TFLite (veriframe_model)';
       });
+
+      await _executePostVerificationFlow(
+        videoName: 'Live Camera Stream',
+        videoPath: '',
+        verdict: streamVerdict,
+        confidenceScore: _rollingStreamScore,
+        explanation: streamExplanation,
+        modelUsed: 'On-Device TFLite (veriframe_model)',
+      );
       return;
     }
 
     try {
       final res = await service.createReport(_baseUrl, sessionId: _streamSessionId);
+      final serverVerdict = res['verdict'] ?? 'authentic';
+      final serverConfidence = (res['confidence_score'] ?? 0.0).toDouble();
+      final serverModelUsed = res['model_used'] ?? '';
+      final serverExplanation = res['explanation'] ?? 'Report compiled successfully.';
+
       setState(() {
-        _confidenceScore = (res['confidence_score'] ?? 0.0).toDouble();
-        _verdict = res['verdict'] ?? 'authentic';
-        _modelUsed = res['model_used'] ?? '';
-        _explanation = res['explanation'] ?? 'Report compiled successfully.';
+        _confidenceScore = serverConfidence;
+        _verdict = serverVerdict;
+        _modelUsed = serverModelUsed;
+        _explanation = serverExplanation;
         _reportId = res['report_id'] ?? '';
         _pdfUrl = res['pdf_url'] ?? '';
-        _isAnalyzing = false;
-        _showResults = true;
       });
+
+      await _executePostVerificationFlow(
+        videoName: 'Live Stream Session',
+        videoPath: _streamSessionId,
+        verdict: serverVerdict,
+        confidenceScore: serverConfidence,
+        explanation: serverExplanation,
+        modelUsed: serverModelUsed,
+      );
     } catch (e) {
       setState(() {
         _isAnalyzing = false;
@@ -887,7 +945,6 @@ class _VerifyPageState extends State<VerifyPage> with TickerProviderStateMixin {
         if (!await downloadsDir.exists()) {
           await downloadsDir.create(recursive: true);
         }
-        final path = '${downloadsDir.path}/$pdfName';
         final fullUrl = _pdfUrl.startsWith('http') ? _pdfUrl : "$_baseUrl$_pdfUrl";
 
         final permStatus = await Permission.storage.request();
@@ -1695,13 +1752,17 @@ class _VerifyPageState extends State<VerifyPage> with TickerProviderStateMixin {
   }
 
   Widget _buildPipelineTimelineSteps() {
+    // Full 8-step pipeline including post-verification (PDF, Firestore, Notification)
     final steps = [
       "Format Validation",
       "Frame Extraction",
       "Face Detection",
-      "Resolution Normalization (224x224)",
-      "TFLite Model Classification",
-      "Aggregation Results",
+      "Model Inference & Aggregation",
+      "Generating AI Reasoning",
+      "Generating PDF Forensic Report",
+      "Saving Report to Firestore",
+      "Sending Notification",
+      "Completed",
     ];
 
     return Column(
@@ -1767,19 +1828,40 @@ class _VerifyPageState extends State<VerifyPage> with TickerProviderStateMixin {
   }
 
   Widget _buildLinkVerificationStepper() {
+    // Combined pipeline: 5 link-download steps (tracked by _linkStep) + 5 post-processing steps (tracked by _pipelineStep)
+    // _linkStep  indices: 0=request, 1=downloading, 2=extracting, 3=detecting, 4=inference
+    // _pipelineStep indices: 4=reasoning, 5=pdf, 6=firestore, 7=notification, 8=completed
     final steps = [
-      "Request Initiated",
-      "Downloading Video File",
-      "Extracting Sub-Frames",
-      "Running Biometric Detection",
-      "Model Inference Running",
-      "Completed",
+      'Request Initiated',
+      'Downloading Video File',
+      'Extracting Sub-Frames',
+      'Running Biometric Detection',
+      'Model Inference Running',
+      'Generating AI Reasoning',
+      'Generating PDF Forensic Report',
+      'Saving Report to Firestore',
+      'Sending Notification',
+      'Completed',
     ];
+
+    // Map index to completion status
+    bool isStepDone(int index) {
+      if (index < 5) return _linkStep > index;
+      // Post-verification steps start when _pipelineStep >= 4 (reasoning)
+      final postStepIndex = index - 5 + 4; // index 5 -> _pipelineStep 4, index 9 -> _pipelineStep 8
+      return _pipelineStep > postStepIndex;
+    }
+
+    bool isStepCurrent(int index) {
+      if (index < 5) return _linkStep == index && _pipelineStep < 4;
+      final postStepIndex = index - 5 + 4;
+      return _pipelineStep == postStepIndex;
+    }
 
     return Column(
       children: List.generate(steps.length, (index) {
-        final isDone = _linkStep > index;
-        final isCurrent = _linkStep == index;
+        final isDone = isStepDone(index);
+        final isCurrent = isStepCurrent(index);
         return Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:open_filex/open_filex.dart';
 import 'package:veriframe_app/models/report_model.dart';
@@ -47,7 +48,7 @@ class _ReportDetailPageState extends State<ReportDetailPage> {
         if (Platform.isAndroid) {
           targetPath = '/storage/emulated/0/Download/VeriFrame/$pdfName';
         } else {
-          final appDocDir = await getTemporaryDirectory(); // Fallback
+          final appDocDir = await getApplicationDocumentsDirectory();
           targetPath = '${appDocDir.path}/VeriFrame/$pdfName';
         }
       }

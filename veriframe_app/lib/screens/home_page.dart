@@ -44,6 +44,8 @@ class _HomePageState extends State<HomePage> {
   void initState() {
     super.initState();
     _loadUserData();
+    // Initialize local notification plugin so it can fire after verifications
+    NotificationService.instance.init();
   }
 
   Widget _getPageContent(int index) {
