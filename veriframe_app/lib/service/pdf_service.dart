@@ -4,6 +4,7 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:path_provider/path_provider.dart';
 import 'package:intl/intl.dart';
+import 'package:http/http.dart' as http;
 
 class PdfService {
   PdfService._();
@@ -184,7 +185,8 @@ class PdfService {
       String path = '';
 
       if (Platform.isAndroid) {
-        final downloadsDir = Directory('/storage/emulated/0/Download/VeriFrame');
+        final extDir = await getExternalStorageDirectory();
+        final downloadsDir = Directory('${extDir?.path ?? "/storage/emulated/0/Download"}/VeriFrame');
         if (!await downloadsDir.exists()) {
           await downloadsDir.create(recursive: true);
         }
@@ -221,5 +223,38 @@ class PdfService {
         ),
       ],
     );
+  }
+
+  Future<File?> downloadReportPdf(String url, String pdfName) async {
+    try {
+      String savePath = '';
+      if (Platform.isAndroid) {
+        final extDir = await getExternalStorageDirectory();
+        final downloadsDir = Directory('${extDir?.path ?? "/storage/emulated/0/Download"}/VeriFrame');
+        if (!await downloadsDir.exists()) {
+          await downloadsDir.create(recursive: true);
+        }
+        savePath = '${downloadsDir.path}/$pdfName';
+      } else {
+        final appDocDir = await getApplicationDocumentsDirectory();
+        final localDir = Directory('${appDocDir.path}/VeriFrame');
+        if (!await localDir.exists()) {
+          await localDir.create(recursive: true);
+        }
+        savePath = '${localDir.path}/$pdfName';
+      }
+
+      final response = await http.get(Uri.parse(url)).timeout(const Duration(seconds: 30));
+      if (response.statusCode == 200) {
+        final file = File(savePath);
+        await file.writeAsBytes(response.bodyBytes);
+        return file;
+      } else {
+        debugPrint('[PdfService] Download failed with status: ${response.statusCode}');
+      }
+    } catch (e) {
+      debugPrint('[PdfService] Download error: $e');
+    }
+    return null;
   }
 }

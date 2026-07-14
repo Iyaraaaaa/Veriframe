@@ -422,10 +422,10 @@ class _LoginPageState extends State<LoginPage> {
                                           : Colors.grey[100]?.withOpacity(0.8),
                                       border: OutlineInputBorder(
                                         borderRadius: BorderRadius.circular(12),
-                                        borderSide: const BorderSide(
-                                          color: Colors.black,
-                                          width: 2,
-                                        ),
+                                         borderSide: BorderSide(
+                                           color: isDarkMode ? Colors.grey[600]! : Colors.black,
+                                           width: 2,
+                                         ),
                                       ),
                                       focusedBorder: OutlineInputBorder(
                                         borderRadius: BorderRadius.circular(12),
@@ -481,10 +481,10 @@ class _LoginPageState extends State<LoginPage> {
                                           : Colors.grey[100]?.withOpacity(0.8),
                                       border: OutlineInputBorder(
                                         borderRadius: BorderRadius.circular(12),
-                                        borderSide: const BorderSide(
-                                          color: Colors.black,
-                                          width: 2,
-                                        ),
+                                         borderSide: BorderSide(
+                                           color: isDarkMode ? Colors.grey[600]! : Colors.black,
+                                           width: 2,
+                                         ),
                                       ),
                                       focusedBorder: OutlineInputBorder(
                                         borderRadius: BorderRadius.circular(12),

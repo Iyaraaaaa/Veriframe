@@ -4,9 +4,9 @@ import 'package:veriframe_app/utils/theme.dart';
 
 /// Shared, reusable application app bar used by every main screen.
 ///
-/// Keeps the VERI_FRAME logo, title and navigation styling identical across
+/// Keeps the VERIFRAME logo, title and navigation styling identical across
 /// the whole app and provides the global language picker and theme toggle.
-/// Brand name "VERI_FRAME" is intentionally never translated.
+/// Brand name "VERIFRAME" is intentionally never translated.
 PreferredSizeWidget globalAppBar(
   BuildContext context, {
   bool showBack = false,
@@ -44,12 +44,16 @@ PreferredSizeWidget globalAppBar(
               child: Icon(Icons.shield, color: scheme.onPrimary, size: 18),
             ),
             const SizedBox(width: 10),
-            Text(
-              'VERI_FRAME',
-              style: TextStyle(
-                color: scheme.onPrimary,
-                fontWeight: FontWeight.w700,
-                letterSpacing: 1.0,
+            Flexible(
+              child: Text(
+                'VERIFRAME',
+                style: TextStyle(
+                  color: scheme.onPrimary,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 1.0,
+                ),
+                overflow: TextOverflow.ellipsis,
+                softWrap: false,
               ),
             ),
           ],

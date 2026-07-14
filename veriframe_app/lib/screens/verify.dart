@@ -16,12 +16,29 @@ import 'package:veriframe_app/l10n/app_localizations.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:veriframe_app/models/report_model.dart';
 import 'package:veriframe_app/models/notification_model.dart';
-import 'package:veriframe_app/service/report_service.dart';
 import 'package:veriframe_app/service/notification_service.dart';
 import 'package:veriframe_app/service/pdf_service.dart';
 import 'package:intl/intl.dart';
+import 'package:open_filex/open_filex.dart';
+
+/// Theme-aware palette for the Verify screen so it renders correctly in both
+/// light and dark mode (no hard-coded black backgrounds in light mode).
+class _VerifyPalette {
+  final bool isDark;
+  const _VerifyPalette(this.isDark);
+
+  Color get surface => isDark ? const Color(0xFF0F1523) : const Color(0xFFFFFFFF);
+  Color get surfaceVariant => isDark ? const Color(0xFF162035) : const Color(0xFFF1F5F9);
+  Color get canvas => isDark ? const Color(0xFF0A0F1D) : const Color(0xFFF8FAFC);
+  Color get border => isDark ? const Color(0xFF1A2233) : const Color(0xFFE2E8F0);
+  Color get borderBright => isDark ? const Color(0xFF1C2740) : const Color(0xFFE2E8F0);
+  Color get text => isDark ? const Color(0xFFE8F0FF) : const Color(0xFF0F172A);
+  Color get textMuted => isDark ? const Color(0xFF6B7FA8) : const Color(0xFF475569);
+  List<Color> get streamGradient => isDark
+      ? const [Color(0xFF080C14), Color(0xFF162035)]
+      : const [Color(0xFFF1F5F9), Color(0xFFFFFFFF)];
+}
 
 class VerifyPage extends StatefulWidget {
   final String? initialVideoPath;
@@ -43,6 +60,8 @@ class VerifyPage extends StatefulWidget {
 
 class _VerifyPageState extends State<VerifyPage> with TickerProviderStateMixin {
   int _activeTab = 0; // 0 = Video, 1 = Link, 2 = Live Stream
+
+  _VerifyPalette get _vp => _VerifyPalette(Theme.of(context).brightness == Brightness.dark);
 
   // The local video file currently selected by the user
   File? _selectedVideoFile;
@@ -865,31 +884,6 @@ class _VerifyPageState extends State<VerifyPage> with TickerProviderStateMixin {
     }
   }
 
-  Future<String> _generateBase64Thumbnail(String path) async {
-    if (path.isEmpty || path.startsWith('http')) return '';
-    try {
-      final tempDir = await getTemporaryDirectory();
-      final thumbPath = await vt.VideoThumbnail.thumbnailFile(
-        video: path,
-        thumbnailPath: tempDir.path,
-        imageFormat: vt.ImageFormat.JPEG,
-        timeMs: 0,
-        quality: 50,
-        maxWidth: 120,
-        maxHeight: 120,
-      );
-      if (thumbPath != null) {
-        final file = File(thumbPath);
-        final bytes = await file.readAsBytes();
-        await file.delete();
-        return base64Encode(bytes);
-      }
-    } catch (e) {
-      debugPrint('[VerifyPage] Error generating base64 thumbnail: $e');
-    }
-    return '';
-  }
-
   Future<void> _executePostVerificationFlow({
     required String videoName,
     required String videoPath,
@@ -910,7 +904,7 @@ class _VerifyPageState extends State<VerifyPage> with TickerProviderStateMixin {
     }
 
     final createdAt = DateTime.now();
-    final reportId = FirebaseFirestore.instance.collection('users').doc(uid).collection('reports').doc().id;
+    final reportId = 'RPT-${createdAt.millisecondsSinceEpoch}';
     final prediction = verdict == 'authentic' ? 'REAL' : 'FAKE';
     final score = verdict == 'authentic' ? confidenceScore : (100.0 - confidenceScore);
 
@@ -949,7 +943,7 @@ class _VerifyPageState extends State<VerifyPage> with TickerProviderStateMixin {
 
         final permStatus = await Permission.storage.request();
         if (permStatus.isGranted || Platform.isIOS) {
-          pdfFile = await ReportService.instance.downloadReportPdf(fullUrl, pdfName);
+          pdfFile = await PdfService.instance.downloadReportPdf(fullUrl, pdfName);
           if (pdfFile != null) {
             pdfPath = pdfFile.path;
           }
@@ -985,59 +979,7 @@ class _VerifyPageState extends State<VerifyPage> with TickerProviderStateMixin {
       }
     }
 
-    // Step 6: Saving Report
-    if (mounted) {
-      setState(() {
-        _pipelineStep = 6;
-        _statusMessage = "Saving Report to Firestore...";
-        _uploadProgress = 0.88;
-      });
-    }
-
-    final thumbnailBase64 = await _generateBase64Thumbnail(videoPath);
-
-    final report = ReportModel(
-      reportId: reportId,
-      videoName: videoName,
-      videoPath: videoPath,
-      prediction: prediction,
-      confidence: confidenceScore,
-      score: score,
-      reasoning: explanation,
-      createdAt: createdAt,
-      pdfPath: pdfPath,
-      pdfName: pdfName,
-      thumbnail: thumbnailBase64,
-      duration: 0.0,
-      processingTime: 5.0,
-    );
-
-    int retries = 3;
-    while (retries > 0) {
-      try {
-        await FirebaseFirestore.instance
-            .collection('users')
-            .doc(uid)
-            .collection('reports')
-            .doc(reportId)
-            .set(report.toMap());
-        break;
-      } catch (e) {
-        retries--;
-        if (retries == 0) {
-          if (mounted) {
-            setState(() {
-              _isAnalyzing = false;
-              _errorMessage = "Firestore upload failed. Please try again.";
-            });
-          }
-          return;
-        }
-        await Future.delayed(const Duration(seconds: 1));
-      }
-    }
-
-    // Step 7: Sending Notification
+    // Step 6: Sending Notification
     if (mounted) {
       setState(() {
         _pipelineStep = 7;
@@ -1060,7 +1002,7 @@ class _VerifyPageState extends State<VerifyPage> with TickerProviderStateMixin {
       videoName: videoName,
     );
 
-    retries = 3;
+    int retries = 3;
     while (retries > 0) {
       try {
         await FirebaseFirestore.instance
@@ -1096,7 +1038,7 @@ class _VerifyPageState extends State<VerifyPage> with TickerProviderStateMixin {
       debugPrint("Local notification failed: $e");
     }
 
-    // Step 8: Completed
+    // Step 7: Completed
     if (mounted) {
       setState(() {
         _pipelineStep = 8;
@@ -1113,12 +1055,12 @@ class _VerifyPageState extends State<VerifyPage> with TickerProviderStateMixin {
         context: context,
         builder: (ctx) => AlertDialog(
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          backgroundColor: const Color(0xFF0F1523),
-          title: const Row(
+          backgroundColor: _vp.surface,
+          title: Row(
             children: [
               Icon(Icons.check_circle, color: Color(0xFF00E896)),
               SizedBox(width: 8),
-              Text("Verification Completed", style: TextStyle(color: Colors.white)),
+              Text("Verification Completed", style: TextStyle(color: _vp.text)),
             ],
           ),
           content: Text(
@@ -1126,7 +1068,7 @@ class _VerifyPageState extends State<VerifyPage> with TickerProviderStateMixin {
             "Verdict: $prediction\n"
             "Authenticity Score: ${score.toStringAsFixed(1)}%\n\n"
             "The PDF report has been downloaded to Downloads/VeriFrame/.",
-            style: const TextStyle(color: Color(0xFFE8F0FF)),
+            style: TextStyle(color: _vp.text),
           ),
           actions: [
             TextButton(
@@ -1177,6 +1119,24 @@ class _VerifyPageState extends State<VerifyPage> with TickerProviderStateMixin {
 
   Future<void> _launchReportPdf() async {
     if (_pdfUrl.isEmpty) return;
+    
+    // If it's a local file path, open it directly using OpenFilex
+    if (!_pdfUrl.startsWith('http')) {
+      final file = File(_pdfUrl);
+      if (await file.exists()) {
+        final openResult = await OpenFilex.open(file.path);
+        if (openResult.type != ResultType.done && mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text("Error opening PDF: ${openResult.message}"),
+              backgroundColor: VFColors.red600,
+            ),
+          );
+        }
+        return;
+      }
+    }
+
     final fullUrl = _pdfUrl.startsWith('http') ? _pdfUrl : "$_baseUrl$_pdfUrl";
     final uri = Uri.parse(fullUrl);
     if (await canLaunchUrl(uri)) {
@@ -1215,27 +1175,27 @@ class _VerifyPageState extends State<VerifyPage> with TickerProviderStateMixin {
         return StatefulBuilder(
           builder: (context, setModalState) {
             return AlertDialog(
-              backgroundColor: const Color(0xFF0F1523),
+              backgroundColor: _vp.surface,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-              title: Text(loc.verifyEscalateTitle, style: const TextStyle(color: Color(0xFFE8F0FF), fontSize: 18, fontWeight: FontWeight.bold)),
+              title: Text(loc.verifyEscalateTitle, style: TextStyle(color: _vp.text, fontSize: 18, fontWeight: FontWeight.bold)),
               content: SingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
                       loc.verifyEscalateDescription,
-                      style: const TextStyle(color: Color(0xFF6B7FA8), fontSize: 13, height: 1.4),
+                      style: TextStyle(color: _vp.textMuted, fontSize: 13, height: 1.4),
                     ),
                     const SizedBox(height: 16),
                     DropdownButtonFormField<String>(
                       initialValue: agency,
-                      dropdownColor: const Color(0xFF0F1523),
-                      style: const TextStyle(color: Color(0xFFE8F0FF)),
+                      dropdownColor: _vp.surface,
+                      style: TextStyle(color: _vp.text),
                       decoration: InputDecoration(
                         filled: true,
-                        fillColor: const Color(0xFF162035),
+                        fillColor: _vp.surfaceVariant,
                         labelText: loc.verifyEscalationAgency,
-                        labelStyle: const TextStyle(color: Color(0xFF6B7FA8)),
+                        labelStyle: TextStyle(color: _vp.textMuted),
                       ),
                       items: [
                         DropdownMenuItem(value: "police", child: Text(loc.verifySriLankaPolice)),
@@ -1249,7 +1209,7 @@ class _VerifyPageState extends State<VerifyPage> with TickerProviderStateMixin {
                     CheckboxListTile(
                       value: confirm,
                       onChanged: (val) => setModalState(() => confirm = val ?? false),
-                      title: Text(loc.verifyEscalateConfirm, style: const TextStyle(color: Color(0xFF6B7FA8), fontSize: 11)),
+                      title: Text(loc.verifyEscalateConfirm, style: TextStyle(color: _vp.textMuted, fontSize: 11)),
                       controlAffinity: ListTileControlAffinity.leading,
                       activeColor: const Color(0xFF00C8FF),
                       contentPadding: EdgeInsets.zero,
@@ -1257,7 +1217,7 @@ class _VerifyPageState extends State<VerifyPage> with TickerProviderStateMixin {
                     CheckboxListTile(
                       value: consent,
                       onChanged: (val) => setModalState(() => consent = val ?? false),
-                      title: Text(loc.verifyEscalateConsent, style: const TextStyle(color: Color(0xFF6B7FA8), fontSize: 11)),
+                      title: Text(loc.verifyEscalateConsent, style: TextStyle(color: _vp.textMuted, fontSize: 11)),
                       controlAffinity: ListTileControlAffinity.leading,
                       activeColor: const Color(0xFF00C8FF),
                       contentPadding: EdgeInsets.zero,
@@ -1268,7 +1228,7 @@ class _VerifyPageState extends State<VerifyPage> with TickerProviderStateMixin {
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(context),
-                  child: Text(loc.verifyCancel, style: const TextStyle(color: Color(0xFF6B7FA8))),
+                  child: Text(loc.verifyCancel, style: TextStyle(color: _vp.textMuted)),
                 ),
                 ElevatedButton(
                   onPressed: (confirm && consent) ? () async {
@@ -1317,22 +1277,22 @@ class _VerifyPageState extends State<VerifyPage> with TickerProviderStateMixin {
       context: context,
       builder: (context) {
         return AlertDialog(
-          backgroundColor: const Color(0xFF0F1523),
-          title: const Text("Configure Backend Server", style: TextStyle(color: Color(0xFFE8F0FF), fontSize: 16)),
+          backgroundColor: _vp.surface,
+          title: Text("Configure Backend Server", style: TextStyle(color: _vp.text, fontSize: 16)),
           content: TextField(
             controller: controller,
-            style: const TextStyle(color: Color(0xFFE8F0FF)),
-            decoration: const InputDecoration(
+            style: TextStyle(color: _vp.text),
+            decoration: InputDecoration(
               hintText: "http://192.168.1.100:8000",
-              hintStyle: TextStyle(color: Color(0xFF6B7FA8)),
+              hintStyle: TextStyle(color: _vp.textMuted),
               helperText: "Specify host base address (use LAN IP on physical phones)",
-              helperStyle: TextStyle(color: Color(0xFF6B7FA8), fontSize: 11),
+              helperStyle: TextStyle(color: _vp.textMuted, fontSize: 11),
             ),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text("Cancel", style: TextStyle(color: Color(0xFF6B7FA8))),
+              child: Text("Cancel", style: TextStyle(color: _vp.textMuted)),
             ),
             ElevatedButton(
               onPressed: () async {
@@ -1365,7 +1325,7 @@ class _VerifyPageState extends State<VerifyPage> with TickerProviderStateMixin {
       extraActions: [
         IconButton(
           onPressed: _showBackendSettings,
-          icon: const Icon(Icons.settings_ethernet, color: Colors.white, size: 20),
+          icon: Icon(Icons.settings_ethernet, color: Colors.white, size: 20),
           tooltip: 'Configure connection settings',
         ),
       ],
@@ -1408,17 +1368,17 @@ class _VerifyPageState extends State<VerifyPage> with TickerProviderStateMixin {
       ),
       child: Row(
         children: [
-          const Icon(Icons.warning_amber_rounded, color: Color(0xFFFF3B5C)),
+          Icon(Icons.warning_amber_rounded, color: Color(0xFFFF3B5C)),
           const SizedBox(width: 12),
           Expanded(
             child: Text(
               _errorMessage!,
-              style: const TextStyle(color: Color(0xFFE8F0FF), fontSize: 13, height: 1.4),
+              style: TextStyle(color: _vp.text, fontSize: 13, height: 1.4),
             ),
           ),
           IconButton(
             onPressed: () => setState(() => _errorMessage = null),
-            icon: const Icon(Icons.close, size: 16, color: Color(0xFF6B7FA8)),
+            icon: Icon(Icons.close, size: 16, color: _vp.textMuted),
           ),
         ],
       ),
@@ -1432,7 +1392,7 @@ class _VerifyPageState extends State<VerifyPage> with TickerProviderStateMixin {
         Container(
           padding: const EdgeInsets.all(4),
           decoration: BoxDecoration(
-            color: const Color(0xFF0A0F1D),
+            color: _vp.canvas,
             borderRadius: BorderRadius.circular(10),
           ),
           child: Row(
@@ -1462,18 +1422,18 @@ class _VerifyPageState extends State<VerifyPage> with TickerProviderStateMixin {
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 12),
           decoration: BoxDecoration(
-            color: isSelected ? const Color(0xFF162035) : Colors.transparent,
+            color: isSelected ? _vp.surfaceVariant : Colors.transparent,
             borderRadius: BorderRadius.circular(8),
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon, color: isSelected ? const Color(0xFF00C8FF) : const Color(0xFF6B7FA8), size: 16),
+              Icon(icon, color: isSelected ? const Color(0xFF00C8FF) : _vp.textMuted, size: 16),
               const SizedBox(width: 8),
               Text(
                 label,
                 style: TextStyle(
-                  color: isSelected ? const Color(0xFFE8F0FF) : const Color(0xFF6B7FA8),
+                  color: isSelected ? _vp.text : _vp.textMuted,
                   fontSize: 12,
                   fontWeight: FontWeight.bold,
                 ),
@@ -1489,23 +1449,23 @@ class _VerifyPageState extends State<VerifyPage> with TickerProviderStateMixin {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: const Color(0xFF0F1523),
+        color: _vp.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFF1A2233)),
+        border: Border.all(color: _vp.border),
       ),
       child: Column(
         children: [
-          const Icon(Icons.drive_folder_upload, size: 64, color: Color(0xFF00C8FF)),
+          Icon(Icons.drive_folder_upload, size: 64, color: Color(0xFF00C8FF)),
           const SizedBox(height: 16),
           Text(
             loc.verifyAiForensicTitle,
-            style: const TextStyle(color: Color(0xFFE8F0FF), fontSize: 16, fontWeight: FontWeight.bold),
+            style: TextStyle(color: _vp.text, fontSize: 16, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 8),
           Text(
             _baseUrl.isEmpty ? loc.verifyNoBackendUrl : loc.verifySelectLocalVideo,
             textAlign: TextAlign.center,
-            style: const TextStyle(color: Color(0xFF6B7FA8), fontSize: 12, height: 1.5),
+            style: TextStyle(color: _vp.textMuted, fontSize: 12, height: 1.5),
           ),
           const SizedBox(height: 12),
           Container(
@@ -1538,7 +1498,7 @@ class _VerifyPageState extends State<VerifyPage> with TickerProviderStateMixin {
           const SizedBox(height: 24),
           ElevatedButton.icon(
             onPressed: _pickAndVerifyVideo,
-            icon: const Icon(Icons.video_collection),
+            icon: Icon(Icons.video_collection),
             label: Text(loc.verifyPickLocalVideo),
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF2563EB),
@@ -1555,26 +1515,26 @@ class _VerifyPageState extends State<VerifyPage> with TickerProviderStateMixin {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: const Color(0xFF0F1523),
+        color: _vp.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFF1A2233)),
+        border: Border.all(color: _vp.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
             loc.verifyVideoUrlPaste,
-            style: const TextStyle(color: Color(0xFFE8F0FF), fontSize: 15, fontWeight: FontWeight.bold),
+            style: TextStyle(color: _vp.text, fontSize: 15, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 6),
           Text(
             loc.verifyUrlScanDescription,
-            style: const TextStyle(color: Color(0xFF6B7FA8), fontSize: 12),
+            style: TextStyle(color: _vp.textMuted, fontSize: 12),
           ),
           const SizedBox(height: 16),
           TextField(
             controller: _urlController,
-            style: const TextStyle(color: Color(0xFFE8F0FF)),
+            style: TextStyle(color: _vp.text),
             decoration: const InputDecoration(
               hintText: "Paste YouTube, TikTok, Facebook, or direct URL...",
               prefixIcon: Icon(Icons.insert_link, color: Color(0xFF00C8FF)),
@@ -1583,7 +1543,7 @@ class _VerifyPageState extends State<VerifyPage> with TickerProviderStateMixin {
           const SizedBox(height: 20),
           ElevatedButton.icon(
             onPressed: _verifyUrlLink,
-            icon: const Icon(Icons.analytics_outlined),
+            icon: Icon(Icons.analytics_outlined),
             label: Text(loc.verifyAnalyzeUrlClip),
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF059669),
@@ -1602,35 +1562,35 @@ class _VerifyPageState extends State<VerifyPage> with TickerProviderStateMixin {
         Container(
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
-            color: const Color(0xFF0F1523),
+            color: _vp.surface,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: const Color(0xFF1A2233)),
+            border: Border.all(color: _vp.border),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
                 children: [
-                  const Icon(Icons.settings_input_antenna, color: Color(0xFF7C3AED)),
+                  Icon(Icons.settings_input_antenna, color: Color(0xFF7C3AED)),
                   const SizedBox(width: 10),
                   Text(
                     loc.verifyExternalLiveStream,
-                    style: const TextStyle(color: Color(0xFFE8F0FF), fontSize: 15, fontWeight: FontWeight.bold),
+                    style: TextStyle(color: _vp.text, fontSize: 15, fontWeight: FontWeight.bold),
                   ),
                 ],
               ),
               const SizedBox(height: 8),
               Text(
                 loc.verifyStreamDescription,
-                style: const TextStyle(color: Color(0xFF6B7FA8), fontSize: 12, height: 1.4),
+                style: TextStyle(color: _vp.textMuted, fontSize: 12, height: 1.4),
               ),
               const SizedBox(height: 16),
               TextField(
                 controller: _streamUrlController,
-                style: const TextStyle(color: Color(0xFFE8F0FF)),
+                style: TextStyle(color: _vp.text),
                 decoration: InputDecoration(
                   hintText: loc.verifyStreamUrlHint,
-                  prefixIcon: const Icon(Icons.link, color: Color(0xFF7C3AED)),
+                  prefixIcon: Icon(Icons.link, color: Color(0xFF7C3AED)),
                 ),
               ),
               const SizedBox(height: 16),
@@ -1638,7 +1598,7 @@ class _VerifyPageState extends State<VerifyPage> with TickerProviderStateMixin {
                 width: double.infinity,
                 child: ElevatedButton.icon(
                   onPressed: _verifyStreamUrl,
-                  icon: const Icon(Icons.play_circle_filled_sharp),
+                  icon: Icon(Icons.play_circle_filled_sharp),
                   label: const Text("Analyze Stream URL"),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF7C3AED),
@@ -1654,27 +1614,27 @@ class _VerifyPageState extends State<VerifyPage> with TickerProviderStateMixin {
         Container(
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
-            color: const Color(0xFF0F1523),
+            color: _vp.surface,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: const Color(0xFF1A2233)),
+            border: Border.all(color: _vp.border),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
                 children: [
-                  const Icon(Icons.camera_alt, color: Color(0xFF00C8FF)),
+                  Icon(Icons.camera_alt, color: Color(0xFF00C8FF)),
                   const SizedBox(width: 10),
                   Text(
                     loc.verifyDeviceCameraFeed,
-                    style: const TextStyle(color: Color(0xFFE8F0FF), fontSize: 15, fontWeight: FontWeight.bold),
+                    style: TextStyle(color: _vp.text, fontSize: 15, fontWeight: FontWeight.bold),
                   ),
                 ],
               ),
               const SizedBox(height: 8),
               Text(
                 loc.verifyCameraStreamDescription,
-                style: const TextStyle(color: Color(0xFF6B7FA8), fontSize: 12, height: 1.4),
+                style: TextStyle(color: _vp.textMuted, fontSize: 12, height: 1.4),
               ),
               const SizedBox(height: 16),
               SizedBox(
@@ -1686,7 +1646,7 @@ class _VerifyPageState extends State<VerifyPage> with TickerProviderStateMixin {
                       await _startLocalCameraStream();
                     }
                   },
-                  icon: const Icon(Icons.videocam_outlined),
+                  icon: Icon(Icons.videocam_outlined),
                   label: Text(loc.verifyOpenCameraStream),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: const Color(0xFF00C8FF),
@@ -1706,9 +1666,9 @@ class _VerifyPageState extends State<VerifyPage> with TickerProviderStateMixin {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: const Color(0xFF0F1523),
+        color: _vp.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFF1C2740)),
+        border: Border.all(color: _vp.borderBright),
       ),
       child: Column(
         children: [
@@ -1720,14 +1680,14 @@ class _VerifyPageState extends State<VerifyPage> with TickerProviderStateMixin {
           const SizedBox(height: 24),
           Text(
             _statusMessage,
-            style: const TextStyle(color: Color(0xFFE8F0FF), fontSize: 14, fontWeight: FontWeight.bold),
+            style: TextStyle(color: _vp.text, fontSize: 14, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 16),
           ClipRRect(
             borderRadius: BorderRadius.circular(6),
             child: LinearProgressIndicator(
               value: _uploadProgress,
-              backgroundColor: const Color(0xFF162035),
+              backgroundColor: _vp.surfaceVariant,
               valueColor: const AlwaysStoppedAnimation(Color(0xFF00C8FF)),
               minHeight: 8,
             ),
@@ -1739,7 +1699,7 @@ class _VerifyPageState extends State<VerifyPage> with TickerProviderStateMixin {
           const SizedBox(height: 24),
           OutlinedButton.icon(
             onPressed: _cancelAnalysis,
-            icon: const Icon(Icons.cancel_outlined),
+            icon: Icon(Icons.cancel_outlined),
             label: const Text("Cancel Scan"),
             style: OutlinedButton.styleFrom(
               foregroundColor: const Color(0xFFFF3B5C),
@@ -1752,7 +1712,7 @@ class _VerifyPageState extends State<VerifyPage> with TickerProviderStateMixin {
   }
 
   Widget _buildPipelineTimelineSteps() {
-    // Full 8-step pipeline including post-verification (PDF, Firestore, Notification)
+    // Pipeline including post-verification (PDF, Notification, Completed)
     final steps = [
       "Format Validation",
       "Frame Extraction",
@@ -1760,7 +1720,6 @@ class _VerifyPageState extends State<VerifyPage> with TickerProviderStateMixin {
       "Model Inference & Aggregation",
       "Generating AI Reasoning",
       "Generating PDF Forensic Report",
-      "Saving Report to Firestore",
       "Sending Notification",
       "Completed",
     ];
@@ -1783,7 +1742,7 @@ class _VerifyPageState extends State<VerifyPage> with TickerProviderStateMixin {
                         ? const Color(0xFF00E896)
                         : isCurrent
                             ? const Color(0xFF00C8FF)
-                            : const Color(0xFF162035),
+                            : _vp.surfaceVariant,
                     border: Border.all(
                       color: isCurrent ? Colors.white : Colors.transparent,
                       width: 2,
@@ -1799,7 +1758,7 @@ class _VerifyPageState extends State<VerifyPage> with TickerProviderStateMixin {
                   Container(
                     width: 2,
                     height: 24,
-                    color: isDone ? const Color(0xFF00E896) : const Color(0xFF162035),
+                    color: isDone ? const Color(0xFF00E896) : _vp.surfaceVariant,
                   ),
               ],
             ),
@@ -1813,8 +1772,8 @@ class _VerifyPageState extends State<VerifyPage> with TickerProviderStateMixin {
                     color: isDone
                         ? const Color(0xFF00E896)
                         : isCurrent
-                            ? const Color(0xFFE8F0FF)
-                            : const Color(0xFF6B7FA8),
+                            ? _vp.text
+                            : _vp.textMuted,
                     fontSize: 12,
                     fontWeight: isCurrent ? FontWeight.bold : FontWeight.normal,
                   ),
@@ -1830,7 +1789,7 @@ class _VerifyPageState extends State<VerifyPage> with TickerProviderStateMixin {
   Widget _buildLinkVerificationStepper() {
     // Combined pipeline: 5 link-download steps (tracked by _linkStep) + 5 post-processing steps (tracked by _pipelineStep)
     // _linkStep  indices: 0=request, 1=downloading, 2=extracting, 3=detecting, 4=inference
-    // _pipelineStep indices: 4=reasoning, 5=pdf, 6=firestore, 7=notification, 8=completed
+    // _pipelineStep indices: 4=reasoning, 5=pdf, 6=notification, 7=completed
     final steps = [
       'Request Initiated',
       'Downloading Video File',
@@ -1839,7 +1798,6 @@ class _VerifyPageState extends State<VerifyPage> with TickerProviderStateMixin {
       'Model Inference Running',
       'Generating AI Reasoning',
       'Generating PDF Forensic Report',
-      'Saving Report to Firestore',
       'Sending Notification',
       'Completed',
     ];
@@ -1872,7 +1830,7 @@ class _VerifyPageState extends State<VerifyPage> with TickerProviderStateMixin {
                   height: 20,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: isDone ? const Color(0xFF00E896) : isCurrent ? const Color(0xFF00C8FF) : const Color(0xFF162035),
+                    color: isDone ? const Color(0xFF00E896) : isCurrent ? const Color(0xFF00C8FF) : _vp.surfaceVariant,
                     border: Border.all(color: isCurrent ? Colors.white : Colors.transparent, width: 2),
                   ),
                   child: Icon(
@@ -1885,7 +1843,7 @@ class _VerifyPageState extends State<VerifyPage> with TickerProviderStateMixin {
                   Container(
                     width: 2,
                     height: 24,
-                    color: isDone ? const Color(0xFF00E896) : const Color(0xFF162035),
+                    color: isDone ? const Color(0xFF00E896) : _vp.surfaceVariant,
                   ),
               ],
             ),
@@ -1896,7 +1854,7 @@ class _VerifyPageState extends State<VerifyPage> with TickerProviderStateMixin {
                 child: Text(
                   steps[index],
                   style: TextStyle(
-                    color: isDone ? const Color(0xFF00E896) : isCurrent ? const Color(0xFFE8F0FF) : const Color(0xFF6B7FA8),
+                    color: isDone ? const Color(0xFF00E896) : isCurrent ? _vp.text : _vp.textMuted,
                     fontSize: 12,
                     fontWeight: isCurrent ? FontWeight.bold : FontWeight.normal,
                   ),
@@ -1914,9 +1872,9 @@ class _VerifyPageState extends State<VerifyPage> with TickerProviderStateMixin {
     final isDeviceCam = _cameraController != null && _isCameraInitialized;
     return Container(
       decoration: BoxDecoration(
-        color: Colors.black,
+        color: _vp.surfaceVariant,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFF1C2740)),
+        border: Border.all(color: _vp.borderBright),
       ),
       clipBehavior: Clip.antiAlias,
       child: Column(
@@ -1935,14 +1893,14 @@ class _VerifyPageState extends State<VerifyPage> with TickerProviderStateMixin {
           else
             Container(
               height: 180,
-              decoration: const BoxDecoration(
+              decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [Color(0xFF080C14), Color(0xFF162035)],
+                  colors: _vp.streamGradient,
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                 ),
               ),
-              child: const Center(
+              child: Center(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -1950,7 +1908,7 @@ class _VerifyPageState extends State<VerifyPage> with TickerProviderStateMixin {
                     SizedBox(height: 12),
                     Text(
                       "Connecting to Live Stream...",
-                      style: TextStyle(color: Color(0xFFE8F0FF), fontWeight: FontWeight.bold, fontSize: 14),
+                      style: TextStyle(color: _vp.text, fontWeight: FontWeight.bold, fontSize: 14),
                     ),
                   ],
                 ),
@@ -1958,7 +1916,7 @@ class _VerifyPageState extends State<VerifyPage> with TickerProviderStateMixin {
             ),
           Container(
             padding: const EdgeInsets.all(16),
-            color: const Color(0xFF0F1523),
+            color: _vp.surface,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -1967,17 +1925,17 @@ class _VerifyPageState extends State<VerifyPage> with TickerProviderStateMixin {
                   children: [
                     Row(
                       children: [
-                        const Icon(Icons.fiber_manual_record, color: Color(0xFFFF3B5C), size: 12),
+                        Icon(Icons.fiber_manual_record, color: Color(0xFFFF3B5C), size: 12),
                         const SizedBox(width: 8),
                         Text(
                           isDeviceCam ? loc.verifyFeedStreaming : loc.verifyAiAnalyzingStream,
-                          style: const TextStyle(color: Color(0xFFFF3B5C), fontSize: 12, fontWeight: FontWeight.bold),
+                          style: TextStyle(color: Color(0xFFFF3B5C), fontSize: 12, fontWeight: FontWeight.bold),
                         ),
                       ],
                     ),
                     Text(
                       "FPS: ${_streamFps.toStringAsFixed(1)} | Frames: $_framesAnalyzed",
-                      style: const TextStyle(color: Color(0xFF6B7FA8), fontSize: 12),
+                      style: TextStyle(color: _vp.textMuted, fontSize: 12),
                     ),
                   ],
                 ),
@@ -1986,7 +1944,7 @@ class _VerifyPageState extends State<VerifyPage> with TickerProviderStateMixin {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text("Current Probability:", style: TextStyle(color: Color(0xFF6B7FA8), fontSize: 12)),
+                    Text("Current Probability:", style: TextStyle(color: _vp.textMuted, fontSize: 12)),
                     Text(
                       "${_rollingStreamScore.toStringAsFixed(1)}%",
                       style: TextStyle(
@@ -2001,7 +1959,7 @@ class _VerifyPageState extends State<VerifyPage> with TickerProviderStateMixin {
                   borderRadius: BorderRadius.circular(4),
                   child: LinearProgressIndicator(
                     value: _rollingStreamScore / 100,
-                    backgroundColor: const Color(0xFF162035),
+                    backgroundColor: _vp.surfaceVariant,
                     valueColor: AlwaysStoppedAnimation(
                       _rollingStreamScore >= 75 ? const Color(0xFFFF3B5C) : const Color(0xFF00E896),
                     ),
@@ -2009,14 +1967,14 @@ class _VerifyPageState extends State<VerifyPage> with TickerProviderStateMixin {
                   ),
                 ),
                 const SizedBox(height: 16),
-                const Text("Probability Rolling Graph", style: TextStyle(color: Color(0xFFE8F0FF), fontSize: 12, fontWeight: FontWeight.bold)),
+                Text("Probability Rolling Graph", style: TextStyle(color: _vp.text, fontSize: 12, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 8),
                 // Real-time custom painter graph
                 DeepfakeGraph(dataPoints: List.from(_confidenceHistory)),
                 const SizedBox(height: 20),
                 ElevatedButton.icon(
                   onPressed: _stopLiveStreamAndGenerateReport,
-                  icon: const Icon(Icons.stop_circle_rounded),
+                  icon: Icon(Icons.stop_circle_rounded),
                   label: Text(loc.verifyStopGetReport),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFFFF3B5C),
@@ -2044,7 +2002,7 @@ class _VerifyPageState extends State<VerifyPage> with TickerProviderStateMixin {
               right: 0,
               child: Container(
                 height: 2,
-                decoration: const BoxDecoration(
+                decoration: BoxDecoration(
                   color: Color(0xFF00C8FF),
                   boxShadow: [
                     BoxShadow(color: Color(0xFF00C8FF), blurRadius: 10, spreadRadius: 3),
@@ -2074,15 +2032,15 @@ class _VerifyPageState extends State<VerifyPage> with TickerProviderStateMixin {
         Container(
           padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
-            color: const Color(0xFF0F1523),
+            color: _vp.surface,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: const Color(0xFF1C2740)),
+            border: Border.all(color: _vp.borderBright),
           ),
           child: Column(
             children: [
               Text(
                 loc.verifyForensicConclusion.toUpperCase(),
-                style: const TextStyle(color: Color(0xFF6B7FA8), fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 1.5),
+                style: TextStyle(color: _vp.textMuted, fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 1.5),
               ),
               const SizedBox(height: 20),
               Stack(
@@ -2094,7 +2052,7 @@ class _VerifyPageState extends State<VerifyPage> with TickerProviderStateMixin {
                     child: CircularProgressIndicator(
                       value: _confidenceScore / 100,
                       strokeWidth: 8,
-                      backgroundColor: const Color(0xFF162035),
+                      backgroundColor: _vp.surfaceVariant,
                       valueColor: AlwaysStoppedAnimation(verdictColor),
                     ),
                   ),
@@ -2103,7 +2061,7 @@ class _VerifyPageState extends State<VerifyPage> with TickerProviderStateMixin {
                     children: [
                       Text(
                         "${_confidenceScore.toStringAsFixed(1)}%",
-                        style: const TextStyle(color: Color(0xFFE8F0FF), fontSize: 26, fontWeight: FontWeight.bold),
+                        style: TextStyle(color: _vp.text, fontSize: 26, fontWeight: FontWeight.bold),
                       ),
                       const SizedBox(height: 2),
                       Text(
@@ -2120,9 +2078,9 @@ class _VerifyPageState extends State<VerifyPage> with TickerProviderStateMixin {
                 height: 100,
                 width: double.infinity,
                 decoration: BoxDecoration(
-                  color: const Color(0xFF0A0F1D),
+                  color: _vp.canvas,
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: const Color(0xFF162035)),
+                  border: Border.all(color: _vp.surfaceVariant),
                 ),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(8),
@@ -2137,7 +2095,7 @@ class _VerifyPageState extends State<VerifyPage> with TickerProviderStateMixin {
                         child: Container(
                           padding: const EdgeInsets.all(4),
                           decoration: BoxDecoration(border: Border.all(color: verdictColor, width: 1)),
-                          child: const Text("EYE_L", style: TextStyle(color: Colors.white70, fontSize: 8)),
+                          child: Text("EYE_L", style: TextStyle(color: _vp.textMuted, fontSize: 8)),
                         ),
                       ),
                       Positioned(
@@ -2146,7 +2104,7 @@ class _VerifyPageState extends State<VerifyPage> with TickerProviderStateMixin {
                         child: Container(
                           padding: const EdgeInsets.all(4),
                           decoration: BoxDecoration(border: Border.all(color: verdictColor, width: 1)),
-                          child: const Text("EYE_R", style: TextStyle(color: Colors.white70, fontSize: 8)),
+                          child: Text("EYE_R", style: TextStyle(color: _vp.textMuted, fontSize: 8)),
                         ),
                       ),
                       Positioned(
@@ -2155,7 +2113,7 @@ class _VerifyPageState extends State<VerifyPage> with TickerProviderStateMixin {
                         child: Container(
                           padding: const EdgeInsets.all(4),
                           decoration: BoxDecoration(border: Border.all(color: verdictColor, width: 1)),
-                          child: const Text("MOUTH", style: TextStyle(color: Colors.white70, fontSize: 8)),
+                          child: Text("MOUTH", style: TextStyle(color: _vp.textMuted, fontSize: 8)),
                         ),
                       ),
                       Align(
@@ -2175,7 +2133,7 @@ class _VerifyPageState extends State<VerifyPage> with TickerProviderStateMixin {
               const SizedBox(height: 16),
               Text(
                 "${loc.verifyModelUsed} $_modelUsed",
-                style: const TextStyle(color: Color(0xFF6B7FA8), fontSize: 11),
+                style: TextStyle(color: _vp.textMuted, fontSize: 11),
               ),
             ],
           ),
@@ -2184,21 +2142,21 @@ class _VerifyPageState extends State<VerifyPage> with TickerProviderStateMixin {
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: const Color(0xFF0F1523),
+            color: _vp.surface,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: const Color(0xFF1C2740)),
+            border: Border.all(color: _vp.borderBright),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 loc.verifyExplainableAiStatement,
-                style: const TextStyle(color: Color(0xFFE8F0FF), fontSize: 13, fontWeight: FontWeight.bold),
+                style: TextStyle(color: _vp.text, fontSize: 13, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 8),
               Text(
                 _explanation,
-                style: const TextStyle(color: Color(0xFF6B7FA8), fontSize: 12, height: 1.5, fontStyle: FontStyle.italic),
+                style: TextStyle(color: _vp.textMuted, fontSize: 12, height: 1.5, fontStyle: FontStyle.italic),
               ),
             ],
           ),
@@ -2209,7 +2167,7 @@ class _VerifyPageState extends State<VerifyPage> with TickerProviderStateMixin {
             Expanded(
               child: ElevatedButton.icon(
                 onPressed: _getPdfForensicReport,
-                icon: const Icon(Icons.picture_as_pdf_outlined),
+                icon: Icon(Icons.picture_as_pdf_outlined),
                 label: Text(loc.verifyGetReportPdf),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF2563EB),
@@ -2222,11 +2180,11 @@ class _VerifyPageState extends State<VerifyPage> with TickerProviderStateMixin {
             Expanded(
               child: ElevatedButton.icon(
                 onPressed: _shareForensicLink,
-                icon: const Icon(Icons.share_outlined),
+                icon: Icon(Icons.share_outlined),
                 label: const Text("Share Link"),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF0A0F1D),
-                  foregroundColor: Colors.white,
+                  backgroundColor: _vp.canvas,
+                  foregroundColor: _vp.text,
                   padding: const EdgeInsets.symmetric(vertical: 14),
                 ),
               ),
@@ -2237,7 +2195,7 @@ class _VerifyPageState extends State<VerifyPage> with TickerProviderStateMixin {
           const SizedBox(height: 12),
           ElevatedButton.icon(
             onPressed: _showEscalationModal,
-            icon: const Icon(Icons.gavel_rounded),
+            icon: Icon(Icons.gavel_rounded),
             label: Text(loc.verifyReportMedia),
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFFFF3B5C),
@@ -2276,9 +2234,9 @@ class DeepfakeGraph extends StatelessWidget {
     return Container(
       height: 120,
       decoration: BoxDecoration(
-        color: const Color(0xFF070B13),
+        color: context.colors.surfaceVariant,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: const Color(0xFF1C2740)),
+        border: Border.all(color: context.colors.border),
       ),
       padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
       child: CustomPaint(
@@ -2296,7 +2254,7 @@ class _GraphPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final gridPaint = Paint()
-      ..color = const Color(0xFF1C2740).withValues(alpha: 0.4)
+      ..color = const Color(0xFF94A3B8).withValues(alpha: 0.4)
       ..strokeWidth = 0.8;
 
     // Draw horizontal grid lines (0%, 25%, 50%, 75%, 100%)

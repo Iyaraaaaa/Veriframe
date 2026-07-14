@@ -344,7 +344,7 @@ class _ForgetPasswordPageState extends State<ForgetPasswordPage> {
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(
-            color: Colors.black, // Black border color
+            color: isDarkMode ? Colors.grey[600]! : Colors.black,
             width: 2,
           ),
         ),

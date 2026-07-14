@@ -1,7 +1,6 @@
 // lib/screens/about_us.dart
 import 'package:flutter/material.dart';
 import 'package:veriframe_app/l10n/app_localizations.dart';
-import 'package:veriframe_app/utils/theme.dart';
 import 'package:veriframe_app/widgets/content_widgets.dart';
 import 'package:veriframe_app/widgets/main_scaffold.dart';
 
@@ -11,64 +10,6 @@ class AboutUsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context)!;
-    final c = context.colors;
-
-    final stack = ['Flutter', 'FastAPI', 'EfficientNetB0', 'Firebase'];
-
-    final features = [
-      _Feature(
-        icon: Icons.psychology_outlined,
-        title: loc.aboutFeature1Title,
-        body: loc.aboutFeature1Desc,
-      ),
-      _Feature(
-        icon: Icons.visibility_outlined,
-        title: loc.aboutFeature2Title,
-        body: loc.aboutFeature2Desc,
-      ),
-      _Feature(
-        icon: Icons.smartphone_outlined,
-        title: loc.aboutFeature3Title,
-        body: loc.aboutFeature3Desc,
-      ),
-      _Feature(
-        icon: Icons.autorenew_rounded,
-        title: loc.aboutFeature4Title,
-        body: loc.aboutFeature4Desc,
-      ),
-    ];
-
-    final values = [
-      _Feature(
-        icon: Icons.gps_fixed_rounded,
-        title: loc.aboutValue1Title,
-        body: loc.aboutValue1Body,
-      ),
-      _Feature(
-        icon: Icons.visibility_outlined,
-        title: loc.aboutValue2Title,
-        body: loc.aboutValue2Body,
-      ),
-      _Feature(
-        icon: Icons.lock_outline_rounded,
-        title: loc.aboutValue3Title,
-        body: loc.aboutValue3Body,
-      ),
-      _Feature(
-        icon: Icons.accessibility_new_outlined,
-        title: loc.aboutValue4Title,
-        body: loc.aboutValue4Body,
-      ),
-    ];
-
-    final apps = [
-      loc.appUse1,
-      loc.appUse2,
-      loc.appUse3,
-      loc.appUse4,
-      loc.appUse5,
-      loc.appUse6,
-    ];
 
     return MainScaffold(
       showBack: true,
@@ -81,96 +22,64 @@ class AboutUsPage extends StatelessWidget {
               icon: Icons.auto_awesome_outlined,
               tagline: loc.aboutTagline,
               title: loc.aboutHeroTitle,
-              subtitle: loc.aboutMission,
+              subtitle: loc.aboutTech,
             ),
             const SizedBox(height: 24),
 
-            SectionLabel(loc.aboutDifferentLabel),
-            const SizedBox(height: 12),
-            ...features.map((f) => Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
-                  child: FeatureCard(
-                    icon: f.icon,
-                    title: f.title,
-                    description: f.body,
-                    accent: c.accent,
-                  ),
-                )),
-
-            const SizedBox(height: 12),
-            SectionLabel(loc.aboutValuesLabel),
-            const SizedBox(height: 12),
-            ...values.map((v) => Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
-                  child: _ValueTile(icon: v.icon, title: v.title, body: v.body),
-                )),
-
-            const SizedBox(height: 12),
-            SectionLabel(loc.aboutTechLabel),
-            const SizedBox(height: 10),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: stack.map((s) => ThemedChip(label: s)).toList(),
+            _StatsRow(
+              stats: [
+                _Stat(
+                  value: loc.aboutStatVerificationsValue,
+                  label: loc.aboutStatVerificationsLabel,
+                ),
+                _Stat(
+                  value: loc.aboutStatRatingValue,
+                  label: loc.aboutStatRatingLabel,
+                  icon: Icons.star_rounded,
+                ),
+                _Stat(
+                  value: loc.aboutStatUptimeValue,
+                  label: loc.aboutStatUptimeLabel,
+                ),
+              ],
             ),
-
             const SizedBox(height: 20),
-            SectionLabel(loc.aboutAppsLabel),
-            const SizedBox(height: 10),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: apps.map((s) => ThemedChip(label: s)).toList(),
-            ),
 
-            const SizedBox(height: 24),
-            ThemedCard(
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'VERI_FRAME',
-                          style: TextStyle(
-                            color: c.text,
-                            fontWeight: FontWeight.w700,
-                            fontSize: 13,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          loc.aboutVersion,
-                          style: TextStyle(color: c.textSubtle, fontSize: 11),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 5,
-                    ),
-                    decoration: BoxDecoration(
-                      color: c.accent.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                        color: c.accent.withValues(alpha: 0.3),
-                      ),
-                    ),
-                    child: Text(
-                      loc.aboutBeta,
-                      style: TextStyle(
-                        color: c.accent,
-                        fontSize: 10,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 1,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+            _AboutSection(
+              icon: Icons.menu_book_outlined,
+              label: loc.aboutStoryLabel,
+              body: loc.aboutStory,
+            ),
+            const SizedBox(height: 16),
+
+            _AboutSection(
+              icon: Icons.flag_outlined,
+              label: loc.aboutMissionLabel,
+              body: loc.aboutMission,
+            ),
+            const SizedBox(height: 16),
+
+            _AboutSection(
+              icon: Icons.visibility_outlined,
+              label: loc.aboutVisionLabel,
+              body: loc.aboutVision,
+            ),
+            const SizedBox(height: 16),
+
+            _AboutValuesSection(
+              label: loc.aboutValuesLabel,
+              values: [
+                loc.aboutValueOne,
+                loc.aboutValueTwo,
+                loc.aboutValueThree,
+              ],
+            ),
+            const SizedBox(height: 16),
+
+            _AboutSection(
+              icon: Icons.memory_outlined,
+              label: loc.aboutTechLabel,
+              body: loc.aboutTechBody,
             ),
             const SizedBox(height: 16),
           ],
@@ -180,71 +89,173 @@ class AboutUsPage extends StatelessWidget {
   }
 }
 
-class _Feature {
-  final IconData icon;
-  final String title;
-  final String body;
-
-  const _Feature({
-    required this.icon,
-    required this.title,
-    required this.body,
-  });
+class _Stat {
+  const _Stat({required this.value, required this.label, this.icon});
+  final String value;
+  final String label;
+  final IconData? icon;
 }
 
-class _ValueTile extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final String body;
-
-  const _ValueTile({
-    required this.icon,
-    required this.title,
-    required this.body,
-  });
+class _StatsRow extends StatelessWidget {
+  const _StatsRow({required this.stats});
+  final List<_Stat> stats;
 
   @override
   Widget build(BuildContext context) {
-    final c = context.colors;
+    final theme = Theme.of(context);
+    return Row(
+      children: [
+        for (int i = 0; i < stats.length; i++) ...[
+          if (i > 0) const SizedBox(width: 10),
+          Expanded(
+            child: Container(
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.surfaceContainerHighest.withOpacity(
+                  0.4,
+                ),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Column(
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Text(
+                        stats[i].value,
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      if (stats[i].icon != null) ...[
+                        const SizedBox(width: 2),
+                        Icon(
+                          stats[i].icon,
+                          size: 16,
+                          color: theme.colorScheme.primary,
+                        ),
+                      ],
+                    ],
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    stats[i].label,
+                    textAlign: TextAlign.center,
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: theme.colorScheme.onSurface.withOpacity(0.6),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+/// A single icon + label header, followed by body copy, in a themed card.
+class _AboutSection extends StatelessWidget {
+  const _AboutSection({
+    required this.icon,
+    required this.label,
+    required this.body,
+  });
+
+  final IconData icon;
+  final String label;
+  final String body;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return ThemedCard(
-      padding: const EdgeInsets.all(14),
-      child: Row(
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: c.accent.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: c.accent.withValues(alpha: 0.3)),
-            ),
-            child: Icon(icon, color: c.accent, size: 18),
+          Row(
+            children: [
+              Icon(icon, size: 20, color: theme.colorScheme.primary),
+              const SizedBox(width: 8),
+              Text(
+                label,
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 0.2,
+                ),
+              ),
+            ],
           ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: TextStyle(
-                    color: c.text,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  body,
-                  style: TextStyle(
-                    color: c.textMuted,
-                    fontSize: 12,
-                    height: 1.5,
-                  ),
-                ),
-              ],
+          const SizedBox(height: 10),
+          Text(
+            body,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              height: 1.5,
+              color: theme.colorScheme.onSurface.withOpacity(0.85),
             ),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Values section: icon + label header, followed by a checklist of values.
+class _AboutValuesSection extends StatelessWidget {
+  const _AboutValuesSection({required this.label, required this.values});
+
+  final String label;
+  final List<String> values;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return ThemedCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                Icons.lightbulb_outline,
+                size: 20,
+                color: theme.colorScheme.primary,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                label,
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 0.2,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          for (final value in values)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(Icons.check, size: 16, color: theme.colorScheme.primary),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      value,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        height: 1.5,
+                        color: theme.colorScheme.onSurface.withOpacity(0.85),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
         ],
       ),
     );

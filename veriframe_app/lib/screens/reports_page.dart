@@ -2,15 +2,17 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart';
-import 'package:veriframe_app/l10n/app_localizations.dart';
 import 'package:veriframe_app/models/report_model.dart';
-import 'package:veriframe_app/service/report_service.dart';
+import 'package:veriframe_app/screens/report_detail_screen.dart';
 import 'package:veriframe_app/screens/report_detail_page.dart';
+import 'package:veriframe_app/service/report_service.dart';
 import 'package:veriframe_app/utils/theme.dart';
 import 'package:veriframe_app/widgets/main_scaffold.dart';
 
 class ReportsPage extends StatefulWidget {
-  const ReportsPage({super.key});
+  final bool wrapped;
+
+  const ReportsPage({super.key, this.wrapped = true});
 
   @override
   State<ReportsPage> createState() => _ReportsPageState();
@@ -21,19 +23,26 @@ class _ReportsPageState extends State<ReportsPage> {
 
   @override
   Widget build(BuildContext context) {
-    final loc = AppLocalizations.of(context);
+    final content = _buildReportList(context);
+    if (!widget.wrapped) return content;
+
+    return MainScaffold(
+      showBack: true,
+      title: const Text('Forensic Reports'),
+      body: content,
+    );
+  }
+
+  Widget _buildReportList(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final t = Theme.of(context);
     final text = VFColors.adaptiveText(isDark);
     final muted = VFColors.adaptiveTextSecondary(isDark);
 
-    return MainScaffold(
-      showBack: true,
-      title: const Text('Forensic Reports'),
-      body: _uid == null
-          ? const Center(child: Text("User not logged in."))
-          : StreamBuilder<List<ReportModel>>(
-              stream: ReportService.instance.getReportsStream(_uid!),
+    return _uid == null
+        ? const Center(child: Text("User not logged in."))
+        : StreamBuilder<List<ReportModel>>(
+            stream: ReportService.instance.getReportsStream(_uid),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(child: CircularProgressIndicator());
@@ -45,9 +54,17 @@ class _ReportsPageState extends State<ReportsPage> {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.error_outline, size: 48, color: VFColors.red600),
+                          Icon(
+                            Icons.error_outline,
+                            size: 48,
+                            color: VFColors.red600,
+                          ),
                           const SizedBox(height: 12),
-                          Text("Error: ${snapshot.error}", style: const TextStyle(fontSize: 14), textAlign: TextAlign.center),
+                          Text(
+                            "Error: ${snapshot.error}",
+                            style: const TextStyle(fontSize: 14),
+                            textAlign: TextAlign.center,
+                          ),
                         ],
                       ),
                     ),
@@ -71,17 +88,22 @@ class _ReportsPageState extends State<ReportsPage> {
                 return ListView.builder(
                   padding: const EdgeInsets.all(16),
                   itemCount: reports.length,
-                  itemBuilder: (ctx, i) => _buildReportCard(reports[i], isDark, text, muted),
+                  itemBuilder: (ctx, i) =>
+                      _buildReportCard(reports[i], isDark, text, muted),
                 );
               },
-            ),
-    );
+            );
   }
 
-  Widget _buildReportCard(ReportModel report, bool isDark, Color text, Color muted) {
+  Widget _buildReportCard(
+    ReportModel report,
+    bool isDark,
+    Color text,
+    Color muted,
+  ) {
     final isReal = report.prediction == 'REAL';
     final cardBg = VFColors.adaptiveCard(isDark);
-    
+
     // Decode base64 thumbnail if available
     Widget thumbnailWidget;
     if (report.thumbnail.isNotEmpty) {
@@ -89,12 +111,7 @@ class _ReportsPageState extends State<ReportsPage> {
         final bytes = base64Decode(report.thumbnail);
         thumbnailWidget = ClipRRect(
           borderRadius: BorderRadius.circular(6),
-          child: Image.memory(
-            bytes,
-            width: 50,
-            height: 50,
-            fit: BoxFit.cover,
-          ),
+          child: Image.memory(bytes, width: 50, height: 50, fit: BoxFit.cover),
         );
       } catch (e) {
         thumbnailWidget = _buildPlaceholderThumbnail(isReal);
@@ -116,7 +133,11 @@ class _ReportsPageState extends State<ReportsPage> {
         leading: thumbnailWidget,
         title: Text(
           report.videoName,
-          style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: text),
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.bold,
+            color: text,
+          ),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
         ),
@@ -127,9 +148,13 @@ class _ReportsPageState extends State<ReportsPage> {
             Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 2,
+                  ),
                   decoration: BoxDecoration(
-                    color: (isReal ? VFColors.emerald600 : VFColors.red600).withOpacity(0.1),
+                    color: (isReal ? VFColors.emerald600 : VFColors.red600)
+                        .withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(4),
                   ),
                   child: Text(
@@ -144,7 +169,11 @@ class _ReportsPageState extends State<ReportsPage> {
                 const SizedBox(width: 8),
                 Text(
                   'Score: ${report.score.toStringAsFixed(0)}%',
-                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: text),
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: text,
+                  ),
                 ),
               ],
             ),
@@ -159,9 +188,7 @@ class _ReportsPageState extends State<ReportsPage> {
         onTap: () {
           Navigator.push(
             context,
-            MaterialPageRoute(
-              builder: (_) => ReportDetailPage(report: report),
-            ),
+            MaterialPageRoute(builder: (_) => ReportDetailPage(report: report)),
           );
         },
       ),
@@ -173,7 +200,9 @@ class _ReportsPageState extends State<ReportsPage> {
       width: 50,
       height: 50,
       decoration: BoxDecoration(
-        color: (isReal ? VFColors.emerald600 : VFColors.red600).withOpacity(0.15),
+        color: (isReal ? VFColors.emerald600 : VFColors.red600).withValues(
+          alpha: 0.15,
+        ),
         borderRadius: BorderRadius.circular(6),
       ),
       child: Icon(

@@ -334,7 +334,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get verify => 'Verify';
 
   @override
-  String get analyzeVideo => 'Analyze Video';
+  String get analyzeVideo => 'Verify';
 
   @override
   String get online => 'Online';
@@ -1175,6 +1175,44 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get aboutTech =>
       'VeriFrame runs EfficientViT and CrossEfficientViT models directly on your device for fast, private analysis, and pairs them with an explainable reasoning engine that highlights the evidence behind every verdict.';
+
+  @override
+  String get aboutTechBody =>
+      'Built on EfficientViT and CrossEfficientViT models with an explainable reasoning engine that highlights the evidence behind every result.';
+
+  @override
+  String get aboutStatVerificationsValue => '10K+';
+
+  @override
+  String get aboutStatVerificationsLabel => 'Verifications';
+
+  @override
+  String get aboutStatRatingValue => '4.9';
+
+  @override
+  String get aboutStatRatingLabel => 'User Rating';
+
+  @override
+  String get aboutStatUptimeValue => '99.9%';
+
+  @override
+  String get aboutStatUptimeLabel => 'Uptime';
+
+  @override
+  String get aboutStoryLabel => 'OUR STORY';
+
+  @override
+  String get aboutStory =>
+      'VeriFrame began as a research project to make deepfake detection transparent and accessible. Today it brings on-device forensic analysis and explainable AI to everyone.';
+
+  @override
+  String get aboutValueOne => 'Transparency in every verdict';
+
+  @override
+  String get aboutValueTwo => 'Privacy-first, on-device analysis';
+
+  @override
+  String get aboutValueThree => 'Accessible protection for everyone';
 
   @override
   String get aboutValuesLabel => 'OUR VALUES';

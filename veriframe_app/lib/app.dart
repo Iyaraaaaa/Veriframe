@@ -14,6 +14,7 @@ import 'package:veriframe_app/screens/settings_page.dart';
 import 'package:veriframe_app/screens/reports_page.dart';
 import 'package:veriframe_app/theme/app_theme.dart';
 import 'package:veriframe_app/utils/navigator_key.dart';
+import 'package:veriframe_app/widgets/error_screen.dart';
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -21,6 +22,19 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final controller = SettingsController();
+
+    ErrorWidget.builder = (FlutterErrorDetails errorDetails) {
+      return ErrorScreen(
+        errorDetails: errorDetails,
+        onRetry: () {
+          if (navigatorKey.currentState != null) {
+            navigatorKey.currentState!.pushReplacement(
+              MaterialPageRoute(builder: (_) => const OnBoardingScreen()),
+            );
+          }
+        },
+      );
+    };
 
     return SettingsScope(
       controller: controller,

@@ -27,8 +27,8 @@ class NotificationService {
       await _localNotificationsPlugin.initialize(
         initializationSettings,
         onDidReceiveNotificationResponse: (NotificationResponse details) {
-          // Tap action redirects to reports page
-          navigatorKey.currentState?.pushNamed('/reports');
+          // Tap action brings the app to the home screen
+          navigatorKey.currentState?.pushNamed('/home');
         },
       );
       _initialized = true;
@@ -106,6 +106,24 @@ class NotificationService {
           .update({'isRead': true});
     } catch (e) {
       debugPrint('[NotificationService] Error marking read: $e');
+    }
+  }
+
+  Future<void> markAllAsRead(String uid) async {
+    try {
+      final batch = FirebaseFirestore.instance.batch();
+      final docs = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .collection('notifications')
+          .where('isRead', isEqualTo: false)
+          .get();
+      for (final doc in docs.docs) {
+        batch.update(doc.reference, {'isRead': true});
+      }
+      await batch.commit();
+    } catch (e) {
+      debugPrint('[NotificationService] Error marking all read: $e');
     }
   }
 

@@ -1200,6 +1200,44 @@ class AppLocalizationsTa extends AppLocalizations {
       'VeriFrame உங்கள் சாதனத்திலேயே வேகமான, தனிப்பட்ட பகுப்பாய்வுக்காக EfficientViT மற்றும் CrossEfficientViT மாதிரிகளை இயக்கி, ஒவ்வொரு தீர்ப்புக்குப் பின்னால் உள்ள சான்றை முன்னிலைப்படுத்தும் விளக்கக்கூடிய பகுப்பாய்வு இயந்திரத்துடன் அவற்றை இணைக்கிறது.';
 
   @override
+  String get aboutTechBody =>
+      'ஒவ்வொரு முடிவுக்குப் பின்னால் உள்ள சான்றை முன்னிலைப்படுத்தும் விளக்கக்கூடிய பகுப்பாய்வு இயந்திரத்துடன் EfficientViT மற்றும் CrossEfficientViT மாதிரிகளின் அடிப்படையில் உருவாக்கப்பட்டது.';
+
+  @override
+  String get aboutStatVerificationsValue => '10K+';
+
+  @override
+  String get aboutStatVerificationsLabel => 'சரிபார்ப்புகள்';
+
+  @override
+  String get aboutStatRatingValue => '4.9';
+
+  @override
+  String get aboutStatRatingLabel => 'பயனர் மதிப்பீடு';
+
+  @override
+  String get aboutStatUptimeValue => '99.9%';
+
+  @override
+  String get aboutStatUptimeLabel => 'இயக்க நேரம்';
+
+  @override
+  String get aboutStoryLabel => 'எங்கள் கதை';
+
+  @override
+  String get aboutStory =>
+      'VeriFrame deepfake கண்டறிதலை வெளிப்படையாகவும் அணுகக்கூடியதாகவும் மாற்றுவதற்கான ஆராய்ச்சித் திட்டமாகத் தொடங்கியது. இன்று அது சாதனத்திலேயே நீதித்துறை பகுப்பாய்வையும் விளக்கக்கூடிய AI-ஐயும் அனைவருக்கும் வழங்குகிறது.';
+
+  @override
+  String get aboutValueOne => 'ஒவ்வொரு தீர்ப்பிலும் வெளிப்படைத்தன்மை';
+
+  @override
+  String get aboutValueTwo => 'தனியுரிமை முதன்மை, சாதனத்திலேயே பகுப்பாய்வு';
+
+  @override
+  String get aboutValueThree => 'அனைவருக்கும் அணுகக்கூடிய பாதுகாப்பு';
+
+  @override
   String get aboutValuesLabel => 'எங்கள் மதிப்புகள்';
 
   @override

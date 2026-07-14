@@ -43,25 +43,37 @@ class _ContactUsPageState extends State<ContactUsPage> {
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         icon: Container(
-          padding: const EdgeInsets.all(12),
+          padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
             color: context.colors.success.withValues(alpha: 0.12),
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(16),
           ),
-          child: Icon(Icons.check_circle_outline_rounded,
-              color: context.colors.success, size: 28),
+          child: Icon(
+            Icons.check_circle_outline_rounded,
+            color: context.colors.success,
+            size: 28,
+          ),
         ),
-        title: Text(loc.contactSentTitle),
-        content: Text(loc.contactSentBody, textAlign: TextAlign.center),
+        title: Text(
+          loc.contactSentTitle,
+          style: const TextStyle(fontWeight: FontWeight.w700),
+        ),
+        content: Text(
+          loc.contactSentBody,
+          textAlign: TextAlign.center,
+          style: TextStyle(color: context.colors.textSubtle, height: 1.4),
+        ),
         actionsAlignment: MainAxisAlignment.center,
+        actionsPadding: const EdgeInsets.only(bottom: 16, top: 4),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: Text(loc.contactDone),
+            child: Text(
+              loc.contactDone,
+              style: const TextStyle(fontWeight: FontWeight.w600),
+            ),
           ),
         ],
       ),
@@ -74,8 +86,11 @@ class _ContactUsPageState extends State<ContactUsPage> {
     final loc = AppLocalizations.of(context)!;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('${loc.contactEmail}: $_supportEmail ${loc.contactCopied}'),
+        content: Text(
+          '${loc.contactEmail}: $_supportEmail ${loc.contactCopied}',
+        ),
         behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       ),
     );
   }
@@ -99,7 +114,7 @@ class _ContactUsPageState extends State<ContactUsPage> {
                 title: loc.contactTitle,
                 subtitle: loc.contactSubtitle,
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 24),
 
               Row(
                 children: [
@@ -111,7 +126,7 @@ class _ContactUsPageState extends State<ContactUsPage> {
                       onTap: _copyEmail,
                     ),
                   ),
-                  const SizedBox(width: 10),
+                  const SizedBox(width: 12),
                   Expanded(
                     child: _QuickCard(
                       icon: Icons.schedule_rounded,
@@ -121,10 +136,10 @@ class _ContactUsPageState extends State<ContactUsPage> {
                   ),
                 ],
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 24),
 
               SectionLabel(loc.contactSendMessageLabel),
-              const SizedBox(height: 12),
+              const SizedBox(height: 14),
               _Field(
                 controller: _nameController,
                 hint: loc.contactNameHint,
@@ -132,7 +147,7 @@ class _ContactUsPageState extends State<ContactUsPage> {
                 validator: (v) =>
                     v == null || v.isEmpty ? loc.contactNameRequired : null,
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 12),
               _Field(
                 controller: _emailController,
                 hint: loc.contactEmailHint,
@@ -144,7 +159,7 @@ class _ContactUsPageState extends State<ContactUsPage> {
                   return null;
                 },
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 12),
               _Field(
                 controller: _messageController,
                 hint: loc.contactMessageHint,
@@ -156,12 +171,18 @@ class _ContactUsPageState extends State<ContactUsPage> {
                   return null;
                 },
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 20),
 
               SizedBox(
                 width: double.infinity,
-                height: 50,
+                height: 52,
                 child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    elevation: 0,
+                  ),
                   onPressed: _isSending ? null : _submitForm,
                   child: _isSending
                       ? SizedBox(
@@ -182,48 +203,14 @@ class _ContactUsPageState extends State<ContactUsPage> {
                               style: const TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w700,
+                                letterSpacing: 0.2,
                               ),
                             ),
                           ],
                         ),
                 ),
               ),
-
-              const SizedBox(height: 20),
-              SectionLabel(loc.contactAlsoReach),
-              const SizedBox(height: 10),
-              ThemedCard(
-                onTap: _copyEmail,
-                child: Row(
-                  children: [
-                    Icon(Icons.content_copy_rounded, color: c.accent, size: 16),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            _supportEmail,
-                            style: TextStyle(
-                              color: c.text,
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            loc.contactCopied,
-                            style: TextStyle(
-                                color: c.textSubtle, fontSize: 11),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Icon(Icons.arrow_forward_ios_rounded,
-                        color: c.textSubtle, size: 13),
-                  ],
-                ),
-              ),
+              const SizedBox(height: 8),
             ],
           ),
         ),
@@ -251,15 +238,30 @@ class _QuickCard extends StatelessWidget {
     final child = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, color: c.accent, size: 16),
-        const SizedBox(height: 6),
-        Text(label, style: TextStyle(color: c.textSubtle, fontSize: 10)),
-        const SizedBox(height: 2),
+        Container(
+          padding: const EdgeInsets.all(6),
+          decoration: BoxDecoration(
+            color: c.accent.withValues(alpha: 0.10),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Icon(icon, color: c.accent, size: 15),
+        ),
+        const SizedBox(height: 10),
+        Text(
+          label,
+          style: TextStyle(
+            color: c.textSubtle,
+            fontSize: 10.5,
+            fontWeight: FontWeight.w500,
+            letterSpacing: 0.2,
+          ),
+        ),
+        const SizedBox(height: 3),
         Text(
           value,
           style: TextStyle(
             color: c.text,
-            fontSize: 12,
+            fontSize: 12.5,
             fontWeight: FontWeight.w600,
           ),
           maxLines: 1,
@@ -268,8 +270,12 @@ class _QuickCard extends StatelessWidget {
       ],
     );
     return onTap != null
-        ? ThemedCard(padding: const EdgeInsets.all(12), onTap: onTap, child: child)
-        : ThemedCard(padding: const EdgeInsets.all(12), child: child);
+        ? ThemedCard(
+            padding: const EdgeInsets.all(14),
+            onTap: onTap,
+            child: child,
+          )
+        : ThemedCard(padding: const EdgeInsets.all(14), child: child);
   }
 }
 
@@ -299,41 +305,41 @@ class _Field extends StatelessWidget {
       keyboardType: keyboardType,
       maxLines: maxLines ?? 1,
       validator: validator,
-      style: TextStyle(color: c.text, fontSize: 13),
+      style: TextStyle(color: c.text, fontSize: 13.5),
       cursorColor: c.accent,
       decoration: InputDecoration(
         hintText: hint,
-        hintStyle: TextStyle(color: c.textSubtle, fontSize: 13),
+        hintStyle: TextStyle(color: c.textSubtle, fontSize: 13.5),
         prefixIcon: isMultiline
             ? null
-            : Icon(icon, color: c.textSubtle, size: 17),
+            : Icon(icon, color: c.textSubtle, size: 18),
         filled: true,
         fillColor: c.surfaceVariant,
         contentPadding: const EdgeInsets.symmetric(
-          horizontal: 14,
-          vertical: 12,
+          horizontal: 16,
+          vertical: 14,
         ),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(color: c.border),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(color: c.border),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(color: c.accent, width: 1.5),
         ),
         errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(color: c.danger),
         ),
         focusedErrorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(color: c.danger, width: 1.5),
         ),
-        errorStyle: TextStyle(color: c.danger, fontSize: 11),
+        errorStyle: TextStyle(color: c.danger, fontSize: 11.5),
       ),
     );
   }

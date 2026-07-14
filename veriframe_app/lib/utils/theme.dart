@@ -108,7 +108,7 @@ class VFTheme {
         labelLarge: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: VFColors.slate600),
       ),
       dividerTheme: const DividerThemeData(color: VFColors.gray200, thickness: 1, space: 1),
-      extensions: const [AppColors.light, AppColors.dark],
+      extensions: const [AppColors.light],
     );
   }
 
@@ -188,7 +188,7 @@ class VFTheme {
         labelLarge: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: VFColors.slate400),
       ),
       dividerTheme: const DividerThemeData(color: VFColors.gray800, thickness: 1, space: 1),
-      extensions: const [AppColors.light, AppColors.dark],
+      extensions: const [AppColors.dark],
     );
   }
 }

@@ -54,12 +54,14 @@ class HomeTopBar extends StatelessWidget implements PreferredSizeWidget {
                 child: Icon(Icons.shield, color: scheme.onPrimary, size: 18),
               ),
               const SizedBox(width: 10),
-              Text(
-                'VERI_FRAME',
-                style: TextStyle(
-                  color: scheme.onPrimary,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 1.0,
+              Flexible(
+                child: Text(
+                  'VERIFRAME',
+                  style: TextStyle(
+                    color: scheme.onPrimary,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 1.0,
+                  ),
                 ),
               ),
             ],

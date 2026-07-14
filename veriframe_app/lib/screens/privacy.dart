@@ -44,31 +44,6 @@ class PrivacyPage extends StatelessWidget {
           loc.privacyS3B4,
         ],
       ),
-      _PrivacySection(
-        title: loc.privacyS4Title,
-        body: loc.privacyS4Body,
-        points: [
-          loc.privacyS4B1,
-          loc.privacyS4B2,
-          loc.privacyS4B3,
-          loc.privacyS4B4,
-        ],
-      ),
-      _PrivacySection(
-        title: loc.privacyS5Title,
-        body: loc.privacyS5Body,
-        points: [
-          loc.privacyS5B1,
-          loc.privacyS5B2,
-          loc.privacyS5B3,
-          loc.privacyS5B4,
-        ],
-      ),
-      _PrivacySection(
-        title: loc.privacyS6Title,
-        body: loc.privacyS6Body,
-        points: const [],
-      ),
     ];
 
     return MainScaffold(
@@ -84,120 +59,82 @@ class PrivacyPage extends StatelessWidget {
               title: loc.privacyTitle,
               subtitle: loc.privacyIntro,
             ),
-            Container(
-              margin: const EdgeInsets.only(top: 14, bottom: 4),
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                color: c.surfaceVariant,
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: c.border),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.update_rounded, color: c.textSubtle, size: 13),
-                  const SizedBox(width: 6),
-                  Text(
-                    loc.privacyLastUpdated,
-                    style: TextStyle(color: c.textMuted, fontSize: 11),
+            const SizedBox(height: 10),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.update_rounded, color: c.textSubtle, size: 13),
+                const SizedBox(width: 6),
+                Text(
+                  loc.privacyLastUpdated,
+                  style: TextStyle(
+                    color: c.textSubtle,
+                    fontSize: 11.5,
+                    fontWeight: FontWeight.w500,
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
-            const SizedBox(height: 18),
+            const SizedBox(height: 24),
             ListView.separated(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               itemCount: sections.length,
-              separatorBuilder: (_, _) => const SizedBox(height: 14),
+              separatorBuilder: (_, __) => const SizedBox(height: 28),
               itemBuilder: (context, i) {
                 final s = sections[i];
-                return ThemedCard(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Container(
-                            width: 28,
-                            height: 28,
-                            decoration: BoxDecoration(
-                              color: c.accent.withValues(alpha: 0.12),
-                              borderRadius: BorderRadius.circular(9),
-                            ),
-                            child: Center(
-                              child: Text(
-                                '${i + 1}',
-                                style: TextStyle(
-                                  color: c.accent,
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                            ),
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Text(
+                          '0${i + 1}',
+                          style: TextStyle(
+                            color: c.accent,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 0.5,
                           ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: Text(
-                              s.title,
-                              style: TextStyle(
-                                color: c.text,
-                                fontSize: 15,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                          ),
-                        ],
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(child: Container(height: 1, color: c.border)),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      s.title,
+                      style: TextStyle(
+                        color: c.text,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: -0.2,
                       ),
-                      const SizedBox(height: 10),
-                      Text(
-                        s.body,
-                        style: TextStyle(
-                          color: c.textMuted,
-                          fontSize: 13,
-                          height: 1.6,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      s.body,
+                      style: TextStyle(
+                        color: c.textMuted,
+                        fontSize: 13.5,
+                        height: 1.65,
+                      ),
+                    ),
+                    if (s.points.isNotEmpty) ...[
+                      const SizedBox(height: 14),
+                      ...s.points.map(
+                        (p) => Padding(
+                          padding: const EdgeInsets.only(bottom: 8),
+                          child: BulletPoint(p),
                         ),
                       ),
-                      if (s.points.isNotEmpty) ...[
-                        const SizedBox(height: 12),
-                        const ThemedDivider(),
-                        const SizedBox(height: 12),
-                        ...s.points.map((p) => BulletPoint(p)),
-                      ],
                     ],
-                  ),
+                  ],
                 );
               },
             ),
-            const SizedBox(height: 16),
-            ThemedCard(
-              accent: c.accent,
-              child: Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(9),
-                    decoration: BoxDecoration(
-                      color: c.accent.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Icon(Icons.mail_outline_rounded,
-                        color: c.accent, size: 18),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      loc.privacyContact,
-                      style: TextStyle(
-                        color: c.textMuted,
-                        fontSize: 13,
-                        height: 1.55,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 24),
           ],
         ),
       ),

@@ -727,7 +727,7 @@ abstract class AppLocalizations {
   /// No description provided for @analyzeVideo.
   ///
   /// In en, this message translates to:
-  /// **'Analyze Video'**
+  /// **'Verify'**
   String get analyzeVideo;
 
   /// No description provided for @online.
@@ -2289,6 +2289,78 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'VeriFrame runs EfficientViT and CrossEfficientViT models directly on your device for fast, private analysis, and pairs them with an explainable reasoning engine that highlights the evidence behind every verdict.'**
   String get aboutTech;
+
+  /// No description provided for @aboutTechBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Built on EfficientViT and CrossEfficientViT models with an explainable reasoning engine that highlights the evidence behind every result.'**
+  String get aboutTechBody;
+
+  /// No description provided for @aboutStatVerificationsValue.
+  ///
+  /// In en, this message translates to:
+  /// **'10K+'**
+  String get aboutStatVerificationsValue;
+
+  /// No description provided for @aboutStatVerificationsLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Verifications'**
+  String get aboutStatVerificationsLabel;
+
+  /// No description provided for @aboutStatRatingValue.
+  ///
+  /// In en, this message translates to:
+  /// **'4.9'**
+  String get aboutStatRatingValue;
+
+  /// No description provided for @aboutStatRatingLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'User Rating'**
+  String get aboutStatRatingLabel;
+
+  /// No description provided for @aboutStatUptimeValue.
+  ///
+  /// In en, this message translates to:
+  /// **'99.9%'**
+  String get aboutStatUptimeValue;
+
+  /// No description provided for @aboutStatUptimeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Uptime'**
+  String get aboutStatUptimeLabel;
+
+  /// No description provided for @aboutStoryLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'OUR STORY'**
+  String get aboutStoryLabel;
+
+  /// No description provided for @aboutStory.
+  ///
+  /// In en, this message translates to:
+  /// **'VeriFrame began as a research project to make deepfake detection transparent and accessible. Today it brings on-device forensic analysis and explainable AI to everyone.'**
+  String get aboutStory;
+
+  /// No description provided for @aboutValueOne.
+  ///
+  /// In en, this message translates to:
+  /// **'Transparency in every verdict'**
+  String get aboutValueOne;
+
+  /// No description provided for @aboutValueTwo.
+  ///
+  /// In en, this message translates to:
+  /// **'Privacy-first, on-device analysis'**
+  String get aboutValueTwo;
+
+  /// No description provided for @aboutValueThree.
+  ///
+  /// In en, this message translates to:
+  /// **'Accessible protection for everyone'**
+  String get aboutValueThree;
 
   /// No description provided for @aboutValuesLabel.
   ///

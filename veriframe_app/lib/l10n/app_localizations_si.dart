@@ -1189,6 +1189,44 @@ class AppLocalizationsSi extends AppLocalizations {
       'VeriFrame ඔබගේ උපාංගයේම වේගවත්, පෞද්ගලික විශ්ලේෂණය සඳහා EfficientViT සහ CrossEfficientViT ආකෘති දෙකම ක්‍රියාත්මක කරන අතර, සෑම තීර්පකයක් පිටුපස ඇති සාක්ෂි ඉස්මතු කරන පැහැදිලි කළ හැකි තර්කන එන්ඔන්ජිමක් සමඟ ඒවා ඒකාබද්ධ කරයි.';
 
   @override
+  String get aboutTechBody =>
+      'සෑම ප්‍රතිඵලයක් පිටුපස ඇති සාක්ෂි ඉස්මතු කරන පැහැදිලි කළ හැකි තර්කන එන්ජිමක් සමඟ EfficientViT සහ CrossEfficientViT ආකෘති මත ගොඩනගා ඇත.';
+
+  @override
+  String get aboutStatVerificationsValue => '10K+';
+
+  @override
+  String get aboutStatVerificationsLabel => 'සත්‍යාපන';
+
+  @override
+  String get aboutStatRatingValue => '4.9';
+
+  @override
+  String get aboutStatRatingLabel => 'පරිශීලක ශ්‍රේණිගත කිරීම';
+
+  @override
+  String get aboutStatUptimeValue => '99.9%';
+
+  @override
+  String get aboutStatUptimeLabel => 'ක්‍රියාකාරී කාලය';
+
+  @override
+  String get aboutStoryLabel => 'අපගේ කතාව';
+
+  @override
+  String get aboutStory =>
+      'VeriFrame ආරම්භ වූයේ deepfake හඳුනාගැනීම විනිවිද පෙනෙන හා ප්‍රවේශ විය හැකි කිරීමට පර්යේෂණ ව්‍යාපෘතියක් ලෙසය. අද එය උපාංගයේම විධිවිචාරණ විශ්ලේෂණය සහ පැහැදිලි කළ හැකි AI සැමට ගෙන එයි.';
+
+  @override
+  String get aboutValueOne => 'සෑම තීරණයකදීම විනිවිදභාවය';
+
+  @override
+  String get aboutValueTwo => 'පෞද්ගලිකත්වය මුල් කරගත්, උපාංගයේම විශ්ලේෂණය';
+
+  @override
+  String get aboutValueThree => 'සැමට ප්‍රවේශ විය හැකි ආරක්ෂාව';
+
+  @override
   String get aboutValuesLabel => 'අපගේ වටිනාකම්';
 
   @override
