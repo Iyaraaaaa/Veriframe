@@ -16,6 +16,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:veriframe_app/utils/theme.dart';
 import 'package:veriframe_app/widgets/main_scaffold.dart';
 import 'package:veriframe_app/widgets/home_top_bar.dart';
+import 'package:veriframe_app/widgets/content_widgets.dart';
 import 'package:intl/intl.dart';
 
 class HomePage extends StatefulWidget {
@@ -26,22 +27,34 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  // 2 tabs only: Home (0) + Verify (1)
+  // 2 tabs: Home (0) + Report (1)
   int _selectedIndex = 0;
   String _userName = "User Name";
   String _userEmail = "user@example.com";
   String _userImage = '';
   String _userId = '';
-  bool _isLoadingUserData = true;
 
   final Map<String, Uint8List> _base64ImageCache = {};
 
   @override
   void initState() {
     super.initState();
+    _loadCachedUserData();
     _loadUserData();
     // Initialize local notification plugin so it can fire after verifications
     NotificationService.instance.init();
+  }
+
+  Future<void> _loadCachedUserData() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (mounted) {
+      setState(() {
+        _userId = prefs.getString('userId') ?? '';
+        _userName = prefs.getString('userName') ?? "User Name";
+        _userEmail = prefs.getString('userEmail') ?? "user@example.com";
+        _userImage = prefs.getString('userImage') ?? '';
+      });
+    }
   }
 
   Widget _getPageContent(int index) {
@@ -49,7 +62,7 @@ class _HomePageState extends State<HomePage> {
       case 0:
         return _buildHomeContent();
       case 1:
-        return VerifyPage(wrapped: false);
+        return const ReportsPage(wrapped: false);
       default:
         return _buildHomeContent();
     }
@@ -57,7 +70,6 @@ class _HomePageState extends State<HomePage> {
 
   Future<void> _loadUserData() async {
     if (!mounted) return;
-    setState(() => _isLoadingUserData = true);
 
     try {
       final currentUser = FirebaseAuth.instance.currentUser;
@@ -99,30 +111,13 @@ class _HomePageState extends State<HomePage> {
         if (_userImage.isNotEmpty) {
           await prefs.setString('userImage', _userImage);
         }
-      } else {
-        final prefs = await SharedPreferences.getInstance();
-        if (mounted) {
-          setState(() {
-            _userId = prefs.getString('userId') ?? '';
-            _userName = prefs.getString('userName') ?? "User Name";
-            _userEmail = prefs.getString('userEmail') ?? "user@example.com";
-            _userImage = prefs.getString('userImage') ?? '';
-          });
-        }
       }
     } catch (e) {
       debugPrint('Error loading user data: $e');
-      final prefs = await SharedPreferences.getInstance();
-      if (mounted) {
-        setState(() {
-          _userId = prefs.getString('userId') ?? '';
-          _userName = prefs.getString('userName') ?? "User Name";
-          _userEmail = prefs.getString('userEmail') ?? "user@example.com";
-          _userImage = prefs.getString('userImage') ?? '';
-        });
-      }
     } finally {
-      if (mounted) setState(() => _isLoadingUserData = false);
+      if (mounted) {
+        setState(() {});
+      }
     }
   }
 
@@ -192,395 +187,7 @@ class _HomePageState extends State<HomePage> {
     if (result == true) await _loadUserData();
   }
 
-  Widget _buildLastScanOverview(bool isDark, Color cardBg, Color text, Color muted) {
-    if (_userId.isEmpty) return const SizedBox();
-    return StreamBuilder<QuerySnapshot>(
-      stream: FirebaseFirestore.instance
-          .collection('users')
-          .doc(_userId)
-          .collection('reports')
-          .orderBy('createdAt', descending: true)
-          .limit(1)
-          .snapshots(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return Container(
-            height: 100,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: cardBg,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: const CircularProgressIndicator(),
-          );
-        }
-        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-          return Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: cardBg,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: isDark ? VFColors.gray800 : VFColors.gray200),
-            ),
-            child: Column(
-              children: [
-                Text(
-                  "No scans performed yet",
-                  style: TextStyle(fontWeight: FontWeight.bold, color: text, fontSize: 14),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  "Verify a video in the Verify tab to generate reports.",
-                  style: TextStyle(color: muted, fontSize: 12),
-                  textAlign: TextAlign.center,
-                ),
-              ],
-            ),
-          );
-        }
-        final doc = snapshot.data!.docs.first;
-        final report = ReportModel.fromMap(doc.data() as Map<String, dynamic>, doc.id);
-        final isReal = report.prediction == 'REAL';
-        final scoreColor = isReal ? VFColors.emerald600 : VFColors.red600;
-        return Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: cardBg,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: isDark ? VFColors.gray800 : VFColors.gray200),
-          ),
-          child: Row(
-            children: [
-              Stack(
-                alignment: Alignment.center,
-                children: [
-                  SizedBox(
-                    width: 60,
-                    height: 60,
-                    child: CircularProgressIndicator(
-                      value: report.score / 100.0,
-                      strokeWidth: 5,
-                      backgroundColor: isDark ? VFColors.gray800 : VFColors.gray200,
-                      valueColor: AlwaysStoppedAnimation<Color>(scoreColor),
-                    ),
-                  ),
-                  Text(
-                    "${report.score.toStringAsFixed(0)}%",
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w800,
-                      color: scoreColor,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      "LAST VERIFICATION RESULT",
-                      style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: muted, letterSpacing: 1.1),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      report.videoName,
-                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: text),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 4),
-                    Row(
-                      children: [
-                        Text(
-                          isReal ? "Authentic" : "Manipulated",
-                          style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: scoreColor),
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          DateFormat('yyyy-MM-dd HH:mm').format(report.createdAt),
-                          style: TextStyle(fontSize: 11, color: muted),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-              IconButton(
-                icon: Icon(Icons.arrow_forward_ios, size: 14, color: muted),
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => ReportDetailPage(report: report),
-                    ),
-                  );
-                },
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
 
-  Widget _buildRecentReportsList(bool isDark, Color cardBg, Color text, Color muted) {
-    if (_userId.isEmpty) return const SizedBox();
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              "Recent Forensic Scans",
-              style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: text),
-            ),
-            TextButton(
-              onPressed: () => Navigator.pushNamed(context, '/reports'),
-              child: const Text("View All", style: TextStyle(fontSize: 12, color: VFColors.blue600)),
-            ),
-          ],
-        ),
-        const SizedBox(height: 6),
-        StreamBuilder<QuerySnapshot>(
-          stream: FirebaseFirestore.instance
-              .collection('users')
-              .doc(_userId)
-              .collection('reports')
-              .orderBy('createdAt', descending: true)
-              .limit(3)
-              .snapshots(),
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(child: CircularProgressIndicator());
-            }
-            if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-              return Padding(
-                padding: const EdgeInsets.symmetric(vertical: 8.0),
-                child: Text("No scan reports found.", style: TextStyle(color: muted, fontSize: 12)),
-              );
-            }
-            final docs = snapshot.data!.docs;
-            return ListView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: docs.length,
-              itemBuilder: (context, index) {
-                final report = ReportModel.fromMap(docs[index].data() as Map<String, dynamic>, docs[index].id);
-                final isReal = report.prediction == 'REAL';
-                Widget thumbnailWidget;
-                if (report.thumbnail.isNotEmpty) {
-                  try {
-                    final bytes = base64Decode(report.thumbnail);
-                    thumbnailWidget = ClipRRect(
-                      borderRadius: BorderRadius.circular(6),
-                      child: Image.memory(bytes, width: 36, height: 36, fit: BoxFit.cover),
-                    );
-                  } catch (_) {
-                    thumbnailWidget = _buildHomePlaceholderThumbnail(isReal);
-                  }
-                } else {
-                  thumbnailWidget = _buildHomePlaceholderThumbnail(isReal);
-                }
-                return Card(
-                  margin: const EdgeInsets.only(bottom: 8),
-                  color: cardBg,
-                  elevation: 1,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    side: BorderSide(color: isDark ? VFColors.gray800 : VFColors.gray200),
-                  ),
-                  child: ListTile(
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
-                    leading: thumbnailWidget,
-                    title: Text(
-                      report.videoName,
-                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: text),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    subtitle: Row(
-                      children: [
-                        Text(
-                          isReal ? "REAL" : "FAKE",
-                          style: TextStyle(
-                            fontSize: 9,
-                            fontWeight: FontWeight.bold,
-                            color: isReal ? VFColors.emerald600 : VFColors.red600,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          "Score: ${report.score.toStringAsFixed(0)}%",
-                          style: TextStyle(fontSize: 11, color: muted),
-                        ),
-                      ],
-                    ),
-                    trailing: Icon(Icons.arrow_forward_ios, size: 12, color: muted),
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => ReportDetailPage(report: report),
-                        ),
-                      );
-                    },
-                  ),
-                );
-              },
-            );
-          },
-        ),
-      ],
-    );
-  }
-
-  Widget _buildHomePlaceholderThumbnail(bool isReal) {
-    return Container(
-      width: 36,
-      height: 36,
-      decoration: BoxDecoration(
-        color: (isReal ? VFColors.emerald600 : VFColors.red600).withOpacity(0.15),
-        borderRadius: BorderRadius.circular(6),
-      ),
-      child: Icon(
-        isReal ? Icons.verified_user : Icons.gavel,
-        color: isReal ? VFColors.emerald600 : VFColors.red600,
-        size: 18,
-      ),
-    );
-  }
-
-  Widget _buildRecentNotificationsList(bool isDark, Color cardBg, Color text, Color muted) {
-    if (_userId.isEmpty) return const SizedBox();
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              "Recent Notifications",
-              style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: text),
-            ),
-            TextButton(
-              onPressed: _openNotifications,
-              child: const Text("View All", style: TextStyle(fontSize: 12, color: VFColors.blue600)),
-            ),
-          ],
-        ),
-        const SizedBox(height: 6),
-        StreamBuilder<QuerySnapshot>(
-          stream: FirebaseFirestore.instance
-              .collection('users')
-              .doc(_userId)
-              .collection('notifications')
-              .orderBy('createdAt', descending: true)
-              .limit(3)
-              .snapshots(),
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(child: CircularProgressIndicator());
-            }
-            if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-              return Padding(
-                padding: const EdgeInsets.symmetric(vertical: 8.0),
-                child: Text("No recent notifications.", style: TextStyle(color: muted, fontSize: 12)),
-              );
-            }
-            final docs = snapshot.data!.docs;
-            return ListView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: docs.length,
-              itemBuilder: (context, index) {
-                final notif = NotificationModel.fromMap(docs[index].data() as Map<String, dynamic>, docs[index].id);
-                return Card(
-                  margin: const EdgeInsets.only(bottom: 8),
-                  color: cardBg,
-                  elevation: 1,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    side: BorderSide(
-                      color: notif.isRead 
-                          ? (isDark ? VFColors.gray800 : VFColors.gray200)
-                          : VFColors.blue600.withOpacity(0.4),
-                    ),
-                  ),
-                  child: ListTile(
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
-                    leading: CircleAvatar(
-                      backgroundColor: notif.isRead 
-                          ? VFColors.slate400.withOpacity(0.1) 
-                          : VFColors.blue600.withOpacity(0.1),
-                      radius: 14,
-                      child: Icon(
-                        Icons.notifications_outlined, 
-                        color: notif.isRead ? VFColors.slate400 : VFColors.blue600, 
-                        size: 14
-                      ),
-                    ),
-                    title: Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            notif.title,
-                            style: TextStyle(
-                              fontSize: 12, 
-                              fontWeight: notif.isRead ? FontWeight.normal : FontWeight.bold,
-                              color: text
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        if (!notif.isRead)
-                          Container(
-                            width: 6,
-                            height: 6,
-                            decoration: const BoxDecoration(
-                              color: Colors.blue,
-                              shape: BoxShape.circle,
-                            ),
-                          ),
-                      ],
-                    ),
-                    subtitle: Text(
-                      notif.message,
-                      style: TextStyle(fontSize: 11, color: muted),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    trailing: Icon(Icons.arrow_forward_ios, size: 12, color: muted),
-                    onTap: () async {
-                      await NotificationService.instance.markAsRead(_userId, notif.id);
-                      final reportDoc = await FirebaseFirestore.instance
-                          .collection('users')
-                          .doc(_userId)
-                          .collection('reports')
-                          .doc(notif.reportId)
-                          .get();
-                      if (reportDoc.exists && mounted) {
-                        final report = ReportModel.fromMap(reportDoc.data()!, reportDoc.id);
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => ReportDetailPage(report: report),
-                          ),
-                        );
-                      }
-                    },
-                  ),
-                );
-              },
-            );
-          },
-        ),
-      ],
-    );
-  }
 
   // ══════════════════════════════════════════
   //  HOME CONTENT
@@ -588,327 +195,275 @@ class _HomePageState extends State<HomePage> {
   Widget _buildHomeContent() {
     final loc = AppLocalizations.of(context)!;
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final cardBg = VFColors.adaptiveCard(isDark);
-    final text = VFColors.adaptiveText(isDark);
-    final muted = VFColors.adaptiveTextSecondary(isDark);
+    final c = context.colors;
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(16, 20, 16, 24),
+      padding: const EdgeInsets.fromLTRB(16, 20, 16, 100),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ── Profile row with pencil edit icon ──
-          Row(
-            children: [
-              Stack(
-                children: [
-                  _getProfileImage(radius: 26),
-                  Positioned(
-                    bottom: 0,
-                    right: 0,
-                    child: GestureDetector(
-                      onTap: _openEditProfile,
-                      child: Container(
-                        padding: const EdgeInsets.all(3),
-                        decoration: BoxDecoration(
-                          color: VFColors.blue600,
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: isDark ? VFColors.navyMid : Colors.white,
-                            width: 1.5,
-                          ),
-                        ),
-                        child: const Icon(
-                          Icons.edit,
-                          size: 10,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Welcome, ${_userName.split(' ')[0]}',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w700,
-                        color: text,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      'VeriFrame Forensic Detection Platform',
-                      style: TextStyle(fontSize: 12, color: muted),
-                    ),
-                  ],
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 4,
-                ),
-                decoration: BoxDecoration(
-                  color: VFColors.emerald600.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: VFColors.emerald600.withValues(alpha: 0.3),
-                  ),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      width: 6,
-                      height: 6,
-                      decoration: const BoxDecoration(
-                        color: VFColors.emerald600,
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                    const SizedBox(width: 5),
-                    Text(
-                      loc.online,
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        color: VFColors.emerald600,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 24),
-          _buildLastScanOverview(isDark, cardBg, text, muted),
-          const SizedBox(height: 24),
-          _buildRecentReportsList(isDark, cardBg, text, muted),
-          const SizedBox(height: 24),
-          _buildRecentNotificationsList(isDark, cardBg, text, muted),
+          // ── Welcome Hero Card ──
+          _buildWelcomeCard(loc, isDark, c),
           const SizedBox(height: 28),
 
-          // ── Hero Section ──
-          Center(
+          // ── Quick Actions ──
+          _buildQuickActions(loc, c),
+          const SizedBox(height: 28),
+
+          // ── What is VeriFrame? ──
+          SectionLabel(loc.whatIsVeriFrame),
+          const SizedBox(height: 10),
+          ThemedCard(
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'VeriFrame',
-                  style: TextStyle(
-                    fontSize: 32,
-                    fontWeight: FontWeight.w900,
-                    color: text,
-                    letterSpacing: 1.2,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  loc.aiVideoAuth,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                    color: VFColors.blue600,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  loc.heroDesc1,
-                  textAlign: TextAlign.center,
+                  loc.whatIsDesc,
                   style: TextStyle(
                     fontSize: 14,
-                    color: text,
-                    fontWeight: FontWeight.w500,
-                    height: 1.5,
+                    color: c.textMuted,
+                    height: 1.6,
                   ),
                 ),
-                const SizedBox(height: 16),
-                Text(
-                  loc.heroDesc2,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 13, color: muted, height: 1.5),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Icon(
+                      Icons.verified_outlined,
+                      size: 16,
+                      color: c.accent,
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      loc.forensicPlatform,
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: c.accent,
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 32),
+          const SizedBox(height: 28),
 
-          // ── What is VeriFrame? ──
-          Text(
-            loc.whatIsVeriFrame,
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w800,
-              color: text,
-            ),
-          ),
-          const SizedBox(height: 12),
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: cardBg,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: isDark ? VFColors.gray800 : VFColors.gray200,
-              ),
-            ),
-            child: Text(
-              loc.whatIsDesc,
-              style: TextStyle(fontSize: 14, color: text, height: 1.5),
-            ),
-          ),
-          const SizedBox(height: 32),
-
-          // ── Features Cards ──
-          Text(
-            loc.features,
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w800,
-              color: text,
-            ),
-          ),
-          const SizedBox(height: 12),
-          GridView.count(
-            crossAxisCount: 2,
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            mainAxisSpacing: 12,
-            crossAxisSpacing: 12,
-            childAspectRatio: 1.0,
+          // ── Features ──
+          SectionLabel(loc.features),
+          const SizedBox(height: 10),
+          Column(
             children: [
-              _buildFeatureCard(
-                loc.featVideoVerification,
-                loc.featVideoVerificationDesc,
-                Icons.video_file,
-                isDark,
+              FeatureCard(
+                icon: Icons.video_file_outlined,
+                title: loc.featVideoVerification,
+                description: loc.featVideoVerificationDesc,
+                accent: c.accent,
               ),
-              _buildFeatureCard(
-                loc.featLinkVerification,
-                loc.featLinkVerificationDesc,
-                Icons.link,
-                isDark,
+              const SizedBox(height: 10),
+              FeatureCard(
+                icon: Icons.link_outlined,
+                title: loc.featLinkVerification,
+                description: loc.featLinkVerificationDesc,
+                accent: c.accent,
               ),
-              _buildFeatureCard(
-                loc.featLiveStream,
-                loc.featLiveStreamDesc,
-                Icons.live_tv,
-                isDark,
+              const SizedBox(height: 10),
+              FeatureCard(
+                icon: Icons.live_tv_outlined,
+                title: loc.featLiveStream,
+                description: loc.featLiveStreamDesc,
+                accent: c.accent,
               ),
-              _buildFeatureCard(
-                loc.featAiReasoning,
-                loc.featAiReasoningDesc,
-                Icons.psychology,
-                isDark,
+              const SizedBox(height: 10),
+              FeatureCard(
+                icon: Icons.psychology_outlined,
+                title: loc.featAiReasoning,
+                description: loc.featAiReasoningDesc,
+                accent: c.accent,
               ),
-              _buildFeatureCard(
-                loc.featForensicReports,
-                loc.featForensicReportsDesc,
-                Icons.description,
-                isDark,
+              const SizedBox(height: 10),
+              FeatureCard(
+                icon: Icons.description_outlined,
+                title: loc.featForensicReports,
+                description: loc.featForensicReportsDesc,
+                accent: c.accent,
               ),
-              _buildFeatureCard(
-                loc.featAuthorityReporting,
-                loc.featAuthorityReportingDesc,
-                Icons.local_police,
-                isDark,
+              const SizedBox(height: 10),
+              FeatureCard(
+                icon: Icons.local_police_outlined,
+                title: loc.featAuthorityReporting,
+                description: loc.featAuthorityReportingDesc,
+                accent: c.accent,
               ),
             ],
           ),
-          const SizedBox(height: 32),
+          const SizedBox(height: 28),
 
           // ── How It Works ──
-          Text(
-            loc.howItWorks,
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w800,
-              color: text,
-            ),
-          ),
-          const SizedBox(height: 12),
-          _buildNewHowItWorksCard(isDark, cardBg, text, muted),
-          const SizedBox(height: 16),
+          SectionLabel(loc.howItWorks),
+          const SizedBox(height: 10),
+          _buildHowItWorks(isDark, c, loc),
         ],
       ),
     );
   }
 
-  Widget _buildFeatureCard(
-    String title,
-    String desc,
-    IconData icon,
-    bool isDark,
-  ) {
-    final cardBg = VFColors.adaptiveCard(isDark);
-    final text = VFColors.adaptiveText(isDark);
-    final muted = VFColors.adaptiveTextSecondary(isDark);
-
+  Widget _buildWelcomeCard(AppLocalizations loc, bool isDark, AppColors c) {
     return Container(
-      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: cardBg,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: isDark ? VFColors.gray800 : VFColors.gray200),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: VFColors.blue600.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(icon, color: VFColors.blue600, size: 20),
-          ),
-          const Spacer(),
-          Text(
-            title,
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w700,
-              color: text,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            desc,
-            style: TextStyle(fontSize: 11, color: muted, height: 1.3),
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
+        borderRadius: BorderRadius.circular(16),
+        gradient: LinearGradient(
+          colors: isDark
+              ? [VFColors.blue600, VFColors.navyDeep]
+              : [VFColors.blue600, VFColors.blue700],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: VFColors.blue600.withValues(alpha: 0.25),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
           ),
         ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    _userName != "User Name"
+                        ? "Welcome, $_userName"
+                        : "Welcome to VeriFrame",
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w800,
+                      height: 1.2,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    loc.aiVideoAuth,
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.85),
+                      fontSize: 13,
+                      height: 1.5,
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(
+                          Icons.play_arrow_rounded,
+                          color: Colors.white,
+                          size: 16,
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          loc.analyzeVideo,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 16),
+            Container(
+              width: 64,
+              height: 64,
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Icon(
+                Icons.shield_outlined,
+                color: Colors.white.withValues(alpha: 0.9),
+                size: 32,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildNewHowItWorksCard(
-    bool isDark,
-    Color cardBg,
-    Color text,
-    Color muted,
-  ) {
-    final loc = AppLocalizations.of(context)!;
+  Widget _buildQuickActions(AppLocalizations loc, AppColors c) {
+    return Row(
+      children: [
+        Expanded(
+          child: _QuickActionCard(
+            icon: Icons.upload_file_outlined,
+            label: loc.uploadVideo,
+            color: VFColors.blue600,
+            onTap: () => _navigateToAnalyze(),
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: _QuickActionCard(
+            icon: Icons.link_outlined,
+            label: loc.analyzeVideoLink,
+            color: VFColors.emerald600,
+            onTap: () => _navigateToAnalyze(),
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: _QuickActionCard(
+            icon: Icons.live_tv_outlined,
+            label: loc.analyzeLiveStream,
+            color: VFColors.violet600,
+            onTap: () => _navigateToAnalyze(),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildHowItWorks(bool isDark, AppColors c, AppLocalizations loc) {
     final steps = [
-      {'title': loc.stepUploadTitle, 'desc': loc.stepUploadDesc},
-      {'title': loc.stepFaceDetectionTitle, 'desc': loc.stepFaceDetectionDesc},
-      {'title': loc.stepAiAnalysisTitle, 'desc': loc.stepAiAnalysisDesc},
+      {'num': '01', 'title': loc.stepUploadTitle, 'desc': loc.stepUploadDesc},
       {
+        'num': '02',
+        'title': loc.stepFaceDetectionTitle,
+        'desc': loc.stepFaceDetectionDesc,
+      },
+      {
+        'num': '03',
+        'title': loc.stepAiAnalysisTitle,
+        'desc': loc.stepAiAnalysisDesc,
+      },
+      {
+        'num': '04',
         'title': loc.stepReasoningEngineTitle,
         'desc': loc.stepReasoningEngineDesc,
       },
       {
+        'num': '05',
         'title': loc.stepAuthenticityScoreTitle,
         'desc': loc.stepAuthenticityScoreDesc,
       },
       {
+        'num': '06',
         'title': loc.stepForensicReportTitle,
         'desc': loc.stepForensicReportDesc,
       },
@@ -917,70 +472,62 @@ class _HomePageState extends State<HomePage> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: cardBg,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: isDark ? VFColors.gray800 : VFColors.gray200),
+        color: c.surface,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: c.border),
       ),
       child: Column(
-        children: steps.asMap().entries.map((entry) {
-          int idx = entry.key;
-          var s = entry.value;
-          bool isLast = idx == steps.length - 1;
-          return IntrinsicHeight(
+        children: steps.map((s) {
+          final isLast = steps.indexOf(s) == steps.length - 1;
+          return Padding(
+            padding: EdgeInsets.only(bottom: isLast ? 0 : 18),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Column(
-                  children: [
-                    Container(
-                      width: 24,
-                      height: 24,
-                      alignment: Alignment.center,
-                      decoration: const BoxDecoration(
-                        color: VFColors.blue600,
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        Icons.arrow_downward,
-                        size: 14,
-                        color: Colors.white,
-                      ),
+                Container(
+                  width: 40,
+                  height: 40,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: c.accent.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: c.accent.withValues(alpha: 0.25),
                     ),
-                    if (!isLast)
-                      Expanded(
-                        child: Container(
-                          width: 2,
-                          color: VFColors.blue600.withValues(alpha: 0.3),
-                        ),
-                      ),
-                  ],
+                  ),
+                  child: Text(
+                    s['num']!,
+                    style: TextStyle(
+                      color: c.accent,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
                 ),
-                const SizedBox(width: 16),
+                const SizedBox(width: 14),
                 Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.only(bottom: 20),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          s['title']!,
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w700,
-                            color: text,
-                          ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        s['title']!,
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                          color: c.text,
                         ),
-                        const SizedBox(height: 4),
-                        Text(
-                          s['desc']!,
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: muted,
-                            height: 1.4,
-                          ),
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        s['desc']!,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: c.textMuted,
+                          height: 1.5,
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 ),
               ],
@@ -997,9 +544,7 @@ class _HomePageState extends State<HomePage> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return MainScaffold(
-      appBar: HomeTopBar(
-        onNotificationTap: _openNotifications,
-      ),
+      appBar: HomeTopBar(onNotificationTap: _openNotifications),
       drawer: _buildDrawer(loc),
 
       // 2-tab body
@@ -1007,11 +552,11 @@ class _HomePageState extends State<HomePage> {
         index: _selectedIndex,
         children: [
           _getPageContent(0), // Home
-          _getPageContent(1), // Verify
+          _getPageContent(1), // Report
         ],
       ),
 
-      // 2-tab bottom nav: Home + Verify
+      // 2-tab bottom nav: Home + Report
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           border: Border(
@@ -1035,9 +580,9 @@ class _HomePageState extends State<HomePage> {
               label: loc.home,
             ),
             BottomNavigationBarItem(
-              icon: const Icon(Icons.videocam_outlined),
-              activeIcon: const Icon(Icons.videocam),
-              label: loc.verify,
+              icon: const Icon(Icons.description_outlined),
+              activeIcon: const Icon(Icons.description),
+              label: 'Report',
             ),
           ],
           currentIndex: _selectedIndex,
@@ -1067,41 +612,19 @@ class _HomePageState extends State<HomePage> {
         padding: EdgeInsets.zero,
         children: [
           UserAccountsDrawerHeader(
-            accountName: _isLoadingUserData
-                ? const SizedBox(
-                    height: 16,
-                    width: 16,
-                    child: CircularProgressIndicator(
-                      color: Colors.white,
-                      strokeWidth: 2,
-                    ),
-                  )
-                : Text(
-                    _userName,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                      color: Colors.white,
-                    ),
-                  ),
-            accountEmail: _isLoadingUserData
-                ? const Text(
-                    'Loading...',
-                    style: TextStyle(color: Colors.white70, fontSize: 12),
-                  )
-                : Text(
-                    _userEmail,
-                    style: const TextStyle(color: Colors.white70, fontSize: 12),
-                  ),
-            currentAccountPicture: _isLoadingUserData
-                ? const CircleAvatar(
-                    backgroundColor: Colors.white24,
-                    child: CircularProgressIndicator(
-                      color: Colors.white,
-                      strokeWidth: 2,
-                    ),
-                  )
-                : _getProfileImage(radius: 30),
+            accountName: Text(
+              _userName,
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+                color: Colors.white,
+              ),
+            ),
+            accountEmail: Text(
+              _userEmail,
+              style: const TextStyle(color: Colors.white70, fontSize: 12),
+            ),
+            currentAccountPicture: _getProfileImage(radius: 30),
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: isDark
@@ -1132,12 +655,6 @@ class _HomePageState extends State<HomePage> {
           const SizedBox(height: 4),
 
           // Reports, Privacy, About Us, Contact Us
-          _buildDrawerItem(
-            Icons.assessment_outlined,
-            "Forensic Reports",
-            VFColors.blue600,
-            const ReportsPage(),
-          ),
           _buildDrawerItem(
             Icons.privacy_tip_outlined,
             loc.privacy,
@@ -1248,6 +765,62 @@ class _HomePageState extends State<HomePage> {
               Navigator.push(context, MaterialPageRoute(builder: (_) => page));
             }
           },
+    );
+  }
+}
+
+class _QuickActionCard extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color color;
+  final VoidCallback onTap;
+
+  const _QuickActionCard({
+    required this.icon,
+    required this.label,
+    required this.color,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(14),
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: c.surface,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: c.border),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(icon, color: color, size: 18),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: c.text,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

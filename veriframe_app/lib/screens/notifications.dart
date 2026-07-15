@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:veriframe_app/l10n/app_localizations.dart';
 import 'package:veriframe_app/models/notification_model.dart';
 import 'package:veriframe_app/service/notification_service.dart';
@@ -17,6 +16,7 @@ class NotificationsPage extends StatefulWidget {
 class _NotificationsPageState extends State<NotificationsPage> {
   final String? _uid = FirebaseAuth.instance.currentUser?.uid;
   bool _isNavigating = false;
+  final Set<String> _removedNotificationIds = <String>{};
 
   String _formatTimeAgo(DateTime dateTime) {
     final now = DateTime.now();
@@ -59,30 +59,14 @@ class _NotificationsPageState extends State<NotificationsPage> {
     await NotificationService.instance.markAllAsRead(_uid);
   }
 
-  Future<void> _deleteNotification(NotificationModel notification) async {
-    if (_uid == null) return;
-    try {
-      await FirebaseFirestore.instance
-          .collection('users')
-          .doc(_uid)
-          .collection('notifications')
-          .doc(notification.id)
-          .delete();
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text("Notification deleted")));
-      }
-    } catch (e) {
-      debugPrint('[NotificationsPage] Error deleting notification: $e');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text("Couldn't delete notification: ${e.toString()}"),
-            backgroundColor: VFColors.red600,
-          ),
-        );
-      }
+  Future<void> _removeNotification(String id) async {
+    setState(() {
+      _removedNotificationIds.add(id);
+    });
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Notification removed")),
+      );
     }
   }
 
@@ -153,7 +137,9 @@ class _NotificationsPageState extends State<NotificationsPage> {
                               ),
                             );
                           }
-                          final notifications = snapshot.data ?? [];
+                          final notifications = snapshot.data!
+                              .where((n) => !_removedNotificationIds.contains(n.id))
+                              .toList();
                           if (notifications.isEmpty) {
                             return _buildEmptyState(c);
                           }
@@ -264,8 +250,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
     return Dismissible(
       key: ValueKey(notif.id),
       direction: DismissDirection.endToStart,
-      confirmDismiss: (_) => _confirmDelete(notif),
-      onDismissed: (_) => _deleteNotification(notif),
+      onDismissed: (_) => _removeNotification(notif.id),
       background: Container(
         alignment: Alignment.centerRight,
         padding: const EdgeInsets.only(right: 20),
@@ -274,7 +259,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
           color: VFColors.red600.withValues(alpha: 0.08),
           borderRadius: BorderRadius.circular(12),
         ),
-        child: Icon(Icons.delete_outline_rounded, color: VFColors.red600),
+        child: Icon(Icons.remove_circle_outline_rounded, color: VFColors.red600),
       ),
       child: Material(
         color: Colors.transparent,
@@ -337,10 +322,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
                               size: 16,
                               color: c.textSubtle,
                             ),
-                            onPressed: () async {
-                              final confirmed = await _confirmDelete(notif);
-                              if (confirmed) _deleteNotification(notif);
-                            },
+                            onPressed: () => _removeNotification(notif.id),
                           ),
                         ],
                       ),
@@ -394,28 +376,6 @@ class _NotificationsPageState extends State<NotificationsPage> {
         ),
       ),
     );
-  }
-
-  Future<bool> _confirmDelete(NotificationModel notif) async {
-    final result = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Delete notification?'),
-        content: Text('This will remove "${notif.title}" permanently.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            style: TextButton.styleFrom(foregroundColor: VFColors.red600),
-            child: const Text('Delete'),
-          ),
-        ],
-      ),
-    );
-    return result ?? false;
   }
 
   Widget _chip({required String label, required Color color}) {
