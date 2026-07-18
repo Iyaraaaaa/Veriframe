@@ -1,28 +1,28 @@
 import 'dart:convert';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart';
-import 'package:veriframe_app/models/report_model.dart';
+import 'package:veriframe_app/models/verification_result.dart';
+import 'package:veriframe_app/provider/verification_notifier.dart';
 import 'package:veriframe_app/screens/report_detail_screen.dart';
-import 'package:veriframe_app/service/report_service.dart';
 import 'package:veriframe_app/utils/theme.dart';
 import 'package:veriframe_app/widgets/main_scaffold.dart';
 
-class ReportsPage extends StatefulWidget {
+class ReportsPage extends ConsumerStatefulWidget {
   final bool wrapped;
 
   const ReportsPage({super.key, this.wrapped = true});
 
   @override
-  State<ReportsPage> createState() => _ReportsPageState();
+  ConsumerState<ReportsPage> createState() => _ReportsPageState();
 }
 
-class _ReportsPageState extends State<ReportsPage> {
+class _ReportsPageState extends ConsumerState<ReportsPage> {
   final String? _uid = FirebaseAuth.instance.currentUser?.uid;
 
-  Future<bool> _confirmDelete(ReportModel report) async {
-    final result = await showDialog<bool>(
+  Future<bool> _confirmDelete(VerificationResult result) async {
+    final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         icon: Icon(Icons.delete_outline_rounded, color: VFColors.red600, size: 28),
@@ -35,7 +35,7 @@ class _ReportsPageState extends State<ReportsPage> {
           ),
         ),
         content: Text(
-          'Permanently remove "${report.videoName}"? This action cannot be undone.',
+          'Permanently remove "${result.mediaName ?? "verification report"}"? This action cannot be undone.',
           style: TextStyle(
             fontSize: 14,
             color: VFColors.adaptiveTextSecondary(Theme.of(context).brightness == Brightness.dark),
@@ -63,18 +63,12 @@ class _ReportsPageState extends State<ReportsPage> {
         ],
       ),
     );
-    return result ?? false;
+    return confirmed ?? false;
   }
 
-  Future<void> _deleteReport(ReportModel report) async {
-    if (_uid == null) return;
+  Future<void> _deleteReport(String id) async {
     try {
-      await FirebaseFirestore.instance
-          .collection('users')
-          .doc(_uid)
-          .collection('reports')
-          .doc(report.reportId)
-          .delete();
+      await ref.read(verificationRepositoryProvider).deleteResult(id);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -124,8 +118,8 @@ class _ReportsPageState extends State<ReportsPage> {
             isDark: isDark,
             muted: muted,
           )
-        : StreamBuilder<List<ReportModel>>(
-            stream: ReportService.instance.getReportsStream(_uid),
+        : StreamBuilder<List<VerificationResult>>(
+            stream: ref.watch(verificationRepositoryProvider).getHistoryStream(),
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return const Center(child: CircularProgressIndicator());
@@ -160,7 +154,7 @@ class _ReportsPageState extends State<ReportsPage> {
                         Container(
                           padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
-                            color: accent.withValues(alpha: 0.12),
+                            color: accent.withOpacity(0.12),
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: Icon(Icons.description_rounded, color: accent, size: 20),
@@ -225,7 +219,7 @@ class _ReportsPageState extends State<ReportsPage> {
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: (iconColor ?? muted).withValues(alpha: 0.1),
+                color: (iconColor ?? muted).withOpacity(0.1),
                 shape: BoxShape.circle,
               ),
               child: Icon(
@@ -251,21 +245,21 @@ class _ReportsPageState extends State<ReportsPage> {
   }
 
   Widget _buildReportCard(
-    ReportModel report,
+    VerificationResult report,
     bool isDark,
     Color text,
     Color muted,
     Color accent,
   ) {
-    final isReal = report.prediction == 'REAL';
+    final isReal = report.verdict.toUpperCase() == 'AUTHENTIC';
     final statusColor = isReal ? VFColors.emerald600 : VFColors.red600;
     final statusBg = isReal ? VFColors.emerald50 : VFColors.red50;
-    final statusBgDark = isReal ? VFColors.emerald600.withValues(alpha: 0.15) : VFColors.red600.withValues(alpha: 0.15);
+    final statusBgDark = isReal ? VFColors.emerald600.withOpacity(0.15) : VFColors.red600.withOpacity(0.15);
 
     Widget thumbnailWidget;
-    if (report.thumbnail.isNotEmpty) {
+    if (report.thumbnailBase64 != null && report.thumbnailBase64!.isNotEmpty) {
       try {
-        final bytes = base64Decode(report.thumbnail);
+        final bytes = base64Decode(report.thumbnailBase64!);
         thumbnailWidget = ClipRRect(
           borderRadius: BorderRadius.circular(10),
           child: Image.memory(bytes, width: 56, height: 56, fit: BoxFit.cover),
@@ -288,7 +282,7 @@ class _ReportsPageState extends State<ReportsPage> {
         ),
         boxShadow: [
           BoxShadow(
-            color: isDark ? Colors.black.withValues(alpha: 0.2) : Colors.black.withValues(alpha: 0.04),
+            color: isDark ? Colors.black.withOpacity(0.2) : Colors.black.withOpacity(0.04),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -315,7 +309,7 @@ class _ReportsPageState extends State<ReportsPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        report.videoName,
+                        report.mediaName ?? 'Forensic Analysis',
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
@@ -335,9 +329,9 @@ class _ReportsPageState extends State<ReportsPage> {
                               borderRadius: BorderRadius.circular(6),
                             ),
                             child: Text(
-                              isReal ? 'REAL' : 'FAKE',
+                              isReal ? 'AUTHENTIC' : 'MANIPULATED',
                               style: TextStyle(
-                                fontSize: 11,
+                                fontSize: 10,
                                 fontWeight: FontWeight.w700,
                                 color: statusColor,
                                 letterSpacing: 0.4,
@@ -346,7 +340,9 @@ class _ReportsPageState extends State<ReportsPage> {
                           ),
                           const SizedBox(width: 8),
                           Text(
-                            '${report.score.toStringAsFixed(0)}% match',
+                            isReal 
+                              ? '${report.authenticityScore.toStringAsFixed(1)}% authentic'
+                              : '${report.fakeProbability.toStringAsFixed(1)}% manipulated',
                             style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w500,
@@ -357,7 +353,7 @@ class _ReportsPageState extends State<ReportsPage> {
                       ),
                       const SizedBox(height: 6),
                       Text(
-                        DateFormat('MMM dd, yyyy · HH:mm').format(report.createdAt),
+                        DateFormat('MMM dd, yyyy · HH:mm').format(report.verifiedAt),
                         style: TextStyle(
                           fontSize: 11,
                           color: muted,
@@ -377,10 +373,10 @@ class _ReportsPageState extends State<ReportsPage> {
                       tooltip: 'Delete report',
                       onPressed: () async {
                         final confirmed = await _confirmDelete(report);
-                        if (confirmed) _deleteReport(report);
+                        if (confirmed) _deleteReport(report.verificationId);
                       },
                     ),
-                    Icon(Icons.chevron_right_rounded, size: 20, color: muted.withValues(alpha: 0.6)),
+                    Icon(Icons.chevron_right_rounded, size: 20, color: muted.withOpacity(0.6)),
                   ],
                 ),
               ],
@@ -396,7 +392,7 @@ class _ReportsPageState extends State<ReportsPage> {
       width: 56,
       height: 56,
       decoration: BoxDecoration(
-        color: statusColor.withValues(alpha: 0.1),
+        color: statusColor.withOpacity(0.1),
         borderRadius: BorderRadius.circular(10),
       ),
       child: Icon(

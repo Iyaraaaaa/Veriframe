@@ -39,6 +39,9 @@ class _NotificationsPageState extends State<NotificationsPage> {
 
     try {
       await NotificationService.instance.markAsRead(_uid, notification.id);
+      if (mounted) {
+        Navigator.pushNamed(context, '/reports');
+      }
     } catch (e) {
       debugPrint('[NotificationsPage] Error tapping notification: $e');
       if (mounted) {
@@ -245,7 +248,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
   Widget _buildNotificationTile(NotificationModel notif, AppColors c) {
     final isFake = notif.prediction.toUpperCase() == 'FAKE';
     final accent = isFake ? VFColors.red600 : VFColors.emerald600;
-    final scorePct = (notif.score * 100).round();
+    final scorePct = notif.score > 1.0 ? notif.score.round() : (notif.score * 100).round();
 
     return Dismissible(
       key: ValueKey(notif.id),

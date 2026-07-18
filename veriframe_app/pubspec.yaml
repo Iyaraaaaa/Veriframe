@@ -41,18 +41,29 @@ dependencies:
   permission_handler: ^11.3.1
   open_filex: ^4.5.0
   flutter_local_notifications: ^17.2.2
+  flutter_riverpod: ^2.5.1
+  freezed_annotation: ^2.4.1
+  json_annotation: ^4.9.0
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^6.0.0
   flutter_launcher_icons: ^0.14.3
+  freezed: ^2.4.7
+  json_serializable: ^6.8.0
+  build_runner: ^2.4.8
 
 flutter_launcher_icons:
   android: true
   ios: true
-  image_path: "assets/images/logo.png"
+  # Opaque, branded icon used for iOS and legacy Android launchers
+  image_path: "assets/icon/icon.png"
   remove_alpha_ios: true
+  # Modern Android adaptive icon: padded logo on a deep-navy brand background
+  adaptive_icon_background: "#080C14"
+  adaptive_icon_foreground: "assets/icon/foreground.png"
+  min_sdk_android: 21
 
 flutter:
   uses-material-design: true

@@ -27,8 +27,8 @@ class NotificationService {
       await _localNotificationsPlugin.initialize(
         initializationSettings,
         onDidReceiveNotificationResponse: (NotificationResponse details) {
-          // Tap action brings the app to the home screen
-          navigatorKey.currentState?.pushNamed('/home');
+          // Tap action opens Verification History
+          navigatorKey.currentState?.pushNamed('/reports');
         },
       );
       _initialized = true;

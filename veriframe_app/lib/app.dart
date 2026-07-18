@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:veriframe_app/controllers/settings_controller.dart';
 import 'package:veriframe_app/l10n/app_localizations.dart';
 import 'package:veriframe_app/screens/home_page.dart';
@@ -40,8 +41,9 @@ class MyApp extends StatelessWidget {
       controller: controller,
       child: ListenableBuilder(
         listenable: controller,
-        builder: (context, _) => MaterialApp(
-          title: 'VeriFrame',
+        builder: (context, _) => ProviderScope(
+          child: MaterialApp(
+            title: 'VeriFrame',
           debugShowCheckedModeBanner: false,
           navigatorKey: navigatorKey,
           locale: controller.locale,
@@ -77,6 +79,7 @@ class MyApp extends StatelessWidget {
           },
         ),
       ),
-    );
+    ),
+  );
   }
 }
