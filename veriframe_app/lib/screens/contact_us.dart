@@ -114,7 +114,7 @@ class _ContactUsPageState extends State<ContactUsPage> {
                 title: loc.contactTitle,
                 subtitle: loc.contactSubtitle,
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 26),
 
               Row(
                 children: [
@@ -126,7 +126,7 @@ class _ContactUsPageState extends State<ContactUsPage> {
                       onTap: _copyEmail,
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: 10),
                   Expanded(
                     child: _QuickCard(
                       icon: Icons.schedule_rounded,
@@ -136,7 +136,7 @@ class _ContactUsPageState extends State<ContactUsPage> {
                   ),
                 ],
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 26),
 
               SectionLabel(loc.contactSendMessageLabel),
               const SizedBox(height: 14),
@@ -147,7 +147,7 @@ class _ContactUsPageState extends State<ContactUsPage> {
                 validator: (v) =>
                     v == null || v.isEmpty ? loc.contactNameRequired : null,
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 10),
               _Field(
                 controller: _emailController,
                 hint: loc.contactEmailHint,
@@ -159,7 +159,7 @@ class _ContactUsPageState extends State<ContactUsPage> {
                   return null;
                 },
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 10),
               _Field(
                 controller: _messageController,
                 hint: loc.contactMessageHint,
@@ -171,13 +171,15 @@ class _ContactUsPageState extends State<ContactUsPage> {
                   return null;
                 },
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 22),
 
               SizedBox(
                 width: double.infinity,
                 height: 52,
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
+                    backgroundColor: c.accent,
+                    foregroundColor: c.onAccent,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -238,15 +240,8 @@ class _QuickCard extends StatelessWidget {
     final child = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Container(
-          padding: const EdgeInsets.all(6),
-          decoration: BoxDecoration(
-            color: c.accent.withValues(alpha: 0.10),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Icon(icon, color: c.accent, size: 15),
-        ),
-        const SizedBox(height: 10),
+        Icon(icon, color: c.accent, size: 16),
+        const SizedBox(height: 12),
         Text(
           label,
           style: TextStyle(
@@ -269,13 +264,11 @@ class _QuickCard extends StatelessWidget {
         ),
       ],
     );
-    return onTap != null
-        ? ThemedCard(
-            padding: const EdgeInsets.all(14),
-            onTap: onTap,
-            child: child,
-          )
-        : ThemedCard(padding: const EdgeInsets.all(14), child: child);
+    return ThemedCard(
+      padding: const EdgeInsets.all(14),
+      onTap: onTap,
+      child: child,
+    );
   }
 }
 

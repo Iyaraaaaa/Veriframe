@@ -75,62 +75,68 @@ class PrivacyPage extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 26),
             ListView.separated(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               itemCount: sections.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 28),
+              separatorBuilder: (_, __) => const SizedBox(height: 30),
               itemBuilder: (context, i) {
                 final s = sections[i];
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Text(
-                          '0${i + 1}',
-                          style: TextStyle(
-                            color: c.accent,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: 0.5,
+                return Container(
+                  padding: const EdgeInsets.only(left: 14),
+                  decoration: BoxDecoration(
+                    border: Border(left: BorderSide(color: c.accent, width: 2)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Text(
+                            '0${i + 1}',
+                            style: TextStyle(
+                              color: c.accent,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 0.5,
+                              fontFeatures: const [
+                                FontFeature.tabularFigures(),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            s.title,
+                            style: TextStyle(
+                              color: c.text,
+                              fontSize: 15.5,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: -0.2,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        s.body,
+                        style: TextStyle(
+                          color: c.textMuted,
+                          fontSize: 13.5,
+                          height: 1.65,
+                        ),
+                      ),
+                      if (s.points.isNotEmpty) ...[
+                        const SizedBox(height: 12),
+                        ...s.points.map(
+                          (p) => Padding(
+                            padding: const EdgeInsets.only(bottom: 8),
+                            child: BulletPoint(p),
                           ),
                         ),
-                        const SizedBox(width: 8),
-                        Expanded(child: Container(height: 1, color: c.border)),
                       ],
-                    ),
-                    const SizedBox(height: 10),
-                    Text(
-                      s.title,
-                      style: TextStyle(
-                        color: c.text,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: -0.2,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      s.body,
-                      style: TextStyle(
-                        color: c.textMuted,
-                        fontSize: 13.5,
-                        height: 1.65,
-                      ),
-                    ),
-                    if (s.points.isNotEmpty) ...[
-                      const SizedBox(height: 14),
-                      ...s.points.map(
-                        (p) => Padding(
-                          padding: const EdgeInsets.only(bottom: 8),
-                          child: BulletPoint(p),
-                        ),
-                      ),
                     ],
-                  ],
+                  ),
                 );
               },
             ),
