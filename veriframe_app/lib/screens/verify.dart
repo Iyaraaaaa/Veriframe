@@ -12,16 +12,15 @@ import 'package:video_thumbnail/video_thumbnail.dart' as vt;
 import 'package:veriframe_app/models/verification_result.dart';
 import 'package:veriframe_app/service/tflite_service.dart';
 import 'package:veriframe_app/service/verify_backend_service.dart';
-import 'package:veriframe_app/service/verification_repository.dart';
 import 'package:veriframe_app/provider/verification_notifier.dart';
 import 'package:veriframe_app/utils/theme.dart';
 import 'package:veriframe_app/widgets/main_scaffold.dart';
 import 'package:veriframe_app/l10n/app_localizations.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:permission_handler/permission_handler.dart';
 import 'package:veriframe_app/models/notification_model.dart';
 import 'package:veriframe_app/service/notification_service.dart';
+import 'package:veriframe_app/service/pdf_service.dart';
 import 'package:intl/intl.dart';
 import 'package:open_filex/open_filex.dart';
 
@@ -1069,7 +1068,7 @@ class _VerifyPageState extends ConsumerState<VerifyPage> with TickerProviderStat
                 width: 64,
                 height: 64,
                 decoration: BoxDecoration(
-                  color: accentColor.withOpacity(0.12),
+                  color: accentColor.withValues(alpha: 0.12),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
@@ -1177,29 +1176,20 @@ class _VerifyPageState extends ConsumerState<VerifyPage> with TickerProviderStat
   }
 
   // --- REPORT ACTION TRIGGERS ---
-  Future<void> _getPdfForensicReport() async {
-    if (_reportId.isNotEmpty && _pdfUrl.isNotEmpty) {
-      _launchReportPdf();
-      return;
-    }
-
+  Future<void> _getPdfForensicReport(VerificationResult result) async {
     setState(() {
-      _statusMessage = "Requesting PDF generation...";
+      _statusMessage = "Generating forensic report PDF...";
       _isAnalyzing = true;
     });
 
     try {
-      final res = await VerifyBackendService.instance.createReport(
-        _baseUrl,
-        sessionId: _streamSessionId,
-        jobId: _streamSessionId.isEmpty ? _currentJobId : "",
-      );
+      final file = await PdfService.instance.generateReportPdf(result: result);
       setState(() {
-        _reportId = res['report_id'] ?? '';
-        _pdfUrl = res['pdf_url'] ?? '';
         _isAnalyzing = false;
       });
-      _launchReportPdf();
+      if (file != null && await file.exists()) {
+        await OpenFilex.open(file.path);
+      }
     } catch (e) {
       setState(() {
         _isAnalyzing = false;
@@ -1246,8 +1236,8 @@ class _VerifyPageState extends ConsumerState<VerifyPage> with TickerProviderStat
     }
   }
 
-  void _shareForensicLink() {
-    final reportSummary = "VeriFrame Forensic Report: Verdict $_verdict with $_confidenceScore% confidence using $_modelUsed. Link: $_baseUrl$_pdfUrl";
+  void _shareForensicLink(VerificationResult result) {
+    final reportSummary = "VeriFrame Forensic Report [${result.verificationId}]: Verdict ${result.verdict} with ${result.authenticityScore.toStringAsFixed(1)}% authenticity rating. Verification Link: https://veriframe.io/verify/${result.verificationId}";
     Clipboard.setData(ClipboardData(text: reportSummary));
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
@@ -1443,7 +1433,13 @@ class _VerifyPageState extends ConsumerState<VerifyPage> with TickerProviderStat
                   _buildInputSelectorTabs(colors),
                 if (_isAnalyzing) _buildAnalysisProgressPipeline(colors),
                 if (_isStreaming) _buildLiveStreamVisualizer(colors),
-                if (_showResults) _buildForensicResultsDashboard(colors),
+                if (_showResults) () {
+                  final activeResult = ref.watch(verificationProvider).value;
+                  if (activeResult != null) {
+                    return _buildForensicResultsDashboard(activeResult, colors);
+                  }
+                  return const SizedBox.shrink();
+                }(),
               ],
             ),
           ),
@@ -2111,15 +2107,14 @@ class _VerifyPageState extends ConsumerState<VerifyPage> with TickerProviderStat
     );
   }
 
-  Widget _buildForensicResultsDashboard(AppColors colors) {
+  Widget _buildForensicResultsDashboard(VerificationResult result, AppColors colors) {
     final loc = AppLocalizations.of(context)!;
-    final verdictColor = _verdict == "manipulated"
-        ? const Color(0xFFFF3B5C)
-        : _verdict == "inconclusive"
-            ? const Color(0xFFFFB020)
-            : const Color(0xFF00E896);
+    final isReal = result.verdict.toUpperCase() == 'AUTHENTIC';
+    final verdictColor = isReal
+        ? const Color(0xFF00E896)
+        : const Color(0xFFFF3B5C);
 
-    final isHighRisk = _confidenceScore >= 75;
+    final isHighRisk = result.riskLevel == 'HIGH';
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -2145,7 +2140,7 @@ class _VerifyPageState extends ConsumerState<VerifyPage> with TickerProviderStat
                     width: 140,
                     height: 140,
                     child: CircularProgressIndicator(
-                      value: _confidenceScore / 100,
+                      value: result.authenticityScore / 100,
                       strokeWidth: 8,
                       backgroundColor: _vp.surfaceVariant,
                       valueColor: AlwaysStoppedAnimation(verdictColor),
@@ -2155,12 +2150,12 @@ class _VerifyPageState extends ConsumerState<VerifyPage> with TickerProviderStat
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        "${_confidenceScore.toStringAsFixed(1)}%",
+                        "${result.authenticityScore.toStringAsFixed(1)}%",
                         style: TextStyle(color: _vp.text, fontSize: 26, fontWeight: FontWeight.bold),
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        _verdict.toUpperCase(),
+                        result.verdict.toUpperCase(),
                         style: TextStyle(color: verdictColor, fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 1.0),
                       ),
                     ],
@@ -2227,7 +2222,7 @@ class _VerifyPageState extends ConsumerState<VerifyPage> with TickerProviderStat
               ),
               const SizedBox(height: 16),
               Text(
-                "${loc.verifyModelUsed} $_modelUsed",
+                "${loc.verifyModelUsed} ${result.source}",
                 style: TextStyle(color: _vp.textMuted, fontSize: 11),
               ),
             ],
@@ -2250,7 +2245,7 @@ class _VerifyPageState extends ConsumerState<VerifyPage> with TickerProviderStat
               ),
               const SizedBox(height: 8),
               Text(
-                _explanation,
+                result.forensicObservations.join('\n'),
                 style: TextStyle(color: _vp.textMuted, fontSize: 12, height: 1.5, fontStyle: FontStyle.italic),
               ),
             ],
@@ -2261,7 +2256,7 @@ class _VerifyPageState extends ConsumerState<VerifyPage> with TickerProviderStat
           children: [
             Expanded(
               child: ElevatedButton.icon(
-                onPressed: _getPdfForensicReport,
+                onPressed: () => _getPdfForensicReport(result),
                 icon: Icon(Icons.picture_as_pdf_outlined),
                 label: Text(loc.verifyGetReportPdf),
                 style: ElevatedButton.styleFrom(
@@ -2274,7 +2269,7 @@ class _VerifyPageState extends ConsumerState<VerifyPage> with TickerProviderStat
             const SizedBox(width: 8),
             Expanded(
               child: ElevatedButton.icon(
-                onPressed: _shareForensicLink,
+                onPressed: () => _shareForensicLink(result),
                 icon: Icon(Icons.share_outlined),
                 label: const Text("Share Link"),
                 style: ElevatedButton.styleFrom(

@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:open_filex/open_filex.dart';
@@ -8,7 +7,7 @@ import 'package:veriframe_app/utils/theme.dart';
 
 class ReportDetailPage extends StatefulWidget {
   final VerificationResult report;
-  const ReportDetailPage({Key? key, required this.report}) : super(key: key);
+  const ReportDetailPage({super.key, required this.report});
 
   @override
   State<ReportDetailPage> createState() => _ReportDetailPageState();
@@ -48,164 +47,405 @@ class _ReportDetailPageState extends State<ReportDetailPage> {
     final muted = VFColors.adaptiveTextSecondary(isDark);
     final r = widget.report;
     final isReal = r.verdict.toUpperCase() == 'AUTHENTIC';
-    
-    final accentColor = isReal ? VFColors.emerald600 : VFColors.red600;
-    final bgLight = isReal ? VFColors.emerald50 : VFColors.red50;
-    final bgDark = isReal ? VFColors.emerald600.withOpacity(0.15) : VFColors.red600.withOpacity(0.15);
+
+    final verdictColor = isReal ? VFColors.emerald600 : VFColors.red600;
+    final riskColor = r.riskLevel == 'LOW'
+        ? VFColors.emerald600
+        : (r.riskLevel == 'MEDIUM' ? VFColors.amber600 : VFColors.red600);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Forensic Report Details')),
+      backgroundColor: VFColors.adaptiveBg(isDark),
+      appBar: AppBar(
+        title: const Text('Forensic Report Analysis'),
+        elevation: 0,
+        backgroundColor: Colors.transparent,
+        foregroundColor: text,
+      ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Title & Media Path
-            Text(
-              r.mediaName ?? 'Forensic Verification',
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-                color: text,
+            // Header Info Card
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: VFColors.adaptiveCard(isDark),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: isDark ? VFColors.gray800 : VFColors.gray200,
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: verdictColor.withOpacity(0.1),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          isReal ? Icons.verified_user_rounded : Icons.gavel_rounded,
+                          color: verdictColor,
+                          size: 20,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          r.mediaName ?? 'Forensic Media Scan',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: text,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    r.mediaPath ?? 'Stream session source',
+                    style: TextStyle(fontSize: 12, color: muted, fontFamily: 'monospace'),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 16),
+                  const Divider(height: 1),
+                  const SizedBox(height: 16),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      _buildHeaderMeta('VERDICT', r.verdict, verdictColor),
+                      _buildHeaderMeta('RISK LEVEL', r.riskLevel, riskColor),
+                      _buildHeaderMeta('SOURCE', r.source.toUpperCase(), text),
+                    ],
+                  ),
+                ],
               ),
             ),
-            const SizedBox(height: 6),
-            Text(
-              r.mediaPath ?? 'Stream source',
-              style: TextStyle(fontSize: 12, color: muted),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 20),
 
-            // Status Badge
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: isDark ? bgDark : bgLight,
-                    borderRadius: BorderRadius.circular(6),
-                    border: Border.all(color: accentColor, width: 1),
-                  ),
-                  child: Text(
-                    r.verdict,
+            // Authenticity circular progress card
+            Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: VFColors.adaptiveCard(isDark),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: isDark ? VFColors.gray800 : VFColors.gray200,
+                ),
+              ),
+              child: Column(
+                children: [
+                  const Text(
+                    'FORENSIC CONCLUSION CONFIDENCE',
                     style: TextStyle(
-                      fontSize: 12,
+                      fontSize: 11,
                       fontWeight: FontWeight.bold,
-                      color: accentColor,
-                      letterSpacing: 0.5,
+                      letterSpacing: 1.2,
                     ),
                   ),
-                ),
-                const SizedBox(width: 12),
-                Text(
-                  'Risk Profile: ${r.riskLevel}',
-                  style: TextStyle(
-                    fontSize: 13, 
-                    fontWeight: FontWeight.bold,
-                    color: r.riskLevel == 'LOW' ? VFColors.emerald600 : (r.riskLevel == 'MEDIUM' ? VFColors.amber600 : VFColors.red600),
+                  const SizedBox(height: 24),
+                  Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      SizedBox(
+                        width: 150,
+                        height: 150,
+                        child: CircularProgressIndicator(
+                          value: r.authenticityScore / 100,
+                          strokeWidth: 10,
+                          backgroundColor: isDark ? VFColors.gray800 : VFColors.gray100,
+                          valueColor: AlwaysStoppedAnimation(verdictColor),
+                        ),
+                      ),
+                      Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            "${r.authenticityScore.toStringAsFixed(1)}%",
+                            style: TextStyle(
+                              fontSize: 32,
+                              fontWeight: FontWeight.bold,
+                              color: text,
+                            ),
+                          ),
+                          Text(
+                            isReal ? 'AUTHENTIC' : 'MANIPULATED',
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w900,
+                              color: verdictColor,
+                              letterSpacing: 0.8,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
-                ),
-              ],
-            ),
-            const Divider(height: 36, thickness: 1),
-
-            // Metrics Table
-            Text(
-              'FORENSIC METRICS',
-              style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: muted, letterSpacing: 1.0),
-            ),
-            const SizedBox(height: 12),
-            _buildMetricTile('Verification ID', r.verificationId, text, muted),
-            _buildMetricTile('Verified At', DateFormat('yyyy-MM-dd HH:mm:ss').format(r.verifiedAt), text, muted),
-            _buildMetricTile('Authenticity Score', '${r.authenticityScore.toStringAsFixed(2)}%', text, muted, highlight: true, highlightColor: VFColors.emerald600),
-            _buildMetricTile('Fake Probability', '${r.fakeProbability.toStringAsFixed(2)}%', text, muted, highlight: true, highlightColor: VFColors.red600),
-            _buildMetricTile('Fusion Confidence', '${r.confidence.toStringAsFixed(2)}%', text, muted),
-            _buildMetricTile('Frame Consistency', '${r.frameConsistency.toStringAsFixed(2)}%', text, muted),
-            _buildMetricTile('Biometric Tracking', '${r.trackingConfidence.toStringAsFixed(2)}%', text, muted),
-            _buildMetricTile('Metadata Integrity', '${r.metadataScore.toStringAsFixed(2)}%', text, muted),
-            if (r.ocrConfidence > 0)
-              _buildMetricTile('OCR Text Overlay', '${r.ocrConfidence.toStringAsFixed(2)}%', text, muted),
-            _buildMetricTile('Secure SHA-256 Hash', r.reportHash, text, muted, isMono: true),
-            
-            const SizedBox(height: 24),
-            
-            // Evidence & Observations
-            if (r.detectedEvidence.isNotEmpty) ...[
-              Text(
-                'DETECTED EVIDENCE & ANOMALIES',
-                style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: muted, letterSpacing: 1.0),
-              ),
-              const SizedBox(height: 8),
-              ...r.detectedEvidence.map((ev) => _buildObservationRow(ev, VFColors.red600, isDark)),
-              const SizedBox(height: 24),
-            ],
-
-            Text(
-              'FORENSIC OBSERVATIONS LOG',
-              style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: muted, letterSpacing: 1.0),
-            ),
-            const SizedBox(height: 8),
-            ...r.forensicObservations.map((obs) => _buildObservationRow(obs, VFColors.blue600, isDark)),
-            
-            const SizedBox(height: 32),
-
-            // Open PDF Report Button
-            Center(
-              child: SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  onPressed: _generating ? null : _openPdf,
-                  icon: _generating
-                      ? const SizedBox(
-                          width: 18,
-                          height: 18,
-                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                        )
-                      : const Icon(Icons.picture_as_pdf_outlined),
-                  label: Text(
-                    _generating ? 'Compiling Report PDF...' : 'Open Forensic PDF Report',
+                  const SizedBox(height: 24),
+                  _buildProgressDetailRow(
+                    'Fusion Confidence Rating',
+                    r.confidence,
+                    isDark ? VFColors.gray800 : VFColors.gray100,
+                    VFColors.blue600,
                   ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: VFColors.blue600,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
-                ),
+                ],
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 20),
+
+            // Forensic details subscores checklist
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: VFColors.adaptiveCard(isDark),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: isDark ? VFColors.gray800 : VFColors.gray200,
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'DETAILED PIPELINE METRICS',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      color: muted,
+                      letterSpacing: 1.0,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  _buildForensicProgressBar('Frame Color Consistency', r.frameConsistency, verdictColor, isDark),
+                  const SizedBox(height: 16),
+                  _buildForensicProgressBar('Biometric Face Tracking', r.trackingConfidence, verdictColor, isDark),
+                  const SizedBox(height: 16),
+                  _buildForensicProgressBar('Metadata Header Integrity', r.metadataScore, VFColors.blue600, isDark),
+                  if (r.ocrConfidence > 0) ...[
+                    const SizedBox(height: 16),
+                    _buildForensicProgressBar('OCR Overlay Text Confidence', r.ocrConfidence, VFColors.blue600, isDark),
+                  ],
+                ],
+              ),
+            ),
+            const SizedBox(height: 20),
+
+            // Evidence and Logs Card
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: VFColors.adaptiveCard(isDark),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: isDark ? VFColors.gray800 : VFColors.gray200,
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Verification Signature Details
+                  Text(
+                    'VERIFICATION KEY',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      color: muted,
+                      letterSpacing: 1.0,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  _buildMetaTextRow('Scan ID', r.verificationId, text),
+                  _buildMetaTextRow('Scan Date', DateFormat('yyyy-MM-dd HH:mm:ss').format(r.verifiedAt), text),
+                  _buildMetaTextRow('SHA-256 Hash', r.reportHash, text, isMono: true),
+                  
+                  const SizedBox(height: 20),
+                  const Divider(),
+                  const SizedBox(height: 20),
+
+                  // Detected anomalies list
+                  if (r.detectedEvidence.isNotEmpty) ...[
+                    Text(
+                      'DETECTED ANOMALIES',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        color: VFColors.red600,
+                        letterSpacing: 1.0,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    ...r.detectedEvidence.map((ev) => _buildObservationTile(ev, VFColors.red600, isDark)),
+                    const SizedBox(height: 20),
+                    const Divider(),
+                    const SizedBox(height: 20),
+                  ],
+
+                  // Forensic log list
+                  Text(
+                    'FORENSIC OBSERVATIONS LOG',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      color: muted,
+                      letterSpacing: 1.0,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  ...r.forensicObservations.map((obs) => _buildObservationTile(obs, VFColors.blue600, isDark)),
+                ],
+              ),
+            ),
+            const SizedBox(height: 28),
+
+            // Elevated Forensic PDF Download button
+            ElevatedButton.icon(
+              onPressed: _generating ? null : _openPdf,
+              icon: _generating
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                    )
+                  : const Icon(Icons.picture_as_pdf_outlined),
+              label: Text(
+                _generating ? 'Compiling PDF...' : 'Open Forensic PDF Report',
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: VFColors.blue600,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                elevation: 2,
+              ),
+            ),
+            const SizedBox(height: 20),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildMetricTile(String label, String value, Color text, Color muted, {bool highlight = false, Color? highlightColor, bool isMono = false}) {
+  Widget _buildHeaderMeta(String label, String value, Color color) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 9,
+            fontWeight: FontWeight.w800,
+            color: Colors.grey,
+            letterSpacing: 0.8,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.bold,
+            color: color,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildProgressDetailRow(String title, double score, Color bg, Color activeColor) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              title,
+              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+            ),
+            Text(
+              "${score.toStringAsFixed(1)}%",
+              style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: activeColor),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(4),
+          child: LinearProgressIndicator(
+            value: score / 100,
+            minHeight: 6,
+            backgroundColor: bg,
+            valueColor: AlwaysStoppedAnimation(activeColor),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildForensicProgressBar(String title, double score, Color color, bool isDark) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              title,
+              style: TextStyle(fontSize: 12, color: isDark ? Colors.white : Colors.black87),
+            ),
+            Text(
+              "${score.toStringAsFixed(1)}%",
+              style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: color),
+            ),
+          ],
+        ),
+        const SizedBox(height: 6),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(4),
+          child: LinearProgressIndicator(
+            value: score / 100,
+            minHeight: 5,
+            backgroundColor: isDark ? VFColors.gray800 : VFColors.gray100,
+            valueColor: AlwaysStoppedAnimation(color),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMetaTextRow(String label, String value, Color text, {bool isMono = false}) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
-            flex: 2,
+          SizedBox(
+            width: 100,
             child: Text(
               label,
-              style: TextStyle(fontSize: 14, color: muted, fontWeight: FontWeight.w500),
+              style: const TextStyle(fontSize: 12, color: Colors.grey, fontWeight: FontWeight.w500),
             ),
           ),
           Expanded(
-            flex: 3,
             child: Text(
               value,
               textAlign: TextAlign.right,
               style: TextStyle(
-                fontSize: 14,
+                fontSize: 12,
+                color: text,
+                fontWeight: FontWeight.bold,
                 fontFamily: isMono ? 'monospace' : null,
-                color: highlight ? (highlightColor ?? text) : text,
-                fontWeight: (highlight || label == 'Verification ID') ? FontWeight.bold : FontWeight.w600,
               ),
             ),
           ),
@@ -214,28 +454,26 @@ class _ReportDetailPageState extends State<ReportDetailPage> {
     );
   }
 
-  Widget _buildObservationRow(String text, Color bulletColor, bool isDark) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
+  Widget _buildObservationTile(String text, Color iconColor, bool isDark) {
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 4),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: isDark ? Colors.black.withOpacity(0.12) : VFColors.gray50,
+        borderRadius: BorderRadius.circular(8),
+      ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
-            padding: const EdgeInsets.only(top: 6, right: 10),
-            child: Container(
-              width: 6,
-              height: 6,
-              decoration: BoxDecoration(color: bulletColor, shape: BoxShape.circle),
-            ),
+            padding: const EdgeInsets.only(top: 3),
+            child: Icon(Icons.circle, size: 6, color: iconColor),
           ),
+          const SizedBox(width: 10),
           Expanded(
             child: Text(
               text,
-              style: TextStyle(
-                fontSize: 13.5,
-                color: VFColors.adaptiveText(isDark),
-                height: 1.4,
-              ),
+              style: const TextStyle(fontSize: 12.5, height: 1.4),
             ),
           ),
         ],

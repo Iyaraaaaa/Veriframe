@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter_app_badger/flutter_app_badger.dart';
 import 'package:veriframe_app/models/notification_model.dart';
 import 'package:veriframe_app/utils/navigator_key.dart';
 
@@ -93,7 +94,26 @@ class NotificationService {
         .collection('notifications')
         .where('isRead', isEqualTo: false)
         .snapshots()
-        .map((snapshot) => snapshot.docs.length);
+        .map((snapshot) {
+          final count = snapshot.docs.length;
+          updateAppBadge(count);
+          return count;
+        });
+  }
+
+  Future<void> updateAppBadge(int count) async {
+    try {
+      final isSupported = await FlutterAppBadger.isAppBadgeSupported();
+      if (isSupported) {
+        if (count > 0) {
+          await FlutterAppBadger.updateBadgeCount(count);
+        } else {
+          await FlutterAppBadger.removeBadge();
+        }
+      }
+    } catch (e) {
+      debugPrint('[NotificationService] Error updating app badge: $e');
+    }
   }
 
   Future<void> markAsRead(String uid, String notificationId) async {

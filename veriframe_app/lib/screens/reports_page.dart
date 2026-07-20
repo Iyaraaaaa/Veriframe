@@ -30,7 +30,7 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
           'Delete Report',
           style: TextStyle(
             fontSize: 18,
-            fontWeight: FontWeight.w700,
+            fontWeight: FontWeight.bold,
             color: VFColors.adaptiveText(Theme.of(context).brightness == Brightness.dark),
           ),
         ),
@@ -148,7 +148,7 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
+                    padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
                     child: Row(
                       children: [
                         Container(
@@ -165,17 +165,17 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'Forensic Reports',
+                                'Forensic History',
                                 style: TextStyle(
                                   fontSize: 18,
-                                  fontWeight: FontWeight.w700,
+                                  fontWeight: FontWeight.bold,
                                   color: text,
                                   height: 1.2,
                                 ),
                               ),
                               const SizedBox(height: 2),
                               Text(
-                                '${reports.length} report${reports.length == 1 ? '' : 's'}',
+                                '${reports.length} report${reports.length == 1 ? '' : 's'} stored in database',
                                 style: TextStyle(
                                   fontSize: 12,
                                   color: muted,
@@ -188,7 +188,7 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
                       ],
                     ),
                   ),
-                  const Divider(height: 1, thickness: 1),
+                  const Divider(height: 1),
                   Expanded(
                     child: ListView.builder(
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -219,12 +219,12 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: (iconColor ?? muted).withOpacity(0.1),
+                color: (iconColor ?? muted).withOpacity(0.08),
                 shape: BoxShape.circle,
               ),
               child: Icon(
                 icon,
-                size: 48,
+                size: 40,
                 color: iconColor ?? muted,
               ),
             ),
@@ -282,8 +282,8 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
         ),
         boxShadow: [
           BoxShadow(
-            color: isDark ? Colors.black.withOpacity(0.2) : Colors.black.withOpacity(0.04),
-            blurRadius: 8,
+            color: isDark ? Colors.black.withOpacity(0.1) : Colors.black.withOpacity(0.02),
+            blurRadius: 6,
             offset: const Offset(0, 2),
           ),
         ],
@@ -309,10 +309,10 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        report.mediaName ?? 'Forensic Analysis',
+                        report.mediaName ?? 'Forensic Verification',
                         style: TextStyle(
                           fontSize: 14,
-                          fontWeight: FontWeight.w600,
+                          fontWeight: FontWeight.bold,
                           color: text,
                           height: 1.3,
                         ),
@@ -323,7 +323,7 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
                       Row(
                         children: [
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                             decoration: BoxDecoration(
                               color: isDark ? statusBgDark : statusBg,
                               borderRadius: BorderRadius.circular(6),
@@ -331,8 +331,8 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
                             child: Text(
                               isReal ? 'AUTHENTIC' : 'MANIPULATED',
                               style: TextStyle(
-                                fontSize: 10,
-                                fontWeight: FontWeight.w700,
+                                fontSize: 9,
+                                fontWeight: FontWeight.w900,
                                 color: statusColor,
                                 letterSpacing: 0.4,
                               ),
@@ -345,7 +345,7 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
                               : '${report.fakeProbability.toStringAsFixed(1)}% manipulated',
                             style: TextStyle(
                               fontSize: 12,
-                              fontWeight: FontWeight.w500,
+                              fontWeight: FontWeight.bold,
                               color: text,
                             ),
                           ),
@@ -357,7 +357,7 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
                         style: TextStyle(
                           fontSize: 11,
                           color: muted,
-                          fontWeight: FontWeight.w400,
+                          fontWeight: FontWeight.w500,
                         ),
                       ),
                     ],
