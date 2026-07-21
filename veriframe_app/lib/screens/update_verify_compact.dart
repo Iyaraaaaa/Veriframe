@@ -1,4 +1,4 @@
-import 'dart:io';
+﻿import 'dart:io';
 
 void main() {
   final file = File(r'D:\VERI_FRAME\veriframe_app\lib\screens\verify.dart');
@@ -317,9 +317,9 @@ void main() {
                     vertical: 4,
                   ),
                   decoration: BoxDecoration(
-                    color: _accent.withOpacity(0.12),
+                    color: _accent.withValues(alpha:0.12),
                     borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: _accent.withOpacity(0.4)),
+                    border: Border.all(color: _accent.withValues(alpha:0.4)),
                   ),
                   child: const Row(
                     children: [
@@ -356,9 +356,9 @@ void main() {
             width: 44,
             height: 44,
             decoration: BoxDecoration(
-              color: _accent.withOpacity(0.08),
+              color: _accent.withValues(alpha:0.08),
               borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: _accent.withOpacity(0.2)),
+              border: Border.all(color: _accent.withValues(alpha:0.2)),
             ),
             child: Icon(
               _isStream ? Icons.live_tv_rounded : _isUrl ? Icons.link_rounded : Icons.video_file_rounded,
@@ -425,9 +425,9 @@ void main() {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: _danger.withOpacity(0.05),
+        color: _danger.withValues(alpha:0.05),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: _danger.withOpacity(0.3)),
+        border: Border.all(color: _danger.withValues(alpha:0.3)),
       ),
       child: Column(
         children: [
@@ -468,9 +468,9 @@ void main() {
             padding: const EdgeInsets.all(12),
             margin: const EdgeInsets.only(bottom: 16),
             decoration: BoxDecoration(
-              color: _danger.withOpacity(0.1),
+              color: _danger.withValues(alpha:0.1),
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: _danger.withOpacity(0.3)),
+              border: Border.all(color: _danger.withValues(alpha:0.3)),
             ),
             child: const Row(
               children: [
@@ -478,7 +478,7 @@ void main() {
                 SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    '⚠ High Risk',
+                    'âš  High Risk',
                     style: TextStyle(color: _danger, fontWeight: FontWeight.bold, fontSize: 16),
                   ),
                 ),
@@ -576,9 +576,9 @@ void main() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha:0.1),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: color.withOpacity(0.5)),
+        border: Border.all(color: color.withValues(alpha:0.5)),
       ),
       child: Text(_verdictLabel(v).toUpperCase(),
           style: TextStyle(
@@ -713,7 +713,7 @@ class _PulsingDot extends StatelessWidget {
         shape: BoxShape.circle,
         boxShadow: [
           BoxShadow(
-            color: color.withOpacity(0.5),
+            color: color.withValues(alpha:0.5),
             blurRadius: 4,
             spreadRadius: 1,
           )
@@ -731,3 +731,4 @@ class _PulsingDot extends StatelessWidget {
     print('Could not find state block');
   }
 }
+

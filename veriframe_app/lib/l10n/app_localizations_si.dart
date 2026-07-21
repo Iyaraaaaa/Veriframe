@@ -172,6 +172,9 @@ class AppLocalizationsSi extends AppLocalizations {
   String get home => 'මුල් පිටුව';
 
   @override
+  String get reportTab => 'වාර්තාව';
+
+  @override
   String get affirmation => 'තහවුරු කිරීම';
 
   @override
@@ -1465,6 +1468,223 @@ class AppLocalizationsSi extends AppLocalizations {
   String get verifyEnterVideoUrl => 'වීඩියෝ URL ඇතුළත් කරන්න...';
 
   @override
+  String get verifyNoCameras => 'No cameras available on this device.';
+
+  @override
+  String verifyCameraError(Object error) {
+    return 'Camera error: $error';
+  }
+
+  @override
+  String get verifyUnsupportedFormat =>
+      'Unsupported video format. Please use MP4, MOV, MKV, or AVI.';
+
+  @override
+  String get verifyConnectingServer => 'Connecting to forensic server...';
+
+  @override
+  String get verifyBackendOffline =>
+      'Backend offline — switching to on-device analysis.';
+
+  @override
+  String get verifyUploadingFile => 'Uploading video file...';
+
+  @override
+  String verifyUploadingProgress(Object percent) {
+    return 'Uploading... $percent%';
+  }
+
+  @override
+  String get verifyAggregatingPredictions => 'Aggregating predictions...';
+
+  @override
+  String verifyOfflineModelFailed(Object error) {
+    return 'Offline model failed: $error';
+  }
+
+  @override
+  String get verifyModelLoading => 'Loading model...';
+
+  @override
+  String get verifyValidatingFile => 'Validating file...';
+
+  @override
+  String get verifyExtractingFrames => 'Extracting frames...';
+
+  @override
+  String verifyAnalyzingFrame(Object current, Object total) {
+    return 'Analyzing frame $current of $total...';
+  }
+
+  @override
+  String get verifyDetectingRegions => 'Detecting facial regions...';
+
+  @override
+  String get verifyPreparingTensors => 'Preparing tensors...';
+
+  @override
+  String get verifyRunningInference => 'Running inference...';
+
+  @override
+  String get verifyInferenceFailed => 'Inference failed. Please try again.';
+
+  @override
+  String get verifyPleasePasteUrl => 'Please paste a video URL first.';
+
+  @override
+  String get verifyDownloadingVideo => 'Downloading video...';
+
+  @override
+  String get verifyFeatureUnavailable => 'Feature unavailable while offline.';
+
+  @override
+  String get verifyPollingTimeout => 'Analysis timed out. Please try again.';
+
+  @override
+  String get verifyEnterStreamUrl => 'Please enter a stream URL first.';
+
+  @override
+  String get verifyCompilingSessionReport => 'Compiling session report...';
+
+  @override
+  String verifyLocalReportExplanation(Object frames, Object score) {
+    return 'Analyzed $frames frames with $score% average confidence.';
+  }
+
+  @override
+  String get verifyAuthError => 'You must be signed in to verify media.';
+
+  @override
+  String get verifyCompilingForensicReport => 'Compiling forensic report...';
+
+  @override
+  String get verifyNotificationTitle => 'Verification Complete';
+
+  @override
+  String get verifyNotificationTitleBranded =>
+      'VeriFrame Verification Complete';
+
+  @override
+  String get verifyCompleteTitle => 'Analysis Complete';
+
+  @override
+  String get verifyVerdictLabel => 'VERDICT';
+
+  @override
+  String get verifyAuthenticityLabel => 'AUTHENTICITY';
+
+  @override
+  String get verifyManipulationLabel => 'MANIPULATION';
+
+  @override
+  String get verifyConfidenceLabel => 'CONFIDENCE';
+
+  @override
+  String get verifyRiskLevelLabel => 'RISK LEVEL';
+
+  @override
+  String get verifyVerifiedAtLabel => 'VERIFIED AT';
+
+  @override
+  String get verifyViewHistory => 'View History';
+
+  @override
+  String get verifyDone => 'Done';
+
+  @override
+  String get verifyGeneratingPdf => 'Generating PDF report...';
+
+  @override
+  String verifyPdfFailed(Object error) {
+    return 'Failed to generate PDF: $error';
+  }
+
+  @override
+  String get verifyLinkCopied => 'Report link copied to clipboard.';
+
+  @override
+  String reportErrorOpeningPdf(Object error) {
+    return 'PDF විවෘත කිරීමේ දෝෂය: $error';
+  }
+
+  @override
+  String reportIdCopied(Object id) {
+    return 'වාර්තා ID පිටපත් කරන ලදී: $id';
+  }
+
+  @override
+  String get reportCopyId => 'වාර්තා ID පිටපත් කරන්න';
+
+  @override
+  String verifyEscalationFailed(Object error) {
+    return 'Escalation failed: $error';
+  }
+
+  @override
+  String get verifyAnalyzeStream => 'Analyze Stream';
+
+  @override
+  String get verifyCancelScan => 'Cancel Scan';
+
+  @override
+  String get verifyStepFormatValidation => 'Format Validation';
+
+  @override
+  String get verifyStepFrameExtraction => 'Frame Extraction';
+
+  @override
+  String get verifyStepFaceDetection => 'Face Detection';
+
+  @override
+  String get verifyStepModelInference => 'Model Inference';
+
+  @override
+  String get verifyStepGeneratingReasoning => 'Generating Reasoning';
+
+  @override
+  String get verifyStepGeneratingPdf => 'Generating PDF';
+
+  @override
+  String get verifyStepSendingNotification => 'Sending Notification';
+
+  @override
+  String get verifyStepCompleted => 'Completed';
+
+  @override
+  String get verifyLinkStepRequestInitiated => 'Request Initiated';
+
+  @override
+  String get verifyLinkStepDownloading => 'Downloading';
+
+  @override
+  String get verifyLinkStepExtracting => 'Extracting Frames';
+
+  @override
+  String get verifyLinkStepDetecting => 'Detecting Faces';
+
+  @override
+  String get verifyLinkStepInference => 'Running Inference';
+
+  @override
+  String get verifyConnectingLiveStream => 'Connecting to live stream...';
+
+  @override
+  String verifyFpsFrames(Object fps, Object frames) {
+    return '$fps FPS · $frames frames';
+  }
+
+  @override
+  String get verifyCurrentProbability => 'Current Probability';
+
+  @override
+  String get verifyProbabilityGraph => 'Probability Graph';
+
+  @override
+  String verifyLandmarkMap(Object count) {
+    return 'Landmark map: $count points';
+  }
+
+  @override
   String get deleteAccountTitle => 'ගිණුම මකා දැමෑමද?';
 
   @override
@@ -1473,4 +1693,112 @@ class AppLocalizationsSi extends AppLocalizations {
 
   @override
   String get deletePermanently => 'ස්ථිරවම මකන්න';
+
+  @override
+  String get homeStatsAiModels => 'AI Models';
+
+  @override
+  String get homeStatsRealtime => 'Real-time';
+
+  @override
+  String get homeStatsLiveAnalysis => 'Live analysis';
+
+  @override
+  String get homeStatsForensic => 'Forensic';
+
+  @override
+  String get homeStatsEvidenceReports => 'Evidence reports';
+
+  @override
+  String get homeFooterTagline => 'Media forensics for a trustworthy internet.';
+
+  @override
+  String homeCopyright(Object year) {
+    return '© $year VeriFrame. All rights reserved.';
+  }
+
+  @override
+  String get verifyBackendServerTitle => 'Configure Backend Server';
+
+  @override
+  String get verifyBackendUrlHint => 'http://192.168.1.100:8000';
+
+  @override
+  String get verifyBackendHelper =>
+      'Specify host base address (use LAN IP on physical phones)';
+
+  @override
+  String notificationsMarkAllRead(Object count) {
+    return 'Mark all read ($count)';
+  }
+
+  @override
+  String get notificationsDeleteTitle => 'Delete notification?';
+
+  @override
+  String get notificationsDeleteMessage =>
+      'This notification will be permanently removed.';
+
+  @override
+  String get notificationsDeleteConfirm => 'Delete';
+
+  @override
+  String get notificationsNotLoggedIn => 'User not logged in.';
+
+  @override
+  String notificationsError(Object error) {
+    return 'Error: $error';
+  }
+
+  @override
+  String get accountDeleted => 'ඔබගේ ගිණුම සාර්ථකව මකන ලදී.';
+
+  @override
+  String get reportsTitle => 'Forensic reports';
+
+  @override
+  String get reportsHistoryTitle => 'Video history';
+
+  @override
+  String get reportsHistorySubtitle =>
+      'Secure history of all completed media verification analyses.';
+
+  @override
+  String get reportsNotLoggedIn => 'User not logged in.';
+
+  @override
+  String get reportsNoReports =>
+      'No reports yet\nYour completed forensic analyses will appear here once a verification has finished.';
+
+  @override
+  String get reportsForensicVerification => 'Forensic verification';
+
+  @override
+  String get reportsDeleteTitle => 'Delete report';
+
+  @override
+  String reportsDeleteMessage(Object name) {
+    return 'Permanently remove \"$name\"? This action cannot be undone.';
+  }
+
+  @override
+  String get reportsDeleteConfirm => 'Delete';
+
+  @override
+  String get reportsDeleted => 'Report deleted';
+
+  @override
+  String reportsDeleteFailed(Object error) {
+    return 'Couldn\'t delete report: $error';
+  }
+
+  @override
+  String get reportsDeleteTooltip => 'Delete report';
+
+  @override
+  String get techStackTitle => 'Technology Stack';
+
+  @override
+  String get techStackSubtitle =>
+      'The technologies powering VeriFrame\'s forensic deepfake detection platform.';
 }

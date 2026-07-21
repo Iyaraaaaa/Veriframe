@@ -16,7 +16,7 @@ class AboutUsPage extends StatelessWidget {
     return MainScaffold(
       showBack: true,
       body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -26,51 +26,53 @@ class AboutUsPage extends StatelessWidget {
               title: loc.aboutHeroTitle,
               subtitle: loc.aboutTech,
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 28),
 
             _StatsRow(
               stats: [
-                _Stat(value: loc.aboutStatVerificationsValue, label: loc.aboutStatVerificationsLabel),
-                _Stat(value: loc.aboutStatRatingValue, label: loc.aboutStatRatingLabel, icon: Icons.star_rounded),
-                _Stat(value: loc.aboutStatUptimeValue, label: loc.aboutStatUptimeLabel),
+                _Stat(
+                  value: loc.aboutStatVerificationsValue,
+                  label: loc.aboutStatVerificationsLabel,
+                ),
+                _Stat(
+                  value: loc.aboutStatRatingValue,
+                  label: loc.aboutStatRatingLabel,
+                  icon: Icons.star_rounded,
+                ),
+                _Stat(
+                  value: loc.aboutStatUptimeValue,
+                  label: loc.aboutStatUptimeLabel,
+                ),
               ],
             ),
-            const SizedBox(height: 28),
+            const SizedBox(height: 36),
 
-            _AboutRule(accent: c.accent, label: loc.aboutStoryLabel, body: loc.aboutStory),
-            const SizedBox(height: 20),
-            _AboutRule(accent: Colors.purple, label: loc.aboutMissionLabel, body: loc.aboutMission),
-            const SizedBox(height: 20),
-            _AboutRule(accent: Colors.amber, label: loc.aboutVisionLabel, body: loc.aboutVision),
-            const SizedBox(height: 24),
+            _AboutRule(
+              accent: c.accent,
+              label: loc.aboutStoryLabel,
+              body: loc.aboutStory,
+            ),
+            const _RuleDivider(),
+            _AboutRule(
+              accent: const Color(0xFF9B7EDE),
+              label: loc.aboutMissionLabel,
+              body: loc.aboutMission,
+            ),
+            const _RuleDivider(),
+            _AboutRule(
+              accent: const Color(0xFFE0A93E),
+              label: loc.aboutVisionLabel,
+              body: loc.aboutVision,
+            ),
+            const SizedBox(height: 32),
 
             _AboutValuesSection(
               label: loc.aboutValuesLabel,
-              values: [loc.aboutValueOne, loc.aboutValueTwo, loc.aboutValueThree],
-            ),
-            const SizedBox(height: 16),
-
-            ThemedCard(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Icon(Icons.memory_outlined, size: 18, color: c.textSubtle),
-                      const SizedBox(width: 8),
-                      Text(
-                        loc.aboutTechLabel,
-                        style: TextStyle(color: c.text, fontSize: 14.5, fontWeight: FontWeight.w700),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 10),
-                  Text(
-                    loc.aboutTechBody,
-                    style: TextStyle(color: c.textMuted, fontSize: 13, height: 1.6),
-                  ),
-                ],
-              ),
+              values: [
+                loc.aboutValueOne,
+                loc.aboutValueTwo,
+                loc.aboutValueThree,
+              ],
             ),
             const SizedBox(height: 16),
           ],
@@ -100,10 +102,11 @@ class _StatsRow extends StatelessWidget {
           if (i > 0) const SizedBox(width: 10),
           Expanded(
             child: Container(
-              padding: const EdgeInsets.symmetric(vertical: 14),
+              padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 8),
               decoration: BoxDecoration(
                 color: c.surfaceVariant,
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: c.text.withOpacity(0.06), width: 1),
               ),
               child: Column(
                 children: [
@@ -112,19 +115,30 @@ class _StatsRow extends StatelessWidget {
                     children: [
                       Text(
                         stats[i].value,
-                        style: TextStyle(color: c.text, fontSize: 17, fontWeight: FontWeight.w700),
+                        style: TextStyle(
+                          color: c.text,
+                          fontSize: 19,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: -0.3,
+                          height: 1.0,
+                        ),
                       ),
                       if (stats[i].icon != null) ...[
-                        const SizedBox(width: 2),
+                        const SizedBox(width: 3),
                         Icon(stats[i].icon, size: 15, color: Colors.amber),
                       ],
                     ],
                   ),
-                  const SizedBox(height: 3),
+                  const SizedBox(height: 6),
                   Text(
                     stats[i].label,
                     textAlign: TextAlign.center,
-                    style: TextStyle(color: c.textSubtle, fontSize: 10.5, fontWeight: FontWeight.w500),
+                    style: TextStyle(
+                      color: c.textSubtle,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 0.4,
+                    ),
                   ),
                 ],
               ),
@@ -136,10 +150,25 @@ class _StatsRow extends StatelessWidget {
   }
 }
 
-/// Narrative block with a colored left rule instead of a full card —
+/// Thin, quiet separator between narrative rules — keeps the eye moving
+/// down the page without the heaviness of a full divider line.
+class _RuleDivider extends StatelessWidget {
+  const _RuleDivider();
+
+  @override
+  Widget build(BuildContext context) {
+    return const SizedBox(height: 22);
+  }
+}
+
+/// Narrative block with a slim rounded accent rule instead of a full card —
 /// reserves the boxed-card treatment for bounded/list content only.
 class _AboutRule extends StatelessWidget {
-  const _AboutRule({required this.accent, required this.label, required this.body});
+  const _AboutRule({
+    required this.accent,
+    required this.label,
+    required this.body,
+  });
   final Color accent;
   final String label;
   final String body;
@@ -147,15 +176,45 @@ class _AboutRule extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
-    return Container(
-      padding: const EdgeInsets.only(left: 14),
-      decoration: BoxDecoration(border: Border(left: BorderSide(color: accent, width: 2))),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+    return IntrinsicHeight(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(label, style: TextStyle(color: c.text, fontSize: 13.5, fontWeight: FontWeight.w700)),
-          const SizedBox(height: 6),
-          Text(body, style: TextStyle(color: c.textMuted, fontSize: 13, height: 1.6)),
+          Container(
+            width: 3,
+            margin: const EdgeInsets.only(top: 2, bottom: 2),
+            decoration: BoxDecoration(
+              color: accent,
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: TextStyle(
+                    color: c.text,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.6,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  body,
+                  style: TextStyle(
+                    color: c.textMuted,
+                    fontSize: 13.5,
+                    height: 1.65,
+                    letterSpacing: 0.1,
+                  ),
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );
@@ -176,26 +235,69 @@ class _AboutValuesSection extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(Icons.lightbulb_outline, size: 18, color: c.textSubtle),
-              const SizedBox(width: 8),
-              Text(label, style: TextStyle(color: c.text, fontSize: 14.5, fontWeight: FontWeight.w700)),
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: c.accent.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(Icons.lightbulb_outline, size: 16, color: c.accent),
+              ),
+              const SizedBox(width: 10),
+              Text(
+                label,
+                style: TextStyle(
+                  color: c.text,
+                  fontSize: 14.5,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.2,
+                ),
+              ),
             ],
           ),
-          const SizedBox(height: 12),
-          for (final value in values)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Icon(Icons.check, size: 15, color: c.accent),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(value, style: TextStyle(color: c.textMuted, fontSize: 13, height: 1.6)),
-                  ),
-                ],
+          const SizedBox(height: 16),
+          for (int i = 0; i < values.length; i++) ...[
+            if (i > 0)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                child: Divider(height: 1, color: c.text.withOpacity(0.06)),
               ),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: 20,
+                  height: 20,
+                  margin: const EdgeInsets.only(top: 1),
+                  decoration: BoxDecoration(
+                    color: c.accent.withOpacity(0.12),
+                    shape: BoxShape.circle,
+                  ),
+                  alignment: Alignment.center,
+                  child: Text(
+                    '${i + 1}',
+                    style: TextStyle(
+                      color: c.accent,
+                      fontSize: 10.5,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    values[i],
+                    style: TextStyle(
+                      color: c.textMuted,
+                      fontSize: 13,
+                      height: 1.6,
+                      letterSpacing: 0.1,
+                    ),
+                  ),
+                ),
+              ],
             ),
+          ],
         ],
       ),
     );

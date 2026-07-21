@@ -133,7 +133,7 @@ class _SettingsPageState extends State<SettingsPage> {
             padding: EdgeInsets.zero,
             child: Column(
               children: [
-                _LinkTile(icon: Icons.info_outline_rounded, title: loc.settingsAbout, onTap: () => Navigator.pushNamed(context, '/about')),
+                _LinkTile(icon: Icons.info_outline_rounded, title: loc.settingsAbout, onTap: () => Navigator.pushNamed(context, '/tech_stack')),
                 ThemedDivider(),
                 _LinkTile(icon: Icons.policy_outlined, title: loc.settingsPrivacy, onTap: () => Navigator.pushNamed(context, '/privacy')),
                 ThemedDivider(),

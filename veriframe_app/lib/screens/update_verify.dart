@@ -1,4 +1,4 @@
-import 'dart:io';
+﻿import 'dart:io';
 
 void main() {
   final file = File(r'D:\VERI_FRAME\veriframe_app\lib\screens\verify.dart');
@@ -113,8 +113,8 @@ void main() {
       _progressValue = 0;
     });
 
-    _log('▶ Initiating VERIFRAME AI Analysis...');
-    _log('▶ Source: \$_source');
+    _log('â–¶ Initiating VERIFRAME AI Analysis...');
+    _log('â–¶ Source: \$_source');
 
     int tick = 0;
     _analysisTimer = Timer.periodic(const Duration(milliseconds: 100), (t) {
@@ -129,43 +129,43 @@ void main() {
       });
 
       if (tick <= 10) {
-        if (tick == 2) _log('▶ Uploading Video...');
+        if (tick == 2) _log('â–¶ Uploading Video...');
         if (tick == 10) {
-          _log('✔ Video Uploaded');
+          _log('âœ” Video Uploaded');
           setState(() => _phase = _AnalysisPhase.extracting);
         }
       } else if (tick <= 25) {
-        if (tick == 12) _log('▶ Extracting Frames...');
+        if (tick == 12) _log('â–¶ Extracting Frames...');
         if (tick == 25) {
-          _log('✔ Frames Extracted');
+          _log('âœ” Frames Extracted');
           setState(() => _phase = _AnalysisPhase.detecting);
         }
       } else if (tick <= 40) {
-        if (tick == 27) _log('▶ Detecting Faces...');
+        if (tick == 27) _log('â–¶ Detecting Faces...');
         if (tick == 40) {
-          _log('✔ Faces Detected');
+          _log('âœ” Faces Detected');
           setState(() => _phase = _AnalysisPhase.efficientVit);
         }
       } else if (tick <= 55) {
-        if (tick == 42) _log('▶ Running EfficientViT...');
+        if (tick == 42) _log('â–¶ Running EfficientViT...');
         if (tick == 55) {
-          _log('✔ EfficientViT Analysis Complete');
+          _log('âœ” EfficientViT Analysis Complete');
           setState(() => _phase = _AnalysisPhase.crossEfficientVit);
         }
       } else if (tick <= 70) {
-        if (tick == 57) _log('▶ Running CrossEfficientViT...');
+        if (tick == 57) _log('â–¶ Running CrossEfficientViT...');
         if (tick == 70) {
-          _log('✔ CrossEfficientViT Analysis Complete');
+          _log('âœ” CrossEfficientViT Analysis Complete');
           setState(() => _phase = _AnalysisPhase.reasoning);
         }
       } else if (tick <= 85) {
-        if (tick == 72) _log('▶ Generating Reasoning...');
+        if (tick == 72) _log('â–¶ Generating Reasoning...');
         if (tick == 85) {
-          _log('✔ Reasoning Generated');
+          _log('âœ” Reasoning Generated');
           setState(() => _phase = _AnalysisPhase.report);
         }
       } else if (tick <= 100) {
-        if (tick == 87) _log('▶ Creating Report...');
+        if (tick == 87) _log('â–¶ Creating Report...');
         final rawConf = (tick - 85) / 15 * 88.0; // Mock score
         setState(() {
           _confidence = rawConf;
@@ -192,10 +192,10 @@ void main() {
         });
 
         _log('');
-        _log('══════════════════════════════');
+        _log('â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•');
         _log('RISK LEVEL: \${_verdictLabel(_verdict!)}');
         _log('CONFIDENCE: \${_confidence.round()}%');
-        _log('══════════════════════════════');
+        _log('â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•');
       }
     });
   }
@@ -392,9 +392,9 @@ void main() {
                     vertical: 4,
                   ),
                   decoration: BoxDecoration(
-                    color: _accent.withOpacity(0.12),
+                    color: _accent.withValues(alpha:0.12),
                     borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: _accent.withOpacity(0.4)),
+                    border: Border.all(color: _accent.withValues(alpha:0.4)),
                   ),
                   child: const Row(
                     children: [
@@ -433,9 +433,9 @@ void main() {
             width: 44,
             height: 44,
             decoration: BoxDecoration(
-              color: _accent.withOpacity(0.08),
+              color: _accent.withValues(alpha:0.08),
               borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: _accent.withOpacity(0.2)),
+              border: Border.all(color: _accent.withValues(alpha:0.2)),
             ),
             child: Icon(
               _isUrl ? Icons.link_rounded : Icons.video_file_rounded,
@@ -567,7 +567,7 @@ void main() {
         ? _safe
         : isActive
         ? _accent
-        : _textSec.withOpacity(0.4);
+        : _textSec.withValues(alpha:0.4);
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
@@ -580,20 +580,20 @@ void main() {
               height: 32,
               decoration: BoxDecoration(
                 color: isActive
-                    ? _accent.withOpacity(0.1 + 0.08 * _pulseAnim.value)
+                    ? _accent.withValues(alpha:0.1 + 0.08 * _pulseAnim.value)
                     : isDone
-                    ? _safe.withOpacity(0.08)
+                    ? _safe.withValues(alpha:0.08)
                     : _surface,
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(
-                  color: color.withOpacity(isActive ? 0.7 : 0.3),
+                  color: color.withValues(alpha:isActive ? 0.7 : 0.3),
                 ),
               ),
               child: isDone
                   ? const Icon(Icons.check_rounded, color: _safe, size: 16)
                   : isActive
                   ? Icon(step.icon, color: _accent, size: 15)
-                  : Icon(step.icon, color: _textSec.withOpacity(0.4), size: 15),
+                  : Icon(step.icon, color: _textSec.withValues(alpha:0.4), size: 15),
             ),
           ),
           const SizedBox(width: 10),
@@ -601,7 +601,7 @@ void main() {
             child: Text(
               step.label,
               style: TextStyle(
-                color: isPending ? _textSec.withOpacity(0.4) : _textPri,
+                color: isPending ? _textSec.withValues(alpha:0.4) : _textPri,
                 fontSize: 13,
                 fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
               ),
@@ -697,9 +697,9 @@ void main() {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
-                      color: color.withOpacity(0.1),
+                      color: color.withValues(alpha:0.1),
                       borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: color.withOpacity(0.5)),
+                      border: Border.all(color: color.withValues(alpha:0.5)),
                     ),
                     child: Text(
                       label,
@@ -757,9 +757,9 @@ void main() {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: _danger.withOpacity(0.1),
+                color: _danger.withValues(alpha:0.1),
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: _danger.withOpacity(0.3)),
+                border: Border.all(color: _danger.withValues(alpha:0.3)),
               ),
               child: Column(
                 children: [
@@ -769,7 +769,7 @@ void main() {
                       const SizedBox(width: 10),
                       const Expanded(
                         child: Text(
-                          '⚠ High-Risk Deepfake Detected',
+                          'âš  High-Risk Deepfake Detected',
                           style: TextStyle(color: _danger, fontWeight: FontWeight.bold, fontSize: 14),
                         ),
                       ),
@@ -801,9 +801,9 @@ void main() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: detected ? _danger.withOpacity(0.1) : _safe.withOpacity(0.1),
+        color: detected ? _danger.withValues(alpha:0.1) : _safe.withValues(alpha:0.1),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: detected ? _danger.withOpacity(0.3) : _safe.withOpacity(0.3)),
+        border: Border.all(color: detected ? _danger.withValues(alpha:0.3) : _safe.withValues(alpha:0.3)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -864,13 +864,13 @@ void main() {
                       final line = _logLines[i];
                       final isVerdict = line.contains('RISK LEVEL') ||
                           line.contains('CONFIDENCE') ||
-                          line.startsWith('══');
+                          line.startsWith('â•â•');
                       return Text(
                         line,
                         style: TextStyle(
                           color: isVerdict
                               ? _verdictColor(_verdict ?? _Verdict.mediumRisk)
-                              : line.startsWith('✔')
+                              : line.startsWith('âœ”')
                               ? _safe
                               : _textSec,
                           fontSize: 11,
@@ -972,9 +972,9 @@ void main() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha:0.1),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: color.withOpacity(0.5)),
+        border: Border.all(color: color.withValues(alpha:0.5)),
       ),
       child: Text(_verdictLabel(v).toUpperCase(),
           style: TextStyle(
@@ -1140,7 +1140,7 @@ class _PulsingDot extends StatelessWidget {
         shape: BoxShape.circle,
         boxShadow: [
           BoxShadow(
-            color: color.withOpacity(0.5),
+            color: color.withValues(alpha:0.5),
             blurRadius: 4,
             spreadRadius: 1,
           )
@@ -1155,3 +1155,4 @@ class _PulsingDot extends StatelessWidget {
   file.writeAsStringSync(content);
   print('verify.dart updated successfully.');
 }
+

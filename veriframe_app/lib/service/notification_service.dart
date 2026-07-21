@@ -81,6 +81,7 @@ class NotificationService {
         .doc(uid)
         .collection('notifications')
         .orderBy('createdAt', descending: true)
+        .limit(3)
         .snapshots()
         .map((snapshot) => snapshot.docs
             .map((doc) => NotificationModel.fromMap(doc.data(), doc.id))
@@ -163,6 +164,33 @@ class NotificationService {
         if (retries == 0) rethrow;
         await Future.delayed(const Duration(seconds: 1));
       }
+    }
+  }
+
+  Future<void> refreshBadge(String uid) async {
+    try {
+      final snapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .collection('notifications')
+          .where('isRead', isEqualTo: false)
+          .get();
+      await updateAppBadge(snapshot.docs.length);
+    } catch (e) {
+      debugPrint('[NotificationService] Error refreshing badge: $e');
+    }
+  }
+
+  Future<void> deleteNotification(String uid, String notificationId) async {
+    try {
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .collection('notifications')
+          .doc(notificationId)
+          .delete();
+    } catch (e) {
+      debugPrint('[NotificationService] Error deleting notification: $e');
     }
   }
 }

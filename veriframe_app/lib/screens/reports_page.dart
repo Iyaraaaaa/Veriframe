@@ -1,18 +1,40 @@
-import 'dart:convert';
+﻿import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart';
+import 'package:veriframe_app/l10n/app_localizations.dart';
 import 'package:veriframe_app/models/verification_result.dart';
 import 'package:veriframe_app/provider/verification_notifier.dart';
 import 'package:veriframe_app/screens/report_detail_screen.dart';
-import 'package:veriframe_app/utils/theme.dart';
 import 'package:veriframe_app/widgets/main_scaffold.dart';
+
+// Theme-aware palette
+class _Pal {
+  final bool isDark;
+  const _Pal(this.isDark);
+
+  Color get bg => isDark ? const Color(0xFF0F1523) : const Color(0xFFFFFFFF);
+  Color get surfaceMuted => isDark ? const Color(0xFF162035) : const Color(0xFFF7F8FA);
+  Color get border => isDark ? const Color(0xFF1A2233) : const Color(0xFFE3E6EB);
+  Color get textPrimary => isDark ? const Color(0xFFE8F0FF) : const Color(0xFF14181F);
+  Color get textSecondary => isDark ? const Color(0xFF8B9DC3) : const Color(0xFF667085);
+  Color get textSubtle => isDark ? const Color(0xFF6B7FA8) : const Color(0xFF98A2B3);
+
+  static const authentic = Color(0xFF1F7A54);
+  static const manipulated = Color(0xFFC1483F);
+  Color get manipulatedBg => isDark ? const Color(0x33C1483F) : const Color(0xFFFBEDEC);
+  static const data = Color(0xFF35608F);
+  Color get dataBg => isDark ? const Color(0x33EAF1F8) : const Color(0xFFEAF1F8);
+
+  static const mono = 'monospace';
+}
 
 class ReportsPage extends ConsumerStatefulWidget {
   final bool wrapped;
+  final String? initialReportId;
 
-  const ReportsPage({super.key, this.wrapped = true});
+  const ReportsPage({super.key, this.wrapped = true, this.initialReportId});
 
   @override
   ConsumerState<ReportsPage> createState() => _ReportsPageState();
@@ -20,45 +42,82 @@ class ReportsPage extends ConsumerStatefulWidget {
 
 class _ReportsPageState extends ConsumerState<ReportsPage> {
   final String? _uid = FirebaseAuth.instance.currentUser?.uid;
+  String? _lastNavigatedReportId;
+
+  _Pal get _pal => _Pal(Theme.of(context).brightness == Brightness.dark);
 
   Future<bool> _confirmDelete(VerificationResult result) async {
+    final loc = AppLocalizations.of(context)!;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        icon: Icon(Icons.delete_outline_rounded, color: VFColors.red600, size: 28),
+        backgroundColor: _pal.bg,
+        surfaceTintColor: Colors.transparent,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        icon: Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: _pal.manipulatedBg,
+            shape: BoxShape.circle,
+          ),
+          child: const Icon(
+            Icons.delete_outline_rounded,
+            color: _Pal.manipulated,
+            size: 26,
+          ),
+        ),
         title: Text(
-          'Delete Report',
+          loc.reportsDeleteTitle,
           style: TextStyle(
             fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: VFColors.adaptiveText(Theme.of(context).brightness == Brightness.dark),
+            fontWeight: FontWeight.w800,
+            color: _pal.textPrimary,
           ),
+          textAlign: TextAlign.center,
         ),
         content: Text(
-          'Permanently remove "${result.mediaName ?? "verification report"}"? This action cannot be undone.',
+          loc.reportsDeleteMessage(result.mediaName ?? loc.reportsForensicVerification),
           style: TextStyle(
             fontSize: 14,
-            color: VFColors.adaptiveTextSecondary(Theme.of(context).brightness == Brightness.dark),
             height: 1.5,
+            color: _pal.textSecondary,
           ),
+          textAlign: TextAlign.center,
         ),
-        actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+        actionsPadding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            style: TextButton.styleFrom(
-              foregroundColor: VFColors.adaptiveTextSecondary(Theme.of(context).brightness == Brightness.dark),
-            ),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(context, true),
-            style: FilledButton.styleFrom(
-              backgroundColor: VFColors.red600,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-            ),
-            child: const Text('Delete'),
+          Row(
+            children: [
+              Expanded(
+                child: TextButton(
+                  onPressed: () => Navigator.pop(context, false),
+                  style: TextButton.styleFrom(
+                    foregroundColor: _pal.textSecondary,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  child: Text(loc.verifyCancel),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: FilledButton(
+                  onPressed: () => Navigator.pop(context, true),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: _Pal.manipulated,
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  child: Text(loc.reportsDeleteConfirm),
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -67,14 +126,17 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
   }
 
   Future<void> _deleteReport(String id) async {
+    final loc = AppLocalizations.of(context)!;
     try {
       await ref.read(verificationRepositoryProvider).deleteResult(id);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: const Text('Report deleted'),
+            content: Text(loc.reportsDeleted),
             behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
           ),
         );
       }
@@ -83,10 +145,12 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text("Couldn't delete report: ${e.toString()}"),
-            backgroundColor: VFColors.red600,
+            content: Text(loc.reportsDeleteFailed(e)),
+            backgroundColor: _Pal.manipulated,
             behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
           ),
         );
       }
@@ -95,42 +159,42 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
 
   @override
   Widget build(BuildContext context) {
-    final content = _buildReportList(context);
+    final args = ModalRoute.of(context)?.settings.arguments;
+    final initialReportId = widget.initialReportId ?? (args is String ? args : null);
+    final loc = AppLocalizations.of(context)!;
+
+    final content = Container(color: _pal.bg, child: _buildReportList(context, initialReportId));
     if (!widget.wrapped) return content;
 
     return MainScaffold(
       showBack: true,
-      title: const Text('Forensic Reports'),
+      title: Text(loc.reportsTitle),
       body: content,
     );
   }
 
-  Widget _buildReportList(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final text = VFColors.adaptiveText(isDark);
-    final muted = VFColors.adaptiveTextSecondary(isDark);
-    final accent = Theme.of(context).colorScheme.primary;
-
+  Widget _buildReportList(BuildContext context, String? initialReportId) {
+    final loc = AppLocalizations.of(context)!;
     return _uid == null
         ? _buildEmptyState(
             icon: Icons.person_outline_rounded,
-            message: 'User not logged in.',
-            isDark: isDark,
-            muted: muted,
+            message: loc.reportsNotLoggedIn,
           )
         : StreamBuilder<List<VerificationResult>>(
-            stream: ref.watch(verificationRepositoryProvider).getHistoryStream(),
+            stream: ref
+                .watch(verificationRepositoryProvider)
+                .getHistoryStream(),
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
-                return const Center(child: CircularProgressIndicator());
+                return Center(
+                  child: CircularProgressIndicator(color: _Pal.data),
+                );
               }
               if (snapshot.hasError) {
                 return _buildEmptyState(
                   icon: Icons.error_outline_rounded,
-                  message: "Error: ${snapshot.error}",
-                  isDark: isDark,
-                  muted: muted,
-                  iconColor: VFColors.red600,
+                  message: 'Error: ${snapshot.error}',
+                  iconColor: _Pal.manipulated,
                 );
               }
 
@@ -138,63 +202,47 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
               if (reports.isEmpty) {
                 return _buildEmptyState(
                   icon: Icons.folder_open_rounded,
-                  message: 'No reports yet.\nStart an analysis to generate forensic reports.',
-                  isDark: isDark,
-                  muted: muted,
+                  message: loc.reportsNoReports,
                 );
+              }
+
+              if (initialReportId != null &&
+                  _lastNavigatedReportId != initialReportId) {
+                final target = reports.firstWhere(
+                  (r) => r.verificationId == initialReportId,
+                  orElse: () => reports.first,
+                );
+                _lastNavigatedReportId = initialReportId;
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  if (mounted) {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => ReportDetailPage(report: target),
+                      ),
+                    );
+                  }
+                });
               }
 
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
-                    child: Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: accent.withOpacity(0.12),
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: Icon(Icons.description_rounded, color: accent, size: 20),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Forensic History',
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                  color: text,
-                                  height: 1.2,
-                                ),
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                '${reports.length} report${reports.length == 1 ? '' : 's'} stored in database',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: muted,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const Divider(height: 1),
+                  _DashboardHeader(_pal),
                   Expanded(
                     child: ListView.builder(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
                       itemCount: reports.length,
-                      itemBuilder: (ctx, i) =>
-                          _buildReportCard(reports[i], isDark, text, muted, accent),
+                      itemBuilder: (ctx, i) => _ReportCard(
+                        report: reports[i],
+                        onDelete: () async {
+                          final confirmed = await _confirmDelete(reports[i]);
+                          if (confirmed) {
+                            _deleteReport(reports[i].verificationId);
+                          }
+                        },
+                        pal: _pal,
+                      ),
                     ),
                   ),
                 ],
@@ -206,10 +254,9 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
   Widget _buildEmptyState({
     required IconData icon,
     required String message,
-    required bool isDark,
-    required Color muted,
     Color? iconColor,
   }) {
+    final color = iconColor ?? _pal.textSubtle;
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(40),
@@ -217,23 +264,19 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.all(22),
               decoration: BoxDecoration(
-                color: (iconColor ?? muted).withOpacity(0.08),
+                color: color.withValues(alpha:0.08),
                 shape: BoxShape.circle,
               ),
-              child: Icon(
-                icon,
-                size: 40,
-                color: iconColor ?? muted,
-              ),
+              child: Icon(icon, size: 42, color: color),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 22),
             Text(
               message,
               style: TextStyle(
                 fontSize: 14,
-                color: muted,
+                color: _pal.textSecondary,
                 height: 1.6,
               ),
               textAlign: TextAlign.center,
@@ -243,140 +286,241 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
       ),
     );
   }
+}
 
-  Widget _buildReportCard(
-    VerificationResult report,
-    bool isDark,
-    Color text,
-    Color muted,
-    Color accent,
-  ) {
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// Dashboard header with statistics
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+class _DashboardHeader extends StatelessWidget {
+  const _DashboardHeader(this.pal);
+
+  final _Pal pal;
+
+  @override
+  Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context)!;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  loc.reportsHistoryTitle,
+                  style: TextStyle(
+                    fontSize: 21,
+                    fontWeight: FontWeight.w800,
+                    color: pal.textPrimary,
+                    letterSpacing: -0.4,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  loc.reportsHistorySubtitle,
+                  style: TextStyle(
+                    fontSize: 12.5,
+                    color: pal.textSubtle,
+                    height: 1.4,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: pal.dataBg,
+              borderRadius: BorderRadius.circular(11),
+            ),
+            child: const Icon(
+              Icons.description_rounded,
+              color: _Pal.data,
+              size: 20,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// Report card â€” circular confidence ring + stamped verdict
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+class _ReportCard extends StatelessWidget {
+  const _ReportCard({required this.report, required this.onDelete, required this.pal});
+
+  final VerificationResult report;
+  final Future<void> Function() onDelete;
+  final _Pal pal;
+
+  @override
+  Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context)!;
     final isReal = report.verdict.toUpperCase() == 'AUTHENTIC';
-    final statusColor = isReal ? VFColors.emerald600 : VFColors.red600;
-    final statusBg = isReal ? VFColors.emerald50 : VFColors.red50;
-    final statusBgDark = isReal ? VFColors.emerald600.withOpacity(0.15) : VFColors.red600.withOpacity(0.15);
-
-    Widget thumbnailWidget;
-    if (report.thumbnailBase64 != null && report.thumbnailBase64!.isNotEmpty) {
-      try {
-        final bytes = base64Decode(report.thumbnailBase64!);
-        thumbnailWidget = ClipRRect(
-          borderRadius: BorderRadius.circular(10),
-          child: Image.memory(bytes, width: 56, height: 56, fit: BoxFit.cover),
-        );
-      } catch (e) {
-        thumbnailWidget = _buildPlaceholderThumbnail(isReal, statusColor);
-      }
-    } else {
-      thumbnailWidget = _buildPlaceholderThumbnail(isReal, statusColor);
-    }
+    final statusColor = isReal ? _Pal.authentic : _Pal.manipulated;
+    final displayScore = isReal
+        ? report.authenticityScore
+        : report.fakeProbability;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: VFColors.adaptiveCard(isDark),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: isDark ? VFColors.gray800 : VFColors.gray200,
-          width: 1,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: isDark ? Colors.black.withOpacity(0.1) : Colors.black.withOpacity(0.02),
-            blurRadius: 6,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        color: pal.bg,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: pal.border, width: 1),
       ),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(16),
           onTap: () {
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (_) => ReportDetailPage(report: report)),
+              MaterialPageRoute(
+                builder: (_) => ReportDetailPage(report: report),
+              ),
             );
           },
           child: Padding(
             padding: const EdgeInsets.all(14),
             child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                thumbnailWidget,
+                _MiniRing(
+                  value: displayScore,
+                  color: statusColor,
+                  isReal: isReal,
+                  trackColor: pal.surfaceMuted,
+                ),
                 const SizedBox(width: 14),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        report.mediaName ?? 'Forensic Verification',
+                        report.mediaName ?? loc.reportsForensicVerification,
                         style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                          color: text,
+                          fontSize: 14.5,
+                          fontWeight: FontWeight.w700,
+                          color: pal.textPrimary,
                           height: 1.3,
                         ),
-                        maxLines: 1,
+                        maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
                       const SizedBox(height: 8),
                       Row(
                         children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: isDark ? statusBgDark : statusBg,
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: Text(
-                              isReal ? 'AUTHENTIC' : 'MANIPULATED',
-                              style: TextStyle(
-                                fontSize: 9,
-                                fontWeight: FontWeight.w900,
-                                color: statusColor,
-                                letterSpacing: 0.4,
+                          Transform.rotate(
+                            angle: -0.07,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 7,
+                                vertical: 3,
+                              ),
+                              decoration: BoxDecoration(
+                                border: Border.all(
+                                  color: statusColor,
+                                  width: 1.1,
+                                ),
+                                borderRadius: BorderRadius.circular(3),
+                              ),
+                              child: Text(
+                                report.verdict.toUpperCase(),
+                                style: TextStyle(
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.w800,
+                                  letterSpacing: 0.4,
+                                  color: statusColor,
+                                ),
                               ),
                             ),
                           ),
-                          const SizedBox(width: 8),
+                          const SizedBox(width: 7),
                           Text(
-                            isReal 
-                              ? '${report.authenticityScore.toStringAsFixed(1)}% authentic'
-                              : '${report.fakeProbability.toStringAsFixed(1)}% manipulated',
+                            '${displayScore.toStringAsFixed(1)}%',
                             style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                              color: text,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                              fontFamily: _Pal.mono,
+                              color: statusColor,
                             ),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 6),
-                      Text(
-                        DateFormat('MMM dd, yyyy · HH:mm').format(report.verifiedAt),
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: muted,
-                          fontWeight: FontWeight.w500,
-                        ),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                           Icon(
+                             Icons.source_rounded,
+                             size: 12,
+                             color: pal.textSubtle,
+                           ),
+                           const SizedBox(width: 5),
+                           Expanded(
+                             child: Text(
+                               report.source.toUpperCase(),
+                               style: TextStyle(
+                                 fontSize: 10.5,
+                                 color: pal.textSubtle,
+                                 fontWeight: FontWeight.w600,
+                                 letterSpacing: 0.3,
+                               ),
+                               maxLines: 1,
+                               overflow: TextOverflow.ellipsis,
+                             ),
+                           ),
+                           const SizedBox(width: 8),
+                           Icon(
+                             Icons.schedule_rounded,
+                             size: 12,
+                             color: pal.textSubtle,
+                           ),
+                           const SizedBox(width: 5),
+                           Text(
+                             DateFormat(
+                               'MMM dd, yyyy',
+                             ).format(report.verifiedAt),
+                             style: TextStyle(
+                               fontSize: 10.5,
+                               color: pal.textSubtle,
+                               fontFamily: _Pal.mono,
+                             ),
+                           ),
+                        ],
                       ),
                     ],
                   ),
                 ),
-                const SizedBox(width: 8),
-                Row(
-                  mainAxisSize: MainAxisSize.min,
+                const SizedBox(width: 4),
+                Column(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
                     IconButton(
                       visualDensity: VisualDensity.compact,
-                      icon: Icon(Icons.delete_outline_rounded, size: 18, color: muted),
-                      tooltip: 'Delete report',
-                      onPressed: () async {
-                        final confirmed = await _confirmDelete(report);
-                        if (confirmed) _deleteReport(report.verificationId);
-                      },
+                      icon: Icon(
+                        Icons.delete_outline_rounded,
+                        size: 18,
+                        color: pal.textSubtle,
+                      ),
+                      tooltip: loc.reportsDeleteTooltip,
+                      onPressed: onDelete,
                     ),
-                    Icon(Icons.chevron_right_rounded, size: 20, color: muted.withOpacity(0.6)),
+                    Padding(
+                      padding: const EdgeInsets.only(right: 2, bottom: 2),
+                      child: Icon(
+                        Icons.chevron_right_rounded,
+                        size: 20,
+                        color: pal.textSubtle,
+                      ),
+                    ),
                   ],
                 ),
               ],
@@ -386,20 +530,83 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
       ),
     );
   }
+}
 
-  Widget _buildPlaceholderThumbnail(bool isReal, Color statusColor) {
-    return Container(
-      width: 56,
-      height: 56,
-      decoration: BoxDecoration(
-        color: statusColor.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: Icon(
-        isReal ? Icons.verified_user_rounded : Icons.gavel_rounded,
-        color: statusColor,
-        size: 26,
+class _MiniRing extends StatelessWidget {
+  const _MiniRing({
+    required this.value,
+    required this.color,
+    required this.isReal,
+    required this.trackColor,
+  });
+  final double value;
+  final Color color;
+  final bool isReal;
+  final Color trackColor;
+
+  @override
+  Widget build(BuildContext context) {
+    final fraction = (value / 100).clamp(0.0, 1.0);
+    return SizedBox(
+      width: 54,
+      height: 54,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          CustomPaint(
+            size: const Size(54, 54),
+            painter: _MiniRingPainter(fraction: fraction, color: color, trackColor: trackColor),
+          ),
+          Icon(
+            isReal ? Icons.verified_user_rounded : Icons.gavel_rounded,
+            color: color,
+            size: 18,
+          ),
+        ],
       ),
     );
   }
 }
+
+class _MiniRingPainter extends CustomPainter {
+  _MiniRingPainter({required this.fraction, required this.color, required this.trackColor});
+  final double fraction;
+  final Color color;
+  final Color trackColor;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height / 2);
+    final radius = (size.width - 6) / 2;
+    const strokeWidth = 3.5;
+
+    final trackPaint = Paint()
+      ..color = trackColor
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = strokeWidth
+      ..strokeCap = StrokeCap.round;
+
+    final progressPaint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = strokeWidth
+      ..strokeCap = StrokeCap.round;
+
+    canvas.drawCircle(center, radius, trackPaint);
+
+    const startAngle = -math.pi / 2;
+    final sweepAngle = 2 * math.pi * fraction;
+    canvas.drawArc(
+      Rect.fromCircle(center: center, radius: radius),
+      startAngle,
+      sweepAngle,
+      false,
+      progressPaint,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant _MiniRingPainter oldDelegate) =>
+      oldDelegate.fraction != fraction || oldDelegate.color != color;
+}
+

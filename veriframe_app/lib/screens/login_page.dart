@@ -1,9 +1,10 @@
-import 'package:firebase_auth/firebase_auth.dart';
+﻿import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:veriframe_app/service/user_service.dart';
 
 class LoginPage extends StatefulWidget {
   final Future<void> Function(bool isDark) onThemeChanged;
@@ -144,9 +145,14 @@ class _LoginPageState extends State<LoginPage> {
 
       // Only save credentials for email login when remember me is checked
       await _saveOrRemoveCredentials();
-      
+
       _showSuccessSnackBar('Welcome back!');
       if (mounted) {
+        try {
+          await UserService.getCurrentUserData();
+        } catch (e) {
+          debugPrint('Error caching user data: $e');
+        }
         Navigator.pushReplacementNamed(context, '/home');
       }
     } on FirebaseAuthException catch (e) {
@@ -332,7 +338,7 @@ class _LoginPageState extends State<LoginPage> {
                 right: 20,
                 child: Container(
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.2),
+                    color: Colors.white.withValues(alpha:0.2),
                     borderRadius: BorderRadius.circular(25),
                   ),
                   child: IconButton(
@@ -359,10 +365,10 @@ class _LoginPageState extends State<LoginPage> {
                         curve: Curves.easeInOut,
                         child: Card(
                           elevation: 20,
-                          shadowColor: Colors.black.withOpacity(0.3),
+                          shadowColor: Colors.black.withValues(alpha:0.3),
                           color: isDarkMode
-                              ? Colors.grey[900]?.withOpacity(0.95)
-                              : Colors.white.withOpacity(0.95),
+                              ? Colors.grey[900]?.withValues(alpha:0.95)
+                              : Colors.white.withValues(alpha:0.95),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(20),
                           ),
@@ -418,8 +424,8 @@ class _LoginPageState extends State<LoginPage> {
                                       ),
                                       filled: true,
                                       fillColor: isDarkMode 
-                                          ? Colors.grey[850]?.withOpacity(0.8) 
-                                          : Colors.grey[100]?.withOpacity(0.8),
+                                          ? Colors.grey[850]?.withValues(alpha:0.8) 
+                                          : Colors.grey[100]?.withValues(alpha:0.8),
                                       border: OutlineInputBorder(
                                         borderRadius: BorderRadius.circular(12),
                                          borderSide: BorderSide(
@@ -477,8 +483,8 @@ class _LoginPageState extends State<LoginPage> {
                                       ),
                                       filled: true,
                                       fillColor: isDarkMode 
-                                          ? Colors.grey[850]?.withOpacity(0.8) 
-                                          : Colors.grey[100]?.withOpacity(0.8),
+                                          ? Colors.grey[850]?.withValues(alpha:0.8) 
+                                          : Colors.grey[100]?.withValues(alpha:0.8),
                                       border: OutlineInputBorder(
                                         borderRadius: BorderRadius.circular(12),
                                          borderSide: BorderSide(
@@ -587,7 +593,7 @@ class _LoginPageState extends State<LoginPage> {
                                         backgroundColor: const Color(0xFF0D40DA),
                                         foregroundColor: Colors.white,
                                         elevation: 8,
-                                        shadowColor: const Color(0xFF0D40DA).withOpacity(0.4),
+                                        shadowColor: const Color(0xFF0D40DA).withValues(alpha:0.4),
                                         shape: RoundedRectangleBorder(
                                           borderRadius: BorderRadius.circular(12),
                                         ),
@@ -742,8 +748,6 @@ class _LoginPageState extends State<LoginPage> {
 class GoogleIconPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
-    final paint = Paint()..style = PaintingStyle.fill;
-    
     // Google "G" colors
     final redPaint = Paint()..color = const Color(0xFFEA4335);
     final yellowPaint = Paint()..color = const Color(0xFFFBBC05);
@@ -810,5 +814,6 @@ class GoogleIconPainter extends CustomPainter {
   @override
   bool shouldRepaint(CustomPainter oldDelegate) => false;
 }
+
 
 

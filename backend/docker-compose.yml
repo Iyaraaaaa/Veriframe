@@ -1,0 +1,43 @@
+version: "3.8"
+
+services:
+  veriframe-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - MODEL_FALLBACK_PATHS=/app/assets/veriframe_model.tflite
+      - INPUT_SIZE=224,224
+      - TARGET_FRAMES=100
+      - MAX_FRAMES=120
+      - TEMPORAL_WINDOW_SIZE=15
+      - CACHE_ENABLED=true
+      - CACHE_DIR=/app/cache
+      - LOG_LEVEL=INFO
+    volumes:
+      - ./logs:/app/logs
+      - ./cache:/app/cache
+      - ./assets:/app/assets:ro
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  # Optional: Redis for caching and session management
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+    profiles:
+      - full
+
+volumes:
+  redis_data:

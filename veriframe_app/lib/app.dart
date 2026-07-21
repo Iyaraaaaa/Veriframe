@@ -6,13 +6,13 @@ import 'package:veriframe_app/screens/home_page.dart';
 import 'package:veriframe_app/screens/on_bording.dart';
 import 'package:veriframe_app/screens/login_page.dart';
 import 'package:veriframe_app/screens/signup_page.dart';
-import 'package:veriframe_app/forgot_password.dart';
+import 'package:veriframe_app/screens/forgot_password.dart';
 import 'package:veriframe_app/screens/verify.dart';
-import 'package:veriframe_app/screens/about_us.dart';
 import 'package:veriframe_app/screens/contact_us.dart';
 import 'package:veriframe_app/screens/privacy.dart';
 import 'package:veriframe_app/screens/settings_page.dart';
 import 'package:veriframe_app/screens/reports_page.dart';
+import 'package:veriframe_app/screens/technology_stack_page.dart';
 import 'package:veriframe_app/theme/app_theme.dart';
 import 'package:veriframe_app/utils/navigator_key.dart';
 import 'package:veriframe_app/widgets/error_screen.dart';
@@ -71,11 +71,11 @@ class MyApp extends StatelessWidget {
             '/forgot_password': (_) => const ForgetPasswordPage(),
             '/home': (_) => const HomePage(),
             '/analyze': (_) => const VerifyPage(),
-            '/about': (_) => const AboutUsPage(),
             '/privacy': (_) => const PrivacyPage(),
             '/contact': (_) => const ContactUsPage(),
             '/settings': (_) => const SettingsPage(),
             '/reports': (_) => const ReportsPage(),
+            '/tech_stack': (_) => const TechnologyStackPage(),
           },
         ),
       ),

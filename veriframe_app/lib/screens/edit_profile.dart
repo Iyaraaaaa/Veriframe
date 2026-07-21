@@ -1,6 +1,5 @@
 import 'dart:io';
 import 'dart:convert';
-import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -41,7 +40,42 @@ class _EditProfilePageState extends State<EditProfilePage> {
   @override
   void initState() {
     super.initState();
-    _loadProfile();
+    _initializeFromWidget();
+    _refreshProfileInBackground();
+  }
+
+  void _initializeFromWidget() {
+    nameController.text = widget.userName?.trim() ?? _extractNameFromEmail(widget.userEmail);
+    emailController.text = widget.userEmail;
+    _currentImageData = (widget.userImage != null && widget.userImage!.trim().isNotEmpty)
+        ? widget.userImage!.trim()
+        : null;
+    _hasImageError = false;
+  }
+
+  Future<void> _refreshProfileInBackground() async {
+    try {
+      final User? currentUser = FirebaseAuth.instance.currentUser;
+
+      if (currentUser != null) {
+        final DocumentSnapshot userDoc = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(currentUser.uid)
+            .get();
+
+        if (userDoc.exists) {
+          final userData = userDoc.data() as Map<String, dynamic>?;
+          if (userData != null) {
+            _loadNameSafely(userData, currentUser);
+            _loadEmailSafely(userData, currentUser);
+            _loadImageSafely(userData, currentUser);
+            if (mounted) setState(() {});
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint('Background profile refresh error: $e');
+    }
   }
 
   AppLocalizations get loc => AppLocalizations.of(context)!;
@@ -52,47 +86,6 @@ class _EditProfilePageState extends State<EditProfilePage> {
     emailController.dispose();
     passwordController.dispose();
     super.dispose();
-  }
-
-  Future<void> _loadProfile() async {
-    setState(() => _isLoading = true);
-    try {
-      final User? currentUser = FirebaseAuth.instance.currentUser;
-      
-      if (currentUser != null) {
-        // Load from Firebase Firestore first
-        final DocumentSnapshot userDoc = await FirebaseFirestore.instance
-            .collection('users')
-            .doc(currentUser.uid)
-            .get();
-        
-        if (userDoc.exists) {
-          final userData = userDoc.data() as Map<String, dynamic>;
-          
-          // Handle name safely
-          _loadNameSafely(userData, currentUser);
-          
-          // Handle email safely
-          _loadEmailSafely(userData, currentUser);
-          
-          // Handle profile image data safely
-          _loadImageSafely(userData, currentUser);
-        } else {
-          // Use Firebase Auth and widget data if Firestore document doesn't exist
-          _loadFromFirebaseAuthAndWidget(currentUser);
-        }
-      } else {
-        // Use widget data if no current user
-        _loadFromWidget();
-      }
-    } catch (e) {
-      debugPrint('Profile load error: $e');
-      _showErrorSnackbar('Failed to load profile data');
-      // Fallback to widget data
-      _loadFromWidget();
-    } finally {
-      setState(() => _isLoading = false);
-    }
   }
 
   void _loadNameSafely(Map<String, dynamic>? userData, User currentUser) {
@@ -173,53 +166,6 @@ class _EditProfilePageState extends State<EditProfilePage> {
       
     } catch (e) {
       debugPrint('Image loading error: $e');
-      _currentImageData = null;
-      _hasImageError = false;
-    }
-  }
-
-  void _loadFromFirebaseAuthAndWidget(User currentUser) {
-    try {
-      // Handle name safely
-      if (currentUser.displayName != null && currentUser.displayName!.trim().isNotEmpty) {
-        nameController.text = currentUser.displayName!.trim();
-      } else if (widget.userName != null && widget.userName!.trim().isNotEmpty) {
-        nameController.text = widget.userName!.trim();
-      } else {
-        nameController.text = _extractNameFromEmail(currentUser.email ?? widget.userEmail);
-      }
-      
-      // Handle email safely
-      emailController.text = currentUser.email ?? widget.userEmail;
-      
-      // Handle image safely
-      String? imageData;
-      if (currentUser.photoURL != null && currentUser.photoURL!.trim().isNotEmpty) {
-        imageData = currentUser.photoURL!.trim();
-      } else if (widget.userImage != null && widget.userImage!.trim().isNotEmpty) {
-        imageData = widget.userImage!.trim();
-      }
-      
-      _currentImageData = imageData;
-      _hasImageError = false;
-    } catch (e) {
-      debugPrint('Firebase Auth loading error: $e');
-      _loadFromWidget();
-    }
-  }
-
-  void _loadFromWidget() {
-    try {
-      nameController.text = widget.userName?.trim() ?? _extractNameFromEmail(widget.userEmail);
-      emailController.text = widget.userEmail;
-      _currentImageData = (widget.userImage != null && widget.userImage!.trim().isNotEmpty) 
-          ? widget.userImage!.trim() 
-          : null;
-      _hasImageError = false;
-    } catch (e) {
-      debugPrint('Widget loading error: $e');
-      nameController.text = _extractNameFromEmail(widget.userEmail);
-      emailController.text = widget.userEmail;
       _currentImageData = null;
       _hasImageError = false;
     }
@@ -453,20 +399,18 @@ class _EditProfilePageState extends State<EditProfilePage> {
     return MainScaffold(
       showBack: true,
       title: Text(loc.editProfile),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : SingleChildScrollView(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                children: [
-                  _buildProfileImage(isDark),
-                  const SizedBox(height: 25),
-                  _buildFormFields(isDark),
-                  const SizedBox(height: 30),
-                  _buildSaveButton(isDark),
-                ],
-              ),
-            ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          children: [
+            _buildProfileImage(isDark),
+            const SizedBox(height: 25),
+            _buildFormFields(isDark),
+            const SizedBox(height: 30),
+            _buildSaveButton(isDark),
+          ],
+        ),
+      ),
     );
   }
 

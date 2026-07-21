@@ -2,10 +2,10 @@ import 'dart:convert';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:veriframe_app/screens/about_us.dart';
 import 'package:veriframe_app/screens/contact_us.dart';
-import 'package:veriframe_app/screens/notifications.dart';
+import 'package:veriframe_app/screens/notifications.dart' as notif_screen;
 import 'package:veriframe_app/screens/privacy.dart';
+import 'package:veriframe_app/screens/about_us.dart';
 import 'package:veriframe_app/screens/delete_account.dart';
 import 'package:veriframe_app/screens/edit_profile.dart';
 import 'package:veriframe_app/screens/reports_page.dart';
@@ -39,7 +39,6 @@ class _HomePageState extends State<HomePage> {
     super.initState();
     _loadCachedUserData();
     _loadUserData();
-    // Initialize local notification plugin so it can fire after verifications
     NotificationService.instance.init();
   }
 
@@ -116,6 +115,10 @@ class _HomePageState extends State<HomePage> {
       if (mounted) {
         setState(() {});
       }
+      final uid = FirebaseAuth.instance.currentUser?.uid;
+      if (uid != null) {
+        NotificationService.instance.refreshBadge(uid);
+      }
     }
   }
 
@@ -166,10 +169,16 @@ class _HomePageState extends State<HomePage> {
 
   void _navigateToAnalyze() => Navigator.pushNamed(context, '/analyze');
 
-  void _openNotifications() => Navigator.push(
-    context,
-    MaterialPageRoute(builder: (_) => const NotificationsPage()),
-  );
+  Future<void> _openNotifications() async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const notif_screen.NotificationsPage()),
+    );
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid != null) {
+      NotificationService.instance.refreshBadge(uid);
+    }
+  }
 
   void _openEditProfile() async {
     final result = await Navigator.push(
@@ -312,10 +321,11 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildStatsStrip(bool isDark, Color text, Color muted) {
+    final loc = AppLocalizations.of(context)!;
     final stats = [
-      (Icons.auto_awesome, 'AI Models', 'EfficientViT'),
-      (Icons.speed, 'Real-time', 'Live analysis'),
-      (Icons.verified_user, 'Forensic', 'Evidence reports'),
+      (Icons.auto_awesome, loc.homeStatsAiModels, 'EfficientViT'),
+      (Icons.speed, loc.homeStatsRealtime, loc.homeStatsLiveAnalysis),
+      (Icons.verified_user, loc.homeStatsForensic, loc.homeStatsEvidenceReports),
     ];
     final divider = Container(
       width: 1,
@@ -451,6 +461,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildFooter(Color text, Color muted) {
+    final loc = AppLocalizations.of(context)!;
     return Column(
       children: [
         Row(
@@ -471,13 +482,13 @@ class _HomePageState extends State<HomePage> {
         ),
         const SizedBox(height: 8),
         Text(
-          'Media forensics for a trustworthy internet.',
+          loc.homeFooterTagline,
           style: TextStyle(fontSize: 12, color: muted),
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: 4),
         Text(
-          '© ${DateTime.now().year} VeriFrame. All rights reserved.',
+          loc.homeCopyright(DateTime.now().year),
           style: TextStyle(fontSize: 11, color: muted),
           textAlign: TextAlign.center,
         ),
@@ -716,7 +727,7 @@ class _HomePageState extends State<HomePage> {
             BottomNavigationBarItem(
               icon: const Icon(Icons.description_outlined),
               activeIcon: const Icon(Icons.description),
-              label: 'Report',
+              label: loc.reportTab,
             ),
           ],
           currentIndex: _selectedIndex,
@@ -788,18 +799,18 @@ class _HomePageState extends State<HomePage> {
 
           const SizedBox(height: 4),
 
-          // Reports, Privacy, About Us, Contact Us
+          // About Us, Privacy, Contact Us
+          _buildDrawerItem(
+            Icons.info_outlined,
+            loc.aboutUs,
+            VFColors.blue600,
+            const AboutUsPage(),
+          ),
           _buildDrawerItem(
             Icons.privacy_tip_outlined,
             loc.privacy,
             VFColors.emerald600,
             const PrivacyPage(),
-          ),
-          _buildDrawerItem(
-            Icons.info_outline,
-            loc.aboutUs,
-            VFColors.blue600,
-            const AboutUsPage(),
           ),
           _buildDrawerItem(
             Icons.phone_outlined,
@@ -830,10 +841,7 @@ class _HomePageState extends State<HomePage> {
               Navigator.pop(context);
               showDialog(
                 context: context,
-                builder: (_) => DeleteAccountDialog(
-                  onConfirm: () =>
-                      Navigator.pushReplacementNamed(context, '/welcome'),
-                ),
+                builder: (_) => const DeleteAccountDialog(),
               );
             },
           ),

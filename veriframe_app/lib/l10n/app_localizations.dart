@@ -406,6 +406,12 @@ abstract class AppLocalizations {
   /// **'Home'**
   String get home;
 
+  /// No description provided for @reportTab.
+  ///
+  /// In en, this message translates to:
+  /// **'Report'**
+  String get reportTab;
+
   /// No description provided for @affirmation.
   ///
   /// In en, this message translates to:
@@ -2794,6 +2800,390 @@ abstract class AppLocalizations {
   /// **'Enter video URL...'**
   String get verifyEnterVideoUrl;
 
+  /// No description provided for @verifyNoCameras.
+  ///
+  /// In en, this message translates to:
+  /// **'No cameras available on this device.'**
+  String get verifyNoCameras;
+
+  /// No description provided for @verifyCameraError.
+  ///
+  /// In en, this message translates to:
+  /// **'Camera error: {error}'**
+  String verifyCameraError(Object error);
+
+  /// No description provided for @verifyUnsupportedFormat.
+  ///
+  /// In en, this message translates to:
+  /// **'Unsupported video format. Please use MP4, MOV, MKV, or AVI.'**
+  String get verifyUnsupportedFormat;
+
+  /// No description provided for @verifyConnectingServer.
+  ///
+  /// In en, this message translates to:
+  /// **'Connecting to forensic server...'**
+  String get verifyConnectingServer;
+
+  /// No description provided for @verifyBackendOffline.
+  ///
+  /// In en, this message translates to:
+  /// **'Backend offline — switching to on-device analysis.'**
+  String get verifyBackendOffline;
+
+  /// No description provided for @verifyUploadingFile.
+  ///
+  /// In en, this message translates to:
+  /// **'Uploading video file...'**
+  String get verifyUploadingFile;
+
+  /// No description provided for @verifyUploadingProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'Uploading... {percent}%'**
+  String verifyUploadingProgress(Object percent);
+
+  /// No description provided for @verifyAggregatingPredictions.
+  ///
+  /// In en, this message translates to:
+  /// **'Aggregating predictions...'**
+  String get verifyAggregatingPredictions;
+
+  /// No description provided for @verifyOfflineModelFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Offline model failed: {error}'**
+  String verifyOfflineModelFailed(Object error);
+
+  /// No description provided for @verifyModelLoading.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading model...'**
+  String get verifyModelLoading;
+
+  /// No description provided for @verifyValidatingFile.
+  ///
+  /// In en, this message translates to:
+  /// **'Validating file...'**
+  String get verifyValidatingFile;
+
+  /// No description provided for @verifyExtractingFrames.
+  ///
+  /// In en, this message translates to:
+  /// **'Extracting frames...'**
+  String get verifyExtractingFrames;
+
+  /// No description provided for @verifyAnalyzingFrame.
+  ///
+  /// In en, this message translates to:
+  /// **'Analyzing frame {current} of {total}...'**
+  String verifyAnalyzingFrame(Object current, Object total);
+
+  /// No description provided for @verifyDetectingRegions.
+  ///
+  /// In en, this message translates to:
+  /// **'Detecting facial regions...'**
+  String get verifyDetectingRegions;
+
+  /// No description provided for @verifyPreparingTensors.
+  ///
+  /// In en, this message translates to:
+  /// **'Preparing tensors...'**
+  String get verifyPreparingTensors;
+
+  /// No description provided for @verifyRunningInference.
+  ///
+  /// In en, this message translates to:
+  /// **'Running inference...'**
+  String get verifyRunningInference;
+
+  /// No description provided for @verifyInferenceFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Inference failed. Please try again.'**
+  String get verifyInferenceFailed;
+
+  /// No description provided for @verifyPleasePasteUrl.
+  ///
+  /// In en, this message translates to:
+  /// **'Please paste a video URL first.'**
+  String get verifyPleasePasteUrl;
+
+  /// No description provided for @verifyDownloadingVideo.
+  ///
+  /// In en, this message translates to:
+  /// **'Downloading video...'**
+  String get verifyDownloadingVideo;
+
+  /// No description provided for @verifyFeatureUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Feature unavailable while offline.'**
+  String get verifyFeatureUnavailable;
+
+  /// No description provided for @verifyPollingTimeout.
+  ///
+  /// In en, this message translates to:
+  /// **'Analysis timed out. Please try again.'**
+  String get verifyPollingTimeout;
+
+  /// No description provided for @verifyEnterStreamUrl.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter a stream URL first.'**
+  String get verifyEnterStreamUrl;
+
+  /// No description provided for @verifyCompilingSessionReport.
+  ///
+  /// In en, this message translates to:
+  /// **'Compiling session report...'**
+  String get verifyCompilingSessionReport;
+
+  /// No description provided for @verifyLocalReportExplanation.
+  ///
+  /// In en, this message translates to:
+  /// **'Analyzed {frames} frames with {score}% average confidence.'**
+  String verifyLocalReportExplanation(Object frames, Object score);
+
+  /// No description provided for @verifyAuthError.
+  ///
+  /// In en, this message translates to:
+  /// **'You must be signed in to verify media.'**
+  String get verifyAuthError;
+
+  /// No description provided for @verifyCompilingForensicReport.
+  ///
+  /// In en, this message translates to:
+  /// **'Compiling forensic report...'**
+  String get verifyCompilingForensicReport;
+
+  /// No description provided for @verifyNotificationTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Verification Complete'**
+  String get verifyNotificationTitle;
+
+  /// No description provided for @verifyNotificationTitleBranded.
+  ///
+  /// In en, this message translates to:
+  /// **'VeriFrame Verification Complete'**
+  String get verifyNotificationTitleBranded;
+
+  /// No description provided for @verifyCompleteTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Analysis Complete'**
+  String get verifyCompleteTitle;
+
+  /// No description provided for @verifyVerdictLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'VERDICT'**
+  String get verifyVerdictLabel;
+
+  /// No description provided for @verifyAuthenticityLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'AUTHENTICITY'**
+  String get verifyAuthenticityLabel;
+
+  /// No description provided for @verifyManipulationLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'MANIPULATION'**
+  String get verifyManipulationLabel;
+
+  /// No description provided for @verifyConfidenceLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'CONFIDENCE'**
+  String get verifyConfidenceLabel;
+
+  /// No description provided for @verifyRiskLevelLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'RISK LEVEL'**
+  String get verifyRiskLevelLabel;
+
+  /// No description provided for @verifyVerifiedAtLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'VERIFIED AT'**
+  String get verifyVerifiedAtLabel;
+
+  /// No description provided for @verifyViewHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'View History'**
+  String get verifyViewHistory;
+
+  /// No description provided for @verifyDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Done'**
+  String get verifyDone;
+
+  /// No description provided for @verifyGeneratingPdf.
+  ///
+  /// In en, this message translates to:
+  /// **'Generating PDF report...'**
+  String get verifyGeneratingPdf;
+
+  /// No description provided for @verifyPdfFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to generate PDF: {error}'**
+  String verifyPdfFailed(Object error);
+
+  /// No description provided for @verifyLinkCopied.
+  ///
+  /// In en, this message translates to:
+  /// **'Report link copied to clipboard.'**
+  String get verifyLinkCopied;
+
+  /// No description provided for @reportErrorOpeningPdf.
+  ///
+  /// In en, this message translates to:
+  /// **'Error opening PDF: {error}'**
+  String reportErrorOpeningPdf(Object error);
+
+  /// No description provided for @reportIdCopied.
+  ///
+  /// In en, this message translates to:
+  /// **'Report ID copied: {id}'**
+  String reportIdCopied(Object id);
+
+  /// No description provided for @reportCopyId.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy report ID'**
+  String get reportCopyId;
+
+  /// No description provided for @verifyEscalationFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Escalation failed: {error}'**
+  String verifyEscalationFailed(Object error);
+
+  /// No description provided for @verifyAnalyzeStream.
+  ///
+  /// In en, this message translates to:
+  /// **'Analyze Stream'**
+  String get verifyAnalyzeStream;
+
+  /// No description provided for @verifyCancelScan.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel Scan'**
+  String get verifyCancelScan;
+
+  /// No description provided for @verifyStepFormatValidation.
+  ///
+  /// In en, this message translates to:
+  /// **'Format Validation'**
+  String get verifyStepFormatValidation;
+
+  /// No description provided for @verifyStepFrameExtraction.
+  ///
+  /// In en, this message translates to:
+  /// **'Frame Extraction'**
+  String get verifyStepFrameExtraction;
+
+  /// No description provided for @verifyStepFaceDetection.
+  ///
+  /// In en, this message translates to:
+  /// **'Face Detection'**
+  String get verifyStepFaceDetection;
+
+  /// No description provided for @verifyStepModelInference.
+  ///
+  /// In en, this message translates to:
+  /// **'Model Inference'**
+  String get verifyStepModelInference;
+
+  /// No description provided for @verifyStepGeneratingReasoning.
+  ///
+  /// In en, this message translates to:
+  /// **'Generating Reasoning'**
+  String get verifyStepGeneratingReasoning;
+
+  /// No description provided for @verifyStepGeneratingPdf.
+  ///
+  /// In en, this message translates to:
+  /// **'Generating PDF'**
+  String get verifyStepGeneratingPdf;
+
+  /// No description provided for @verifyStepSendingNotification.
+  ///
+  /// In en, this message translates to:
+  /// **'Sending Notification'**
+  String get verifyStepSendingNotification;
+
+  /// No description provided for @verifyStepCompleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Completed'**
+  String get verifyStepCompleted;
+
+  /// No description provided for @verifyLinkStepRequestInitiated.
+  ///
+  /// In en, this message translates to:
+  /// **'Request Initiated'**
+  String get verifyLinkStepRequestInitiated;
+
+  /// No description provided for @verifyLinkStepDownloading.
+  ///
+  /// In en, this message translates to:
+  /// **'Downloading'**
+  String get verifyLinkStepDownloading;
+
+  /// No description provided for @verifyLinkStepExtracting.
+  ///
+  /// In en, this message translates to:
+  /// **'Extracting Frames'**
+  String get verifyLinkStepExtracting;
+
+  /// No description provided for @verifyLinkStepDetecting.
+  ///
+  /// In en, this message translates to:
+  /// **'Detecting Faces'**
+  String get verifyLinkStepDetecting;
+
+  /// No description provided for @verifyLinkStepInference.
+  ///
+  /// In en, this message translates to:
+  /// **'Running Inference'**
+  String get verifyLinkStepInference;
+
+  /// No description provided for @verifyConnectingLiveStream.
+  ///
+  /// In en, this message translates to:
+  /// **'Connecting to live stream...'**
+  String get verifyConnectingLiveStream;
+
+  /// No description provided for @verifyFpsFrames.
+  ///
+  /// In en, this message translates to:
+  /// **'{fps} FPS · {frames} frames'**
+  String verifyFpsFrames(Object fps, Object frames);
+
+  /// No description provided for @verifyCurrentProbability.
+  ///
+  /// In en, this message translates to:
+  /// **'Current Probability'**
+  String get verifyCurrentProbability;
+
+  /// No description provided for @verifyProbabilityGraph.
+  ///
+  /// In en, this message translates to:
+  /// **'Probability Graph'**
+  String get verifyProbabilityGraph;
+
+  /// No description provided for @verifyLandmarkMap.
+  ///
+  /// In en, this message translates to:
+  /// **'Landmark map: {count} points'**
+  String verifyLandmarkMap(Object count);
+
   /// No description provided for @deleteAccountTitle.
   ///
   /// In en, this message translates to:
@@ -2811,6 +3201,192 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Delete Permanently'**
   String get deletePermanently;
+
+  /// No description provided for @homeStatsAiModels.
+  ///
+  /// In en, this message translates to:
+  /// **'AI Models'**
+  String get homeStatsAiModels;
+
+  /// No description provided for @homeStatsRealtime.
+  ///
+  /// In en, this message translates to:
+  /// **'Real-time'**
+  String get homeStatsRealtime;
+
+  /// No description provided for @homeStatsLiveAnalysis.
+  ///
+  /// In en, this message translates to:
+  /// **'Live analysis'**
+  String get homeStatsLiveAnalysis;
+
+  /// No description provided for @homeStatsForensic.
+  ///
+  /// In en, this message translates to:
+  /// **'Forensic'**
+  String get homeStatsForensic;
+
+  /// No description provided for @homeStatsEvidenceReports.
+  ///
+  /// In en, this message translates to:
+  /// **'Evidence reports'**
+  String get homeStatsEvidenceReports;
+
+  /// No description provided for @homeFooterTagline.
+  ///
+  /// In en, this message translates to:
+  /// **'Media forensics for a trustworthy internet.'**
+  String get homeFooterTagline;
+
+  /// No description provided for @homeCopyright.
+  ///
+  /// In en, this message translates to:
+  /// **'© {year} VeriFrame. All rights reserved.'**
+  String homeCopyright(Object year);
+
+  /// No description provided for @verifyBackendServerTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Configure Backend Server'**
+  String get verifyBackendServerTitle;
+
+  /// No description provided for @verifyBackendUrlHint.
+  ///
+  /// In en, this message translates to:
+  /// **'http://192.168.1.100:8000'**
+  String get verifyBackendUrlHint;
+
+  /// No description provided for @verifyBackendHelper.
+  ///
+  /// In en, this message translates to:
+  /// **'Specify host base address (use LAN IP on physical phones)'**
+  String get verifyBackendHelper;
+
+  /// No description provided for @notificationsMarkAllRead.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark all read ({count})'**
+  String notificationsMarkAllRead(Object count);
+
+  /// No description provided for @notificationsDeleteTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete notification?'**
+  String get notificationsDeleteTitle;
+
+  /// No description provided for @notificationsDeleteMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'This notification will be permanently removed.'**
+  String get notificationsDeleteMessage;
+
+  /// No description provided for @notificationsDeleteConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get notificationsDeleteConfirm;
+
+  /// No description provided for @notificationsNotLoggedIn.
+  ///
+  /// In en, this message translates to:
+  /// **'User not logged in.'**
+  String get notificationsNotLoggedIn;
+
+  /// No description provided for @notificationsError.
+  ///
+  /// In en, this message translates to:
+  /// **'Error: {error}'**
+  String notificationsError(Object error);
+
+  /// No description provided for @accountDeleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Your account has been deleted successfully.'**
+  String get accountDeleted;
+
+  /// No description provided for @reportsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Forensic reports'**
+  String get reportsTitle;
+
+  /// No description provided for @reportsHistoryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Video history'**
+  String get reportsHistoryTitle;
+
+  /// No description provided for @reportsHistorySubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Secure history of all completed media verification analyses.'**
+  String get reportsHistorySubtitle;
+
+  /// No description provided for @reportsNotLoggedIn.
+  ///
+  /// In en, this message translates to:
+  /// **'User not logged in.'**
+  String get reportsNotLoggedIn;
+
+  /// No description provided for @reportsNoReports.
+  ///
+  /// In en, this message translates to:
+  /// **'No reports yet\nYour completed forensic analyses will appear here once a verification has finished.'**
+  String get reportsNoReports;
+
+  /// No description provided for @reportsForensicVerification.
+  ///
+  /// In en, this message translates to:
+  /// **'Forensic verification'**
+  String get reportsForensicVerification;
+
+  /// No description provided for @reportsDeleteTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete report'**
+  String get reportsDeleteTitle;
+
+  /// No description provided for @reportsDeleteMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Permanently remove \"{name}\"? This action cannot be undone.'**
+  String reportsDeleteMessage(Object name);
+
+  /// No description provided for @reportsDeleteConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get reportsDeleteConfirm;
+
+  /// No description provided for @reportsDeleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Report deleted'**
+  String get reportsDeleted;
+
+  /// No description provided for @reportsDeleteFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t delete report: {error}'**
+  String reportsDeleteFailed(Object error);
+
+  /// No description provided for @reportsDeleteTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete report'**
+  String get reportsDeleteTooltip;
+
+  /// No description provided for @techStackTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Technology Stack'**
+  String get techStackTitle;
+
+  /// No description provided for @techStackSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'The technologies powering VeriFrame\'s forensic deepfake detection platform.'**
+  String get techStackSubtitle;
 }
 
 class _AppLocalizationsDelegate

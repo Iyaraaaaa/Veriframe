@@ -1,4 +1,4 @@
-import 'dart:io';
+﻿import 'dart:io';
 
 void main() {
   final file = File(r'D:\VERI_FRAME\veriframe_app\lib\screens\home_page.dart');
@@ -14,7 +14,6 @@ void main() {
 
   // Add TextEditingControllers to _HomePageState
   if (!content.contains('final TextEditingController _linkController = TextEditingController();')) {
-    final stateStart = content.indexOf('class _HomePageState extends State<HomePage> {');
     content = content.replaceFirst('class _HomePageState extends State<HomePage> {', '''class _HomePageState extends State<HomePage> {
   final TextEditingController _linkController = TextEditingController();
   final TextEditingController _streamController = TextEditingController();
@@ -36,7 +35,7 @@ void main() {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ── Profile row ──
+          // â”€â”€ Profile row â”€â”€
           Row(
             children: [
               Stack(
@@ -91,9 +90,9 @@ void main() {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: VFColors.emerald600.withOpacity(0.1),
+                  color: VFColors.emerald600.withValues(alpha:0.1),
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: VFColors.emerald600.withOpacity(0.3)),
+                  border: Border.all(color: VFColors.emerald600.withValues(alpha:0.3)),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
@@ -122,7 +121,7 @@ void main() {
           ),
           const SizedBox(height: 32),
 
-          // ── Hero Section ──
+          // â”€â”€ Hero Section â”€â”€
           Center(
             child: Column(
               children: [
@@ -171,7 +170,7 @@ void main() {
           ),
           const SizedBox(height: 32),
 
-          // ── Features Cards ──
+          // â”€â”€ Features Cards â”€â”€
           Text(
             'Features',
             style: TextStyle(
@@ -199,7 +198,7 @@ void main() {
           ),
           const SizedBox(height: 32),
 
-          // ── How It Works ──
+          // â”€â”€ How It Works â”€â”€
           Text(
             'How It Works',
             style: TextStyle(
@@ -216,9 +215,9 @@ void main() {
     );
   }
 
-  // ══════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
   //  VERIFY CONTENT
-  // ══════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
   Widget _buildVerifyContent() {
     final isDark = widget.isDarkMode;
     final cardBg = VFColors.adaptiveCard(isDark);
@@ -443,7 +442,7 @@ void main() {
         border: Border.all(color: isDark ? VFColors.gray800 : VFColors.gray200),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha:0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           )
@@ -457,7 +456,7 @@ void main() {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: VFColors.blue600.withOpacity(0.1),
+                  color: VFColors.blue600.withValues(alpha:0.1),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Icon(icon, color: VFColors.blue600, size: 24),
@@ -505,7 +504,7 @@ void main() {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: VFColors.blue600.withOpacity(0.1),
+              color: VFColors.blue600.withValues(alpha:0.1),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(icon, color: VFColors.blue600, size: 20),
@@ -576,7 +575,7 @@ void main() {
                       Expanded(
                         child: Container(
                           width: 2,
-                          color: VFColors.blue600.withOpacity(0.3),
+                          color: VFColors.blue600.withValues(alpha:0.3),
                         ),
                       ),
                   ],
@@ -625,3 +624,4 @@ void main() {
     print('Pattern not matched');
   }
 }
+

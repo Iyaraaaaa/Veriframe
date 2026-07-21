@@ -1,4 +1,4 @@
-import 'package:firebase_auth/firebase_auth.dart';
+﻿import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 class ForgetPasswordPage extends StatefulWidget {
@@ -47,7 +47,7 @@ class _ForgetPasswordPageState extends State<ForgetPasswordPage> {
       // Optional: Navigate back to login after successful reset
       Future.delayed(const Duration(seconds: 2), () {
         if (mounted) {
-          Navigator.pushReplacementNamed(context, '/login_page');
+          Navigator.pushReplacementNamed(context, '/login');
         }
       });
     } on FirebaseAuthException catch (e) {
@@ -124,7 +124,7 @@ class _ForgetPasswordPageState extends State<ForgetPasswordPage> {
                 right: 20,
                 child: Container(
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.2),
+                    color: Colors.white.withValues(alpha:0.2),
                     borderRadius: BorderRadius.circular(25),
                   ),
                   child: IconButton(
@@ -152,10 +152,10 @@ class _ForgetPasswordPageState extends State<ForgetPasswordPage> {
                         curve: Curves.easeInOut,
                         child: Card(
                           elevation: 20,
-                          shadowColor: Colors.black.withOpacity(0.3),
+                          shadowColor: Colors.black.withValues(alpha:0.3),
                           color: isDarkMode
-                              ? Colors.grey[900]?.withOpacity(0.95)
-                              : Colors.white.withOpacity(0.95),
+                              ? Colors.grey[900]?.withValues(alpha:0.95)
+                              : Colors.white.withValues(alpha:0.95),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(20),
                           ),
@@ -212,7 +212,7 @@ class _ForgetPasswordPageState extends State<ForgetPasswordPage> {
                                         backgroundColor: const Color(0xFF0D40DA),
                                         foregroundColor: Colors.white,
                                         elevation: 8,
-                                        shadowColor: const Color(0xFF0D40DA).withOpacity(0.4),
+                                        shadowColor: const Color(0xFF0D40DA).withValues(alpha:0.4),
                                         shape: RoundedRectangleBorder(
                                           borderRadius: BorderRadius.circular(12),
                                         ),
@@ -339,8 +339,8 @@ class _ForgetPasswordPageState extends State<ForgetPasswordPage> {
         ),
         filled: true,
         fillColor: isDarkMode 
-            ? Colors.grey[850]?.withOpacity(0.8) 
-            : Colors.grey[100]?.withOpacity(0.8),
+            ? Colors.grey[850]?.withValues(alpha:0.8) 
+            : Colors.grey[100]?.withValues(alpha:0.8),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(
@@ -377,5 +377,6 @@ class _ForgetPasswordPageState extends State<ForgetPasswordPage> {
     );
   }
 }
+
 
 

@@ -1,5 +1,5 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:veriframe_app/models/notification_model.dart';
 import 'package:veriframe_app/service/notification_service.dart';
 import 'package:veriframe_app/utils/theme.dart';
@@ -16,8 +16,17 @@ class NotificationsPage extends StatefulWidget {
 
 class _NotificationsPageState extends State<NotificationsPage> {
   final String? _uid = FirebaseAuth.instance.currentUser?.uid;
-  final Set<String> _removedNotificationIds = {};
-  bool _isNavigating = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _markAllAsReadOnOpen();
+  }
+
+  Future<void> _markAllAsReadOnOpen() async {
+    if (_uid == null) return;
+    await NotificationService.instance.markAllAsRead(_uid);
+  }
 
   String _formatTimeAgo(DateTime dateTime) {
     final now = DateTime.now();
@@ -36,48 +45,22 @@ class _NotificationsPageState extends State<NotificationsPage> {
     }
   }
 
-  Future<void> _handleNotificationTap(NotificationModel notification) async {
-    if (_uid == null || _isNavigating) return;
-
-    setState(() => _isNavigating = true);
-
-    try {
-      await NotificationService.instance.markAsRead(_uid!, notification.id);
-      if (mounted) {
-        Navigator.pushNamed(context, '/reports');
-      }
-    } catch (e) {
-      debugPrint('[NotificationsPage] Error tapping notification: $e');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text("Unable to open notification: ${e.toString()}"),
-            backgroundColor: VFColors.red600,
-          ),
-        );
-      }
-    } finally {
-      if (mounted) setState(() => _isNavigating = false);
-    }
-  }
-
   Future<void> _markAllAsRead() async {
     if (_uid == null) return;
-    await NotificationService.instance.markAllAsRead(_uid!);
+    await NotificationService.instance.markAllAsRead(_uid);
   }
 
-  Future<void> _removeNotification(String id) async {
-    setState(() {
-      _removedNotificationIds.add(id);
-    });
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Notification removed"),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-    }
+  Future<void> _removeNotification(
+    String id,
+    NotificationModel notification,
+  ) async {
+    if (_uid == null) return;
+    await NotificationService.instance.deleteNotification(_uid, id);
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
   }
 
   @override
@@ -92,15 +75,18 @@ class _NotificationsPageState extends State<NotificationsPage> {
       showBack: true,
       title: Row(
         children: [
-          Icon(Icons.notifications_outlined, size: 20, color: text),
-          const SizedBox(width: 10),
-          Text(loc.notifications),
+          Icon(Icons.notifications_outlined, size: 18, color: text),
+          const SizedBox(width: 8),
+          Text(
+            loc.notifications,
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+          ),
         ],
       ),
       extraActions: [
         StreamBuilder<int>(
           stream: _uid != null
-              ? NotificationService.instance.getUnreadCountStream(_uid!)
+              ? NotificationService.instance.getUnreadCountStream(_uid)
               : const Stream.empty(),
           builder: (context, snapshot) {
             final count = snapshot.data ?? 0;
@@ -111,10 +97,10 @@ class _NotificationsPageState extends State<NotificationsPage> {
                 foregroundColor: accent,
                 textStyle: const TextStyle(
                   fontSize: 13,
-                  fontWeight: FontWeight.bold,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
-              child: const Text('Mark all read'),
+              child: Text(loc.notificationsMarkAllRead(count > 99 ? '99+' : count.toString())),
             );
           },
         ),
@@ -122,7 +108,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
       body: _uid == null
           ? Center(
               child: Text(
-                "User not logged in.",
+                loc.notificationsNotLoggedIn,
                 style: TextStyle(color: muted),
               ),
             )
@@ -134,7 +120,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
                     children: [
                       StreamBuilder<List<NotificationModel>>(
                         stream: NotificationService.instance
-                            .getNotificationsStream(_uid!),
+                            .getNotificationsStream(_uid),
                         builder: (context, snapshot) {
                           if (snapshot.connectionState ==
                               ConnectionState.waiting) {
@@ -145,14 +131,12 @@ class _NotificationsPageState extends State<NotificationsPage> {
                           if (snapshot.hasError) {
                             return Center(
                               child: Text(
-                                "Error: ${snapshot.error}",
+                                loc.notificationsError(snapshot.error.toString()),
                                 style: TextStyle(color: text),
                               ),
                             );
                           }
-                          final notifications = snapshot.data!
-                              .where((n) => !_removedNotificationIds.contains(n.id))
-                              .toList();
+                          final notifications = snapshot.data ?? [];
                           if (notifications.isEmpty) {
                             return _buildEmptyState(isDark, text, muted);
                           }
@@ -160,22 +144,21 @@ class _NotificationsPageState extends State<NotificationsPage> {
                           return ListView.separated(
                             itemCount: notifications.length,
                             padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
-                            separatorBuilder: (_, __) =>
-                                const SizedBox(height: 12),
+                            separatorBuilder: (_, _) =>
+                                const SizedBox(height: 10),
                             itemBuilder: (context, index) {
                               final notif = notifications[index];
-                              return _buildNotificationTile(notif, isDark, text, muted, accent);
+                              return _buildNotificationTile(
+                                notif,
+                                isDark,
+                                text,
+                                muted,
+                                accent,
+                              );
                             },
                           );
                         },
                       ),
-                      if (_isNavigating)
-                        Container(
-                          color: Colors.black.withOpacity(0.4),
-                          child: const Center(
-                            child: CircularProgressIndicator(),
-                          ),
-                        ),
                     ],
                   ),
                 ),
@@ -200,37 +183,62 @@ class _NotificationsPageState extends State<NotificationsPage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           StreamBuilder<int>(
-            stream: NotificationService.instance.getUnreadCountStream(_uid!),
+            stream: _uid != null
+                ? NotificationService.instance.getUnreadCountStream(_uid)
+                : const Stream.empty(),
             builder: (context, snapshot) {
               final unread = snapshot.data ?? 0;
               return Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Container(
-                    width: 8,
-                    height: 8,
-                    decoration: BoxDecoration(
-                      color: unread > 0 ? VFColors.blue600 : Colors.grey,
-                      shape: BoxShape.circle,
-                    ),
+                  Row(
+                    children: [
+                      if (unread > 0)
+                        Container(
+                          width: 8,
+                          height: 8,
+                          decoration: BoxDecoration(
+                            color: VFColors.blue600,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                      if (unread > 0) const SizedBox(width: 8),
+                      Text(
+                        'Notifications',
+                        style: TextStyle(
+                          color: text,
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(width: 8),
-                  Text(
-                    unread > 0
-                        ? '$unread pending verification update${unread > 1 ? 's' : ''}'
-                        : "No unread alerts",
-                    style: TextStyle(
-                      color: text,
-                      fontSize: 13,
-                      fontWeight: FontWeight.bold,
+                  if (unread > 0)
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 3,
+                      ),
+                      decoration: BoxDecoration(
+                        color: VFColors.blue600.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        unread > 99 ? '99+' : '$unread',
+                        style: TextStyle(
+                          color: VFColors.blue600,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
                     ),
-                  ),
                 ],
               );
             },
           ),
           const SizedBox(height: 6),
           Text(
-            "Review history of digital verification scan logs below.",
+            "Stay updated with your verification results.",
             style: TextStyle(color: muted, fontSize: 12, height: 1.4),
           ),
         ],
@@ -246,9 +254,9 @@ class _NotificationsPageState extends State<NotificationsPage> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
-              padding: const EdgeInsets.all(24),
+              padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: muted.withOpacity(0.08),
+                color: muted.withValues(alpha: 0.08),
                 shape: BoxShape.circle,
               ),
               child: Icon(
@@ -259,16 +267,16 @@ class _NotificationsPageState extends State<NotificationsPage> {
             ),
             const SizedBox(height: 20),
             Text(
-              "All caught up!",
+              "No Notifications",
               style: TextStyle(
                 color: text,
                 fontSize: 16,
-                fontWeight: FontWeight.bold,
+                fontWeight: FontWeight.w700,
               ),
             ),
             const SizedBox(height: 8),
             Text(
-              "You will receive local push updates and database logs when completed forensic reports compile.",
+              "You're all caught up.\nNew verification results will appear here.",
               textAlign: TextAlign.center,
               style: TextStyle(color: muted, fontSize: 13, height: 1.5),
             ),
@@ -288,136 +296,227 @@ class _NotificationsPageState extends State<NotificationsPage> {
     final isFake = notif.prediction.toUpperCase() == 'FAKE';
     final statusColor = isFake ? VFColors.red600 : VFColors.emerald600;
     final statusBg = isFake ? VFColors.red50 : VFColors.emerald50;
-    final statusBgDark = isFake ? VFColors.red600.withOpacity(0.15) : VFColors.emerald600.withOpacity(0.15);
-    final scorePct = notif.score > 1.0 ? notif.score.round() : (notif.score * 100).round();
+    final statusBgDark = isFake
+        ? VFColors.red600.withValues(alpha: 0.15)
+        : VFColors.emerald600.withValues(alpha: 0.15);
+    final scorePct = notif.score.toStringAsFixed(1);
 
-    return Dismissible(
-      key: ValueKey(notif.id),
-      direction: DismissDirection.endToStart,
-      onDismissed: (_) => _removeNotification(notif.id),
-      background: Container(
-        alignment: Alignment.centerRight,
-        padding: const EdgeInsets.only(right: 20),
-        decoration: BoxDecoration(
-          color: VFColors.red600.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(14),
-        ),
-        child: Icon(Icons.delete_outline_rounded, color: VFColors.red600, size: 24),
-      ),
-      child: Container(
-        decoration: BoxDecoration(
-          color: VFColors.adaptiveCard(isDark),
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(
-            color: isDark ? VFColors.gray800 : VFColors.gray200,
+    return TweenAnimationBuilder<double>(
+      duration: const Duration(milliseconds: 200),
+      tween: Tween(begin: 0.0, end: 1.0),
+      builder: (context, value, child) {
+        return Opacity(
+          opacity: value,
+          child: Transform.translate(
+            offset: Offset(0, 10 * (1 - value)),
+            child: child,
           ),
-          boxShadow: [
-            BoxShadow(
-              color: isDark ? Colors.black.withOpacity(0.1) : Colors.black.withOpacity(0.02),
-              blurRadius: 6,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            onTap: () => _handleNotificationTap(notif),
-            borderRadius: BorderRadius.circular(14),
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: isDark ? statusBgDark : statusBg,
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      isFake ? Icons.warning_amber_rounded : Icons.verified_user_rounded,
-                      color: statusColor,
-                      size: 20,
-                    ),
-                  ),
-                  const SizedBox(width: 14),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                notif.title,
-                                style: TextStyle(
-                                  fontWeight: notif.isRead ? FontWeight.w600 : FontWeight.bold,
-                                  fontSize: 14,
-                                  color: text,
-                                ),
-                              ),
-                            ),
-                            if (!notif.isRead)
-                              Container(
-                                width: 8,
-                                height: 8,
-                                decoration: BoxDecoration(
-                                  color: accent,
-                                  shape: BoxShape.circle,
-                                ),
-                              ),
-                          ],
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          notif.message,
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: muted,
-                            height: 1.4,
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        Row(
-                          children: [
-                            _chip(
-                              label: notif.prediction.toUpperCase() == 'FAKE' ? 'MANIPULATED' : 'AUTHENTIC',
-                              color: statusColor,
-                              bg: isDark ? statusBgDark : statusBg,
-                            ),
-                            const SizedBox(width: 8),
-                            _chip(
-                              label: '$scorePct% score',
-                              color: text,
-                              bg: isDark ? VFColors.gray800 : VFColors.gray100,
-                            ),
-                            const Spacer(),
-                            Text(
-                              _formatTimeAgo(notif.createdAt),
-                              style: TextStyle(
-                                fontSize: 11,
-                                color: muted,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
+        );
+      },
+      child: Dismissible(
+        key: ValueKey(notif.id),
+        direction: DismissDirection.endToStart,
+        onDismissed: (_) => _removeNotification(notif.id, notif),
+        confirmDismiss: (direction) async => await showDialog<bool>(
+          context: context,
+          builder: (ctx) {
+            final loc = AppLocalizations.of(ctx)!;
+            return AlertDialog(
+              title: Text(loc.notificationsDeleteTitle),
+              content: Text(
+                loc.notificationsDeleteMessage,
               ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(ctx, false),
+                  child: Text(loc.verifyCancel),
+                ),
+                TextButton(
+                  onPressed: () => Navigator.pop(ctx, true),
+                  style: TextButton.styleFrom(foregroundColor: VFColors.red600),
+                  child: Text(loc.notificationsDeleteConfirm),
+                ),
+              ],
+            );
+          },
+        ),
+        background: Container(
+          alignment: Alignment.centerRight,
+          padding: const EdgeInsets.only(right: 20),
+          decoration: BoxDecoration(
+            color: VFColors.red600.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Icon(
+            Icons.delete_outline_rounded,
+            color: VFColors.red600,
+            size: 24,
+          ),
+        ),
+        child: GestureDetector(
+          onTap: () async {
+            if (!notif.isRead && _uid != null) {
+              await NotificationService.instance.markAsRead(_uid, notif.id);
+            }
+          },
+          child: Container(
+          decoration: BoxDecoration(
+            color: VFColors.adaptiveCard(isDark),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: isDark ? VFColors.gray800 : VFColors.gray200,
             ),
           ),
+          child: Padding(
+            padding: const EdgeInsets.all(14),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _StatusIcon(
+                  isFake: isFake,
+                  isDark: isDark,
+                  statusColor: statusColor,
+                  statusBg: statusBg,
+                  statusBgDark: statusBgDark,
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              notif.title,
+                              style: TextStyle(
+                                fontWeight: notif.isRead
+                                    ? FontWeight.w600
+                                    : FontWeight.w700,
+                                fontSize: 14,
+                                color: text,
+                              ),
+                            ),
+                          ),
+                          if (!notif.isRead)
+                            Container(
+                              width: 8,
+                              height: 8,
+                              margin: const EdgeInsets.only(left: 8),
+                              decoration: BoxDecoration(
+                                color: accent,
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        notif.message,
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: muted,
+                          height: 1.4,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 10),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Row(
+                              children: [
+                                Flexible(
+                                  child: _NotificationChip(
+                                    label: isFake ? 'MANIPULATED' : 'AUTHENTIC',
+                                    color: statusColor,
+                                    bg: isDark ? statusBgDark : statusBg,
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Flexible(
+                                  child: _NotificationChip(
+                                    label: '$scorePct% score',
+                                    color: text,
+                                    bg: isDark ? VFColors.gray800 : VFColors.gray100,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            _formatTimeAgo(notif.createdAt),
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: muted,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
         ),
       ),
     );
   }
+}
 
-  Widget _chip({required String label, required Color color, required Color bg}) {
+class _StatusIcon extends StatelessWidget {
+  const _StatusIcon({
+    required this.isFake,
+    required this.isDark,
+    required this.statusColor,
+    required this.statusBg,
+    required this.statusBgDark,
+  });
+
+  final bool isFake;
+  final bool isDark;
+  final Color statusColor;
+  final Color statusBg;
+  final Color statusBgDark;
+
+  @override
+  Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      width: 36,
+      height: 36,
+      decoration: BoxDecoration(
+        color: isDark ? statusBgDark : statusBg,
+        shape: BoxShape.circle,
+      ),
+      child: Icon(
+        isFake ? Icons.warning_amber_rounded : Icons.verified_user_rounded,
+        color: statusColor,
+        size: 18,
+      ),
+    );
+  }
+}
+
+class _NotificationChip extends StatelessWidget {
+  const _NotificationChip({
+    required this.label,
+    required this.color,
+    required this.bg,
+  });
+
+  final String label;
+  final Color color;
+  final Color bg;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
       decoration: BoxDecoration(
         color: bg,
         borderRadius: BorderRadius.circular(6),
@@ -425,11 +524,13 @@ class _NotificationsPageState extends State<NotificationsPage> {
       child: Text(
         label,
         style: TextStyle(
-          fontSize: 10,
-          fontWeight: FontWeight.bold,
+          fontSize: 9,
+          fontWeight: FontWeight.w700,
           letterSpacing: 0.2,
           color: color,
         ),
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
       ),
     );
   }

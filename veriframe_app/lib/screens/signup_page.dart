@@ -1,4 +1,4 @@
-import 'dart:async';
+﻿import 'dart:async';
 import 'dart:io';
 import 'dart:convert';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -326,7 +326,7 @@ class _SignUpPageState extends State<SignUpPage> {
                 right: 20,
                 child: Container(
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.2),
+                    color: Colors.white.withValues(alpha:0.2),
                     borderRadius: BorderRadius.circular(25),
                   ),
                   child: IconButton(
@@ -360,10 +360,10 @@ class _SignUpPageState extends State<SignUpPage> {
                               curve: Curves.easeInOut,
                               child: Card(
                                 elevation: 20,
-                                shadowColor: Colors.black.withOpacity(0.3),
+                                shadowColor: Colors.black.withValues(alpha:0.3),
                                 color: isDarkMode
-                                    ? Colors.grey[900]?.withOpacity(0.95)
-                                    : Colors.white.withOpacity(0.95),
+                                    ? Colors.grey[900]?.withValues(alpha:0.95)
+                                    : Colors.white.withValues(alpha:0.95),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(20),
                                 ),
@@ -467,7 +467,7 @@ class _SignUpPageState extends State<SignUpPage> {
                                               elevation: 8,
                                               shadowColor: (isEmailVerified
                                                   ? Colors.green[600] 
-                                                  : const Color(0xFF0D40DA))?.withOpacity(0.4),
+                                                  : const Color(0xFF0D40DA))?.withValues(alpha:0.4),
                                               shape: RoundedRectangleBorder(
                                                 borderRadius: BorderRadius.circular(12),
                                               ),
@@ -622,7 +622,7 @@ class _SignUpPageState extends State<SignUpPage> {
       padding: EdgeInsets.all(isVerySmallScreen ? 10 : (isSmallScreen ? 12 : 16)),
       decoration: BoxDecoration(
         color: isDarkMode 
-            ? color[900]?.withOpacity(0.3)
+            ? color[900]?.withValues(alpha:0.3)
             : color[50],
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
@@ -701,11 +701,11 @@ class _SignUpPageState extends State<SignUpPage> {
         filled: true,
         fillColor: enabled 
             ? (isDarkMode 
-                ? Colors.grey[850]?.withOpacity(0.8) 
-                : Colors.grey[100]?.withOpacity(0.8))
+                ? Colors.grey[850]?.withValues(alpha:0.8) 
+                : Colors.grey[100]?.withValues(alpha:0.8))
             : (isDarkMode 
-                ? Colors.grey[800]?.withOpacity(0.5)
-                : Colors.grey[200]?.withOpacity(0.5)),
+                ? Colors.grey[800]?.withValues(alpha:0.5)
+                : Colors.grey[200]?.withValues(alpha:0.5)),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(
@@ -762,5 +762,6 @@ class _SignUpPageState extends State<SignUpPage> {
     );
   }
 }
+
 
 

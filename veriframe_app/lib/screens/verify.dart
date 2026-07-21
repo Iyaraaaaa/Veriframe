@@ -1,4 +1,4 @@
-import 'dart:async';
+﻿import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'package:camera/camera.dart';
@@ -7,7 +7,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:video_thumbnail/video_thumbnail.dart' as vt;
 import 'package:veriframe_app/models/verification_result.dart';
 import 'package:veriframe_app/service/tflite_service.dart';
@@ -24,8 +23,7 @@ import 'package:veriframe_app/service/pdf_service.dart';
 import 'package:intl/intl.dart';
 import 'package:open_filex/open_filex.dart';
 
-/// Theme-aware palette for the Verify screen so it renders correctly in both
-/// light and dark mode (no hard-coded black backgrounds in light mode).
+/// Theme-aware palette
 class _VerifyPalette {
   final bool isDark;
   const _VerifyPalette(this.isDark);
@@ -65,6 +63,8 @@ class _VerifyPageState extends ConsumerState<VerifyPage> with TickerProviderStat
 
   _VerifyPalette get _vp => _VerifyPalette(Theme.of(context).brightness == Brightness.dark);
 
+  AppLocalizations get loc => AppLocalizations.of(context)!;
+
   // The local video file currently selected by the user
   File? _selectedVideoFile;
 
@@ -88,16 +88,7 @@ class _VerifyPageState extends ConsumerState<VerifyPage> with TickerProviderStat
   
   // Results
   bool _showResults = false;
-  double _confidenceScore = 0.0;
   double _rollingStreamScore = 0.0;
-  String _verdict = "authentic";
-  String _modelUsed = "";
-  String _explanation = "";
-  String _reportId = "";
-  String _pdfUrl = "";
-
-  String? _errorMessage;
-  String _currentJobId = "";
 
   // TFLite state
   bool _tfliteReady = false;
@@ -115,6 +106,9 @@ class _VerifyPageState extends ConsumerState<VerifyPage> with TickerProviderStat
   late Animation<double> _scannerAnimation;
 
   String _baseUrl = '';
+
+  String? _errorMessage;
+  String _reportId = '';
 
   @override
   void initState() {
@@ -185,7 +179,7 @@ class _VerifyPageState extends ConsumerState<VerifyPage> with TickerProviderStat
     try {
       final cameras = await availableCameras();
       if (cameras.isEmpty) {
-        setState(() => _errorMessage = "No cameras found on device.");
+        setState(() => _errorMessage = loc.verifyNoCameras);
         return;
       }
       final camera = cameras.firstWhere(
@@ -206,7 +200,7 @@ class _VerifyPageState extends ConsumerState<VerifyPage> with TickerProviderStat
       }
     } catch (e) {
       if (mounted) {
-        setState(() => _errorMessage = "Camera initialization error: $e");
+        setState(() => _errorMessage = loc.verifyCameraError(e));
       }
     }
   }
@@ -231,7 +225,7 @@ class _VerifyPageState extends ConsumerState<VerifyPage> with TickerProviderStat
 
     if (!isSupported) {
       setState(() {
-        _errorMessage = "Unsupported format. Only MP4, MOV, MKV, and AVI are accepted.";
+        _errorMessage = loc.verifyUnsupportedFormat;
       });
       return;
     }
@@ -242,7 +236,7 @@ class _VerifyPageState extends ConsumerState<VerifyPage> with TickerProviderStat
       _errorMessage = null;
       _uploadProgress = 0.0;
       _pipelineStep = 0;
-      _statusMessage = "Connecting to forensic server...";
+      _statusMessage = loc.verifyConnectingServer;
     });
 
     // Check backend availability
@@ -253,8 +247,8 @@ class _VerifyPageState extends ConsumerState<VerifyPage> with TickerProviderStat
       // Graceful switch to offline TFLite
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("Backend offline. Switching to on-device TFLite model."),
+          SnackBar(
+            content: Text(loc.verifyBackendOffline),
             backgroundColor: Color(0xFFFFB020),
             behavior: SnackBarBehavior.floating,
           ),
@@ -267,7 +261,7 @@ class _VerifyPageState extends ConsumerState<VerifyPage> with TickerProviderStat
     // Online verification
     try {
       setState(() {
-        _statusMessage = "Uploading video file...";
+        _statusMessage = loc.verifyUploadingFile;
         _pipelineStep = 1;
       });
 
@@ -278,7 +272,7 @@ class _VerifyPageState extends ConsumerState<VerifyPage> with TickerProviderStat
           if (mounted && _isAnalyzing) {
             setState(() {
               _uploadProgress = progress * 0.8; // Upload takes up to 80% progress
-              _statusMessage = "Uploading... ${(progress * 100).toStringAsFixed(0)}%";
+              _statusMessage = loc.verifyUploadingProgress((progress * 100).toStringAsFixed(0));
             });
           }
         },
@@ -289,34 +283,29 @@ class _VerifyPageState extends ConsumerState<VerifyPage> with TickerProviderStat
       setState(() {
         _pipelineStep = 3;
         _uploadProgress = 0.9;
-        _statusMessage = "Aggregating predictions...";
+        _statusMessage = loc.verifyAggregatingPredictions;
       });
 
       await Future.delayed(const Duration(milliseconds: 500));
 
-      final prediction = (res['prediction'] ?? '').toString().toLowerCase();
-      final confidence = (res['confidence'] ?? 0.0).toDouble();
-      final frames = res['frames_analyzed'] ?? 0;
-      final verdict = prediction == 'fake' ? 'manipulated' : 'authentic';
-      final explanation = "Analyzed $frames face frame(s) using cloud-based Ensemble models. "
-          "Model verdict is class '$prediction' with a confidence rating of ${(confidence * 100).toStringAsFixed(1)}%.";
-      final finalConfidence = (confidence * 100).clamp(0.0, 100.0);
+      final result = VerificationResult.fromJson(res).copyWith(
+        mediaName: file.path.split(Platform.pathSeparator).last,
+        mediaPath: file.path,
+      );
+
+      final explanation = "Analyzed ${result.forensicObservations.join(' ')} "
+          "Model verdict is '${result.verdict}' with a confidence rating of ${result.confidence.toStringAsFixed(1)}%.";
       final videoName = file.path.split(Platform.pathSeparator).last;
 
-      // Update preliminary display values
       setState(() {
-        _confidenceScore = finalConfidence;
-        _verdict = verdict;
-        _modelUsed = "MobileNet Ensemble (Cloud Server)";
-        _explanation = explanation;
       });
 
-      // Trigger the full post-verification pipeline (PDF, Firestore, notification)
       await _executePostVerificationFlow(
         videoName: videoName,
         videoPath: file.path,
-        verdict: verdict,
-        confidenceScore: finalConfidence,
+        verdict: result.verdict.toLowerCase(),
+        authenticityScore: result.authenticityScore,
+        fakeProbability: result.fakeProbability,
         explanation: explanation,
         modelUsed: "MobileNet Ensemble (Cloud Server)",
       );
@@ -338,8 +327,8 @@ class _VerifyPageState extends ConsumerState<VerifyPage> with TickerProviderStat
       setState(() {
         _isAnalyzing = false;
         _errorMessage = _tfliteError.isNotEmpty
-            ? "Offline model failed: $_tfliteError"
-            : "On-device model is loading — please retry in a moment.";
+            ? loc.verifyOfflineModelFailed(_tfliteError)
+            : loc.verifyModelLoading;
       });
       return;
     }
@@ -353,21 +342,21 @@ class _VerifyPageState extends ConsumerState<VerifyPage> with TickerProviderStat
       return;
     }
 
-    // Step 0 — Validate
-    setState(() {
-      _pipelineStep = 0;
-      _statusMessage = "Validating video file...";
-      _uploadProgress = 0.10;
-    });
+    // Step 0 â€” Validate
+      setState(() {
+        _pipelineStep = 0;
+        _statusMessage = loc.verifyValidatingFile;
+        _uploadProgress = 0.10;
+      });
     await Future.delayed(const Duration(milliseconds: 300));
     if (!_isAnalyzing) return;
 
-    // Step 1 — Extract real frames at spread-out timestamps
-    setState(() {
-      _pipelineStep = 1;
-      _statusMessage = "Extracting frames from video...";
-      _uploadProgress = 0.25;
-    });
+    // Step 1 â€” Extract real frames at spread-out timestamps
+      setState(() {
+        _pipelineStep = 1;
+        _statusMessage = loc.verifyExtractingFrames;
+        _uploadProgress = 0.25;
+      });
 
     const int frameCount = 8;
     final List<int> timestampsMs = List.generate(frameCount, (i) => i * 2000);
@@ -377,7 +366,7 @@ class _VerifyPageState extends ConsumerState<VerifyPage> with TickerProviderStat
     for (int i = 0; i < timestampsMs.length; i++) {
       if (!_isAnalyzing) return;
       setState(() {
-        _statusMessage = "Extracting frame ${i + 1} of ${timestampsMs.length} (${timestampsMs[i] ~/ 1000}s)...";
+        _statusMessage = loc.verifyAnalyzingFrame(i + 1, timestampsMs.length);
         _uploadProgress = 0.25 + (i / timestampsMs.length) * 0.25;
       });
       try {
@@ -410,30 +399,30 @@ class _VerifyPageState extends ConsumerState<VerifyPage> with TickerProviderStat
       return;
     }
 
-    // Step 2 — Face detection (UI step)
-    setState(() {
-      _pipelineStep = 2;
-      _statusMessage = "Detecting regions of interest...";
-      _uploadProgress = 0.55;
-    });
+    // Step 2 â€” Face detection (UI step)
+      setState(() {
+        _pipelineStep = 2;
+        _statusMessage = loc.verifyDetectingRegions;
+        _uploadProgress = 0.55;
+      });
     await Future.delayed(const Duration(milliseconds: 300));
     if (!_isAnalyzing) return;
 
-    // Step 3 — Resizing info
-    setState(() {
-      _pipelineStep = 3;
-      _statusMessage = "Preparing 224x224 input tensors...";
-      _uploadProgress = 0.65;
-    });
+    // Step 3 â€” Resizing info
+      setState(() {
+        _pipelineStep = 3;
+        _statusMessage = loc.verifyPreparingTensors;
+        _uploadProgress = 0.65;
+      });
     await Future.delayed(const Duration(milliseconds: 200));
     if (!_isAnalyzing) return;
 
-    // Step 4 — Run TFLite on every real frame
-    setState(() {
-      _pipelineStep = 4;
-      _statusMessage = "Running on-device AI inference...";
-      _uploadProgress = 0.70;
-    });
+    // Step 4 â€” Run TFLite on every real frame
+      setState(() {
+        _pipelineStep = 4;
+        _statusMessage = loc.verifyRunningInference;
+        _uploadProgress = 0.70;
+      });
 
     final List<double> scores = [];
     int inferenceMsSum = 0;
@@ -463,28 +452,25 @@ class _VerifyPageState extends ConsumerState<VerifyPage> with TickerProviderStat
     if (scores.isEmpty) {
       setState(() {
         _isAnalyzing = false;
-        _errorMessage = "Inference failed on all frames. Try a different video file.";
+        _errorMessage = loc.verifyInferenceFailed;
       });
       return;
     }
 
     final avgFakeScore = scores.reduce((a, b) => a + b) / scores.length;
     final avgInferenceMs = inferenceMsSum ~/ scores.length;
-    final finalConfidence = (avgFakeScore * 100).clamp(0.0, 100.0);
+    final authenticityScore = ((1.0 - avgFakeScore) * 100).clamp(0.0, 100.0);
+    final fakeProbability = (avgFakeScore * 100).clamp(0.0, 100.0);
     final verdict = avgFakeScore >= 0.5 ? 'manipulated' : 'authentic';
     final filename = videoFile.path.split(Platform.pathSeparator).last;
     final explanation = "Analyzed ${scores.length} real frame(s) extracted from '$filename'. "
-        "Verdict: '$verdict' with ${finalConfidence.toStringAsFixed(1)}% deepfake confidence. "
+        "Verdict: '$verdict' with ${fakeProbability.toStringAsFixed(1)}% deepfake confidence. "
         "Average inference time: ${avgInferenceMs}ms per frame.";
 
     // Update preliminary display values
     setState(() {
       _pipelineStep = 3;
       _uploadProgress = 0.70;
-      _confidenceScore = finalConfidence;
-      _verdict = verdict;
-      _modelUsed = "On-Device TFLite (veriframe_model)";
-      _explanation = explanation;
     });
 
     // Trigger the full post-verification pipeline (PDF, Firestore, notification)
@@ -492,7 +478,8 @@ class _VerifyPageState extends ConsumerState<VerifyPage> with TickerProviderStat
       videoName: filename,
       videoPath: videoFile.path,
       verdict: verdict,
-      confidenceScore: finalConfidence,
+      authenticityScore: authenticityScore,
+      fakeProbability: fakeProbability,
       explanation: explanation,
       modelUsed: "On-Device TFLite (veriframe_model)",
     );
@@ -511,19 +498,19 @@ class _VerifyPageState extends ConsumerState<VerifyPage> with TickerProviderStat
     final url = _urlController.text.trim();
     if (url.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Please paste a valid video URL link.")),
+        SnackBar(content: Text(loc.verifyPleasePasteUrl)),
       );
       return;
     }
 
-    setState(() {
-      _isAnalyzing = true;
-      _showResults = false;
-      _errorMessage = null;
-      _uploadProgress = 0.1;
-      _linkStep = 1; // Downloading
-      _statusMessage = "Downloading video from link...";
-    });
+      setState(() {
+        _isAnalyzing = true;
+        _showResults = false;
+        _errorMessage = null;
+        _uploadProgress = 0.1;
+        _linkStep = 1;
+        _statusMessage = loc.verifyDownloadingVideo;
+      });
 
     final service = VerifyBackendService.instance;
     final isOnline = await service.isBackendAvailable(_baseUrl);
@@ -531,7 +518,7 @@ class _VerifyPageState extends ConsumerState<VerifyPage> with TickerProviderStat
     if (!isOnline) {
       setState(() {
         _isAnalyzing = false;
-        _errorMessage = "Url link verification requires an active forensic backend. Please configure backend settings.";
+        _errorMessage = loc.verifyFeatureUnavailable;
       });
       return;
     }
@@ -539,7 +526,6 @@ class _VerifyPageState extends ConsumerState<VerifyPage> with TickerProviderStat
     try {
       final jobId = await service.verifyLink(_baseUrl, url);
       setState(() {
-        _currentJobId = jobId;
         _uploadProgress = 0.3;
         _linkStep = 2; // Extracting
         _statusMessage = "Extracting frames on server...";
@@ -560,16 +546,16 @@ class _VerifyPageState extends ConsumerState<VerifyPage> with TickerProviderStat
 
     Timer.periodic(const Duration(seconds: 2), (timer) async {
       polls++;
-      if (polls > maxPolls || !_isAnalyzing) {
-        timer.cancel();
-        if (_isAnalyzing) {
-          setState(() {
-            _isAnalyzing = false;
-            _errorMessage = "Polling timeout: Job exceeded maximum execution time.";
-          });
+        if (polls > maxPolls || !_isAnalyzing) {
+          timer.cancel();
+          if (_isAnalyzing) {
+            setState(() {
+              _isAnalyzing = false;
+              _errorMessage = loc.verifyPollingTimeout;
+            });
+          }
+          return;
         }
-        return;
-      }
 
       try {
         final res = await VerifyBackendService.instance.getAnalysis(_baseUrl, jobId);
@@ -602,27 +588,28 @@ class _VerifyPageState extends ConsumerState<VerifyPage> with TickerProviderStat
         } else if (status == 'completed' || status == 'stopped') {
           timer.cancel();
           final results = res['result'] ?? {};
-          final linkVerdict = results['verdict'] ?? 'authentic';
-          final linkConfidence = (results['confidence_score'] ?? 0.0).toDouble();
-          final linkModelUsed = results['model_used'] ?? 'Ensemble Model';
-          final linkExplanation = results['explanation'] ?? 'Analysis completed successfully.';
+          if (results.isEmpty) {
+            throw Exception("Link analysis returned empty results.");
+          }
+          final linkResult = VerificationResult.fromJson(results);
+          final linkVerdict = linkResult.verdict.toLowerCase();
+          final linkModelUsed = linkResult.forensicObservations.isNotEmpty
+              ? linkResult.forensicObservations.first
+              : 'Analysis completed successfully.';
+          final linkExplanation = linkResult.forensicObservations.join(' ');
           final linkUrl = _urlController.text.trim();
 
           setState(() {
             _linkStep = 4;
             _uploadProgress = 0.70;
-            _confidenceScore = linkConfidence;
-            _verdict = linkVerdict;
-            _modelUsed = linkModelUsed;
-            _explanation = linkExplanation;
           });
 
-          // Trigger the full post-verification pipeline (PDF, Firestore, notification)
           await _executePostVerificationFlow(
             videoName: linkUrl.length > 60 ? '${linkUrl.substring(0, 57)}...' : linkUrl,
             videoPath: linkUrl,
             verdict: linkVerdict,
-            confidenceScore: linkConfidence,
+            authenticityScore: linkResult.authenticityScore,
+            fakeProbability: linkResult.fakeProbability,
             explanation: linkExplanation,
             modelUsed: linkModelUsed,
           );
@@ -645,7 +632,7 @@ class _VerifyPageState extends ConsumerState<VerifyPage> with TickerProviderStat
     final streamUrl = _streamUrlController.text.trim();
     if (streamUrl.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Please enter a valid RTSP/RTMP/HLS stream URL.")),
+        SnackBar(content: Text(loc.verifyEnterStreamUrl)),
       );
       return;
     }
@@ -667,7 +654,7 @@ class _VerifyPageState extends ConsumerState<VerifyPage> with TickerProviderStat
     if (!isOnline) {
       setState(() {
         _isStreaming = false;
-        _errorMessage = "Live stream analyzer requires connection to a forensic server.";
+        _errorMessage = loc.verifyFeatureUnavailable;
       });
       return;
     }
@@ -690,20 +677,46 @@ class _VerifyPageState extends ConsumerState<VerifyPage> with TickerProviderStat
           
           if (status == 'completed' || status == 'stopped') {
             timer.cancel();
+            final results = res['result'] ?? {};
+            if (results.isEmpty) {
+              throw Exception("Stream analysis returned empty results.");
+            }
+            final streamResult = VerificationResult.fromJson(results);
+            final streamVerdict = streamResult.verdict.toLowerCase();
+            final streamModelUsed = streamResult.forensicObservations.isNotEmpty
+                ? streamResult.forensicObservations.first
+                : 'Analysis completed successfully.';
+            final streamExplanation = streamResult.forensicObservations.join(' ');
+            final streamUrl = _streamUrlController.text.trim();
+
+            setState(() {
+              _isStreaming = false;
+              _isAnalyzing = true;
+              _statusMessage = "Compiling session report...";
+              _uploadProgress = 0.70;
+            });
+
+            await _executePostVerificationFlow(
+              videoName: streamUrl.length > 60 ? '${streamUrl.substring(0, 57)}...' : streamUrl,
+              videoPath: streamUrl,
+              verdict: streamVerdict,
+              authenticityScore: streamResult.authenticityScore,
+              fakeProbability: streamResult.fakeProbability,
+              explanation: streamExplanation,
+              modelUsed: streamModelUsed,
+            );
             return;
           }
 
           final result = res['result'];
           if (result != null) {
-            final score = (result['confidence_score'] ?? 0.0).toDouble();
+            final score = (result['confidence'] ?? 0.0).toDouble();
             _framesAnalyzed++;
             _updateFps();
             _addConfidencePoint(score);
 
             setState(() {
               _rollingStreamScore = score;
-              _verdict = result['verdict'] ?? 'authentic';
-              _modelUsed = result['model_used'] ?? '';
             });
           }
         } catch (e) {
@@ -760,8 +773,6 @@ class _VerifyPageState extends ConsumerState<VerifyPage> with TickerProviderStat
 
           setState(() {
             _rollingStreamScore = score;
-            _verdict = res['verdict'] ?? 'authentic';
-            _modelUsed = res['model_used'] ?? 'Biometric Network';
           });
         } else {
           // Offline camera TFLite execution
@@ -781,8 +792,6 @@ class _VerifyPageState extends ConsumerState<VerifyPage> with TickerProviderStat
 
           setState(() {
             _rollingStreamScore = score;
-            _verdict = score >= 50.0 ? 'manipulated' : 'authentic';
-            _modelUsed = 'On-Device TFLite (veriframe_model)';
           });
         }
       } catch (e) {
@@ -823,7 +832,7 @@ class _VerifyPageState extends ConsumerState<VerifyPage> with TickerProviderStat
     setState(() {
       _isStreaming = false;
       _isAnalyzing = true;
-      _statusMessage = "Compiling session report...";
+      _statusMessage = loc.verifyCompilingSessionReport;
     });
 
     final service = VerifyBackendService.instance;
@@ -832,22 +841,18 @@ class _VerifyPageState extends ConsumerState<VerifyPage> with TickerProviderStat
     if (!isOnline) {
       // Local report calculation
       await Future.delayed(const Duration(milliseconds: 1000));
-      final streamExplanation = "Forensic camera review complete. Aggregated $_framesAnalyzed frame(s) processed locally. "
-          "Calculated rolling average fake rating: ${_rollingStreamScore.toStringAsFixed(1)}%.";
+      final streamExplanation = loc.verifyLocalReportExplanation(_framesAnalyzed, _rollingStreamScore.toStringAsFixed(1));
       final streamVerdict = _rollingStreamScore >= 50.0 ? 'manipulated' : 'authentic';
 
       setState(() {
-        _confidenceScore = _rollingStreamScore;
-        _verdict = streamVerdict;
-        _explanation = streamExplanation;
-        _modelUsed = 'On-Device TFLite (veriframe_model)';
       });
 
       await _executePostVerificationFlow(
         videoName: 'Live Camera Stream',
         videoPath: '',
         verdict: streamVerdict,
-        confidenceScore: _rollingStreamScore,
+        authenticityScore: 100.0 - _rollingStreamScore,
+        fakeProbability: _rollingStreamScore,
         explanation: streamExplanation,
         modelUsed: 'On-Device TFLite (veriframe_model)',
       );
@@ -856,25 +861,23 @@ class _VerifyPageState extends ConsumerState<VerifyPage> with TickerProviderStat
 
     try {
       final res = await service.createReport(_baseUrl, sessionId: _streamSessionId);
-      final serverVerdict = res['verdict'] ?? 'authentic';
-      final serverConfidence = (res['confidence_score'] ?? 0.0).toDouble();
-      final serverModelUsed = res['model_used'] ?? '';
-      final serverExplanation = res['explanation'] ?? 'Report compiled successfully.';
+      final serverResult = VerificationResult.fromJson(res);
+      final serverVerdict = serverResult.verdict.toLowerCase();
+      final serverModelUsed = serverResult.forensicObservations.isNotEmpty
+          ? serverResult.forensicObservations.first
+          : 'Report compiled successfully.';
+      final serverExplanation = serverResult.forensicObservations.join(' ');
 
       setState(() {
-        _confidenceScore = serverConfidence;
-        _verdict = serverVerdict;
-        _modelUsed = serverModelUsed;
-        _explanation = serverExplanation;
-        _reportId = res['report_id'] ?? '';
-        _pdfUrl = res['pdf_url'] ?? '';
+        _reportId = res['report_id'] ?? serverResult.verificationId;
       });
 
       await _executePostVerificationFlow(
         videoName: 'Live Stream Session',
         videoPath: _streamSessionId,
         verdict: serverVerdict,
-        confidenceScore: serverConfidence,
+        authenticityScore: serverResult.authenticityScore,
+        fakeProbability: serverResult.fakeProbability,
         explanation: serverExplanation,
         modelUsed: serverModelUsed,
       );
@@ -890,7 +893,8 @@ class _VerifyPageState extends ConsumerState<VerifyPage> with TickerProviderStat
     required String videoName,
     required String videoPath,
     required String verdict,
-    required double confidenceScore,
+    required double authenticityScore,
+    required double fakeProbability,
     required String explanation,
     required String modelUsed,
   }) async {
@@ -899,7 +903,7 @@ class _VerifyPageState extends ConsumerState<VerifyPage> with TickerProviderStat
       if (mounted) {
         setState(() {
           _isAnalyzing = false;
-          _errorMessage = "Authentication error: User not logged in.";
+          _errorMessage = loc.verifyAuthError;
         });
       }
       return;
@@ -908,24 +912,20 @@ class _VerifyPageState extends ConsumerState<VerifyPage> with TickerProviderStat
     final createdAt = DateTime.now();
     final reportId = 'RPT-${createdAt.millisecondsSinceEpoch}';
     final prediction = verdict == 'authentic' ? 'REAL' : 'FAKE';
-    final authenticityScore = verdict == 'authentic' ? confidenceScore : (100.0 - confidenceScore);
-    final fakeProbability = verdict == 'authentic' ? (100.0 - confidenceScore) : confidenceScore;
 
     // Step 5: Composing VerificationResult
     if (mounted) {
       setState(() {
         _pipelineStep = 5;
-        _statusMessage = "Compiling forensic report...";
+        _statusMessage = loc.verifyCompilingForensicReport;
         _uploadProgress = 0.80;
       });
     }
     await Future.delayed(const Duration(milliseconds: 400));
 
-    // Build a VerificationResult from the legacy local values.
-    // Frame consistency and tracking values were already computed; reuse display values.
     final frameConsistency = (100.0 - fakeProbability * 0.4).clamp(0.0, 100.0);
     final trackingConfidence = (100.0 - fakeProbability * 0.3).clamp(0.0, 100.0);
-    final fusedConfidence = (confidenceScore * 0.70
+    final fusedConfidence = (authenticityScore * 0.70
         + (frameConsistency / 100.0) * 0.15 * 100.0
         + (trackingConfidence / 100.0) * 0.15 * 100.0
     ).clamp(0.0, 100.0);
@@ -950,7 +950,7 @@ class _VerifyPageState extends ConsumerState<VerifyPage> with TickerProviderStat
         'Face texture anomalies detected in classified regions.',
       ],
       forensicObservations: [
-        'TFLite deep-learning classifier output: $prediction (${confidenceScore.toStringAsFixed(1)}% confidence).',
+        'TFLite deep-learning classifier output: $prediction (${fakeProbability.toStringAsFixed(1)}% confidence).',
         'Frame consistency score: ${frameConsistency.toStringAsFixed(1)}%.',
         'Biometric tracking stability: ${trackingConfidence.toStringAsFixed(1)}%.',
         explanation,
@@ -962,6 +962,10 @@ class _VerifyPageState extends ConsumerState<VerifyPage> with TickerProviderStat
 
     // Persist to Riverpod state
     ref.read(verificationProvider.notifier).setResult(result);
+
+    final notificationScore = verdict.toUpperCase() == 'AUTHENTIC'
+        ? result.authenticityScore
+        : result.fakeProbability;
 
     // Step 6: Save to Firestore via repository
     if (mounted) {
@@ -991,14 +995,14 @@ class _VerifyPageState extends ConsumerState<VerifyPage> with TickerProviderStat
         .collection('users').doc(uid).collection('notifications').doc().id;
     final notification = NotificationModel(
       id: notificationId,
-      title: "Verification Completed",
+      title: loc.verifyNotificationTitle,
       message: "Analysis complete. Verdict: ${result.verdict}. "
-          "Authenticity: ${result.authenticityScore.toStringAsFixed(1)}%. Tap to view report.",
+          "${verdict.toUpperCase() == 'AUTHENTIC' ? 'Authenticity' : 'Manipulation'}: ${notificationScore.toStringAsFixed(1)}%. Tap to view report.",
       type: "verification_completed",
       reportId: reportId,
       createdAt: createdAt,
       isRead: false,
-      score: result.authenticityScore,
+      score: notificationScore,
       prediction: prediction,
       videoName: videoName,
     );
@@ -1025,15 +1029,15 @@ class _VerifyPageState extends ConsumerState<VerifyPage> with TickerProviderStat
     try {
       await NotificationService.instance.showLocalNotification(
         id: notificationId.hashCode,
-        title: "VeriFrame – Verification Complete",
-        body: "${result.verdict}: ${result.authenticityScore.toStringAsFixed(1)}% authentic. Tap to view report.",
+        title: loc.verifyNotificationTitleBranded,
+        body: "${result.verdict}: ${notificationScore.toStringAsFixed(1)}% ${verdict.toUpperCase() == 'AUTHENTIC' ? 'authentic' : 'manipulated'}. Tap to view report.",
         payload: reportId,
       );
     } catch (e) {
       debugPrint("Local notification failed: $e");
     }
 
-    // Step 8: Completed — show immutable success dialog
+    // Step 8: Completed â€” show immutable success dialog
     if (mounted) {
       setState(() {
         _pipelineStep = 8;
@@ -1051,6 +1055,7 @@ class _VerifyPageState extends ConsumerState<VerifyPage> with TickerProviderStat
   void _showSuccessDialog(VerificationResult result) {
     final isReal = result.verdict.toUpperCase() == 'AUTHENTIC';
     final accentColor = isReal ? const Color(0xFF00E896) : const Color(0xFFFF3B5C);
+    final displayScore = isReal ? result.authenticityScore : result.fakeProbability;
 
     showDialog(
       context: context,
@@ -1079,7 +1084,7 @@ class _VerifyPageState extends ConsumerState<VerifyPage> with TickerProviderStat
               ),
               const SizedBox(height: 16),
               Text(
-                'Verification Complete',
+                loc.verifyCompleteTitle,
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
@@ -1097,19 +1102,23 @@ class _VerifyPageState extends ConsumerState<VerifyPage> with TickerProviderStat
                 ),
               ),
               const SizedBox(height: 20),
-              _buildDialogRow('Verdict', result.verdict, accentColor, bold: true),
-              _buildDialogRow('Authenticity', '${result.authenticityScore.toStringAsFixed(2)}%', _vp.text),
-              _buildDialogRow('Confidence', '${result.confidence.toStringAsFixed(2)}%', _vp.text),
+              _buildDialogRow(loc.verifyVerdictLabel, result.verdict, accentColor, bold: true),
               _buildDialogRow(
-                'Risk Level',
+                isReal ? loc.verifyAuthenticityLabel : loc.verifyManipulationLabel,
+                '${displayScore.toStringAsFixed(2)}%',
+                _vp.text,
+              ),
+              _buildDialogRow(loc.verifyConfidenceLabel, '${result.confidence.toStringAsFixed(2)}%', _vp.text),
+              _buildDialogRow(
+                loc.verifyRiskLevelLabel,
                 result.riskLevel,
                 result.riskLevel == 'LOW'
                     ? const Color(0xFF00E896)
                     : (result.riskLevel == 'MEDIUM' ? const Color(0xFFFFB020) : const Color(0xFFFF3B5C)),
               ),
               _buildDialogRow(
-                'Verified At',
-                DateFormat('MMM dd, yyyy · HH:mm').format(result.verifiedAt),
+                loc.verifyVerifiedAtLabel,
+                DateFormat('MMM dd, yyyy Â· HH:mm').format(result.verifiedAt),
                 _vp.textMuted,
               ),
               const SizedBox(height: 24),
@@ -1125,7 +1134,7 @@ class _VerifyPageState extends ConsumerState<VerifyPage> with TickerProviderStat
                         foregroundColor: const Color(0xFF00C8FF),
                         padding: const EdgeInsets.symmetric(vertical: 12),
                       ),
-                      child: const Text('View History'),
+                      child: Text(loc.verifyViewHistory, style: TextStyle(color: const Color(0xFF00C8FF))),
                     ),
                   ),
                   const SizedBox(width: 8),
@@ -1140,7 +1149,7 @@ class _VerifyPageState extends ConsumerState<VerifyPage> with TickerProviderStat
                           borderRadius: BorderRadius.circular(10),
                         ),
                       ),
-                      child: const Text('Done'),
+                      child: Text(loc.verifyDone),
                     ),
                   ),
                 ],
@@ -1178,7 +1187,7 @@ class _VerifyPageState extends ConsumerState<VerifyPage> with TickerProviderStat
   // --- REPORT ACTION TRIGGERS ---
   Future<void> _getPdfForensicReport(VerificationResult result) async {
     setState(() {
-      _statusMessage = "Generating forensic report PDF...";
+      _statusMessage = loc.verifyGeneratingPdf;
       _isAnalyzing = true;
     });
 
@@ -1196,52 +1205,21 @@ class _VerifyPageState extends ConsumerState<VerifyPage> with TickerProviderStat
       });
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Failed to compile PDF: $e"), backgroundColor: const Color(0xFFFF3B5C)),
-        );
-      }
-    }
-  }
-
-  Future<void> _launchReportPdf() async {
-    if (_pdfUrl.isEmpty) return;
-    
-    // If it's a local file path, open it directly using OpenFilex
-    if (!_pdfUrl.startsWith('http')) {
-      final file = File(_pdfUrl);
-      if (await file.exists()) {
-        final openResult = await OpenFilex.open(file.path);
-        if (openResult.type != ResultType.done && mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text("Error opening PDF: ${openResult.message}"),
-              backgroundColor: VFColors.red600,
-            ),
-          );
-        }
-        return;
-      }
-    }
-
-    final fullUrl = _pdfUrl.startsWith('http') ? _pdfUrl : "$_baseUrl$_pdfUrl";
-    final uri = Uri.parse(fullUrl);
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
-    } else {
-      Clipboard.setData(ClipboardData(text: fullUrl));
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Link copied to clipboard: $fullUrl")),
+          SnackBar(content: Text(loc.verifyPdfFailed(e)), backgroundColor: const Color(0xFFFF3B5C)),
         );
       }
     }
   }
 
   void _shareForensicLink(VerificationResult result) {
-    final reportSummary = "VeriFrame Forensic Report [${result.verificationId}]: Verdict ${result.verdict} with ${result.authenticityScore.toStringAsFixed(1)}% authenticity rating. Verification Link: https://veriframe.io/verify/${result.verificationId}";
+    final isReal = result.verdict.toUpperCase() == 'AUTHENTIC';
+    final displayScore = isReal ? result.authenticityScore : result.fakeProbability;
+    final scoreLabel = isReal ? 'authenticity' : 'manipulation';
+    final reportSummary = "VeriFrame Forensic Report [${result.verificationId}]: Verdict ${result.verdict} with ${displayScore.toStringAsFixed(1)}% $scoreLabel rating. Verification Link: https://veriframe.io/verify/${result.verificationId}";
     Clipboard.setData(ClipboardData(text: reportSummary));
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text("Forensic summary link copied to clipboard!"),
+      SnackBar(
+        content: Text(loc.verifyLinkCopied),
         behavior: SnackBarBehavior.floating,
         backgroundColor: Color(0xFF00E896),
       ),
@@ -1350,7 +1328,7 @@ class _VerifyPageState extends ConsumerState<VerifyPage> with TickerProviderStat
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Escalation failed: $e"), backgroundColor: const Color(0xFFFF3B5C), behavior: SnackBarBehavior.floating),
+          SnackBar(content: Text(loc.verifyEscalationFailed(e)), backgroundColor: const Color(0xFFFF3B5C), behavior: SnackBarBehavior.floating),
         );
       }
     }
@@ -1358,26 +1336,27 @@ class _VerifyPageState extends ConsumerState<VerifyPage> with TickerProviderStat
 
   void _showBackendSettings() {
     final controller = TextEditingController(text: _baseUrl);
+    final loc = AppLocalizations.of(context)!;
     showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
           backgroundColor: _vp.surface,
-          title: Text("Configure Backend Server", style: TextStyle(color: _vp.text, fontSize: 16)),
+          title: Text(loc.verifyBackendServerTitle, style: TextStyle(color: _vp.text, fontSize: 16)),
           content: TextField(
             controller: controller,
             style: TextStyle(color: _vp.text),
             decoration: InputDecoration(
-              hintText: "http://192.168.1.100:8000",
+              hintText: loc.verifyBackendUrlHint,
               hintStyle: TextStyle(color: _vp.textMuted),
-              helperText: "Specify host base address (use LAN IP on physical phones)",
+              helperText: loc.verifyBackendHelper,
               helperStyle: TextStyle(color: _vp.textMuted, fontSize: 11),
             ),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: Text("Cancel", style: TextStyle(color: _vp.textMuted)),
+              child: Text(loc.verifyCancel, style: TextStyle(color: _vp.textMuted)),
             ),
             ElevatedButton(
               onPressed: () async {
@@ -1391,7 +1370,7 @@ class _VerifyPageState extends ConsumerState<VerifyPage> with TickerProviderStat
                 }
                 nav.pop();
               },
-              child: const Text("Save"),
+              child: Text(loc.verifyBackendSave),
             ),
           ],
         );
@@ -1690,7 +1669,7 @@ class _VerifyPageState extends ConsumerState<VerifyPage> with TickerProviderStat
                 child: ElevatedButton.icon(
                   onPressed: _verifyStreamUrl,
                   icon: Icon(Icons.play_circle_filled_sharp),
-                  label: const Text("Analyze Stream URL"),
+                  label: Text(loc.verifyAnalyzeStream),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF7C3AED),
                     foregroundColor: Colors.white,
@@ -1791,7 +1770,7 @@ class _VerifyPageState extends ConsumerState<VerifyPage> with TickerProviderStat
           OutlinedButton.icon(
             onPressed: _cancelAnalysis,
             icon: Icon(Icons.cancel_outlined),
-            label: const Text("Cancel Scan"),
+            label: Text(loc.verifyCancelScan),
             style: OutlinedButton.styleFrom(
               foregroundColor: const Color(0xFFFF3B5C),
               side: const BorderSide(color: Color(0xFFFF3B5C)),
@@ -1805,14 +1784,14 @@ class _VerifyPageState extends ConsumerState<VerifyPage> with TickerProviderStat
   Widget _buildPipelineTimelineSteps() {
     // Pipeline including post-verification (PDF, Notification, Completed)
     final steps = [
-      "Format Validation",
-      "Frame Extraction",
-      "Face Detection",
-      "Model Inference & Aggregation",
-      "Generating AI Reasoning",
-      "Generating PDF Forensic Report",
-      "Sending Notification",
-      "Completed",
+      loc.verifyStepFormatValidation,
+      loc.verifyStepFrameExtraction,
+      loc.verifyStepFaceDetection,
+      loc.verifyStepModelInference,
+      loc.verifyStepGeneratingReasoning,
+      loc.verifyStepGeneratingPdf,
+      loc.verifyStepSendingNotification,
+      loc.verifyStepCompleted,
     ];
 
     return Column(
@@ -1882,15 +1861,15 @@ class _VerifyPageState extends ConsumerState<VerifyPage> with TickerProviderStat
     // _linkStep  indices: 0=request, 1=downloading, 2=extracting, 3=detecting, 4=inference
     // _pipelineStep indices: 4=reasoning, 5=pdf, 6=notification, 7=completed
     final steps = [
-      'Request Initiated',
-      'Downloading Video File',
-      'Extracting Sub-Frames',
-      'Running Biometric Detection',
-      'Model Inference Running',
-      'Generating AI Reasoning',
-      'Generating PDF Forensic Report',
-      'Sending Notification',
-      'Completed',
+      loc.verifyLinkStepRequestInitiated,
+      loc.verifyLinkStepDownloading,
+      loc.verifyLinkStepExtracting,
+      loc.verifyLinkStepDetecting,
+      loc.verifyLinkStepInference,
+      loc.verifyStepGeneratingReasoning,
+      loc.verifyStepGeneratingPdf,
+      loc.verifyStepSendingNotification,
+      loc.verifyStepCompleted,
     ];
 
     // Map index to completion status
@@ -1997,10 +1976,10 @@ class _VerifyPageState extends ConsumerState<VerifyPage> with TickerProviderStat
                   children: [
                     Icon(Icons.sensors, color: Color(0xFF7C3AED), size: 48),
                     SizedBox(height: 12),
-                    Text(
-                      "Connecting to Live Stream...",
-                      style: TextStyle(color: _vp.text, fontWeight: FontWeight.bold, fontSize: 14),
-                    ),
+                     Text(
+                       loc.verifyConnectingLiveStream,
+                       style: TextStyle(color: _vp.text, fontWeight: FontWeight.bold, fontSize: 14),
+                     ),
                   ],
                 ),
               ),
@@ -2024,18 +2003,18 @@ class _VerifyPageState extends ConsumerState<VerifyPage> with TickerProviderStat
                         ),
                       ],
                     ),
-                    Text(
-                      "FPS: ${_streamFps.toStringAsFixed(1)} | Frames: $_framesAnalyzed",
-                      style: TextStyle(color: _vp.textMuted, fontSize: 12),
-                    ),
+                     Text(
+                       loc.verifyFpsFrames(_streamFps.toStringAsFixed(1), _framesAnalyzed),
+                       style: TextStyle(color: _vp.textMuted, fontSize: 12),
+                     ),
                   ],
                 ),
                 const SizedBox(height: 14),
                 // Stats Dashboard details
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text("Current Probability:", style: TextStyle(color: _vp.textMuted, fontSize: 12)),
+                 Row(
+                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                   children: [
+                     Text(loc.verifyCurrentProbability, style: TextStyle(color: _vp.textMuted, fontSize: 12)),
                     Text(
                       "${_rollingStreamScore.toStringAsFixed(1)}%",
                       style: TextStyle(
@@ -2058,7 +2037,7 @@ class _VerifyPageState extends ConsumerState<VerifyPage> with TickerProviderStat
                   ),
                 ),
                 const SizedBox(height: 16),
-                Text("Probability Rolling Graph", style: TextStyle(color: _vp.text, fontSize: 12, fontWeight: FontWeight.bold)),
+                Text(loc.verifyProbabilityGraph, style: TextStyle(color: _vp.text, fontSize: 12, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 8),
                 // Real-time custom painter graph
                 DeepfakeGraph(dataPoints: List.from(_confidenceHistory)),
@@ -2116,6 +2095,8 @@ class _VerifyPageState extends ConsumerState<VerifyPage> with TickerProviderStat
 
     final isHighRisk = result.riskLevel == 'HIGH';
 
+      final consistentScore = isReal ? result.authenticityScore : result.fakeProbability;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -2140,7 +2121,7 @@ class _VerifyPageState extends ConsumerState<VerifyPage> with TickerProviderStat
                     width: 140,
                     height: 140,
                     child: CircularProgressIndicator(
-                      value: result.authenticityScore / 100,
+                      value: consistentScore / 100,
                       strokeWidth: 8,
                       backgroundColor: _vp.surfaceVariant,
                       valueColor: AlwaysStoppedAnimation(verdictColor),
@@ -2150,7 +2131,7 @@ class _VerifyPageState extends ConsumerState<VerifyPage> with TickerProviderStat
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        "${result.authenticityScore.toStringAsFixed(1)}%",
+                        "${consistentScore.toStringAsFixed(1)}%",
                         style: TextStyle(color: _vp.text, fontSize: 26, fontWeight: FontWeight.bold),
                       ),
                       const SizedBox(height: 2),
@@ -2211,7 +2192,7 @@ class _VerifyPageState extends ConsumerState<VerifyPage> with TickerProviderStat
                         child: Padding(
                           padding: const EdgeInsets.all(8),
                           child: Text(
-                            "Landmark map: 83 points detected",
+                            loc.verifyLandmarkMap(83),
                             style: TextStyle(color: verdictColor.withValues(alpha: 0.6), fontSize: 9),
                           ),
                         ),
@@ -2271,7 +2252,7 @@ class _VerifyPageState extends ConsumerState<VerifyPage> with TickerProviderStat
               child: ElevatedButton.icon(
                 onPressed: () => _shareForensicLink(result),
                 icon: Icon(Icons.share_outlined),
-                label: const Text("Share Link"),
+                label: Text(loc.verifyLinkCopied),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: _vp.canvas,
                   foregroundColor: _vp.text,
@@ -2300,9 +2281,7 @@ class _VerifyPageState extends ConsumerState<VerifyPage> with TickerProviderStat
             setState(() {
               _showResults = false;
               _rollingStreamScore = 0.0;
-              _confidenceScore = 0.0;
               _reportId = "";
-              _pdfUrl = "";
               _streamSessionId = "";
               _errorMessage = null;
             });

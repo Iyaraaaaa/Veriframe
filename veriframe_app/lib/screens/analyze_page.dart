@@ -1,12 +1,11 @@
-import 'dart:async';
-import 'dart:io';
+﻿import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-// ─────────────────────────────────────────────
-//  VERIFRAME  —  Verify Page
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+//  VERIFRAME  â€”  Verify Page
 //  Deepfake detection analysis screen
-// ─────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class VerifyPage extends StatefulWidget {
   final String? videoPath;
@@ -21,7 +20,7 @@ class VerifyPage extends StatefulWidget {
 
 class _VerifyPageState extends State<VerifyPage>
     with TickerProviderStateMixin {
-  // ── State ───────────────────────────────────
+  // â”€â”€ State â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   _AnalysisPhase _phase = _AnalysisPhase.idle;
   _Verdict? _verdict;
 
@@ -40,7 +39,7 @@ class _VerifyPageState extends State<VerifyPage>
   final List<String> _logLines = [];
   Timer? _analysisTimer;
 
-  // ── Theme tokens ────────────────────────────
+  // â”€â”€ Theme tokens â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   static const _bg        = Color(0xFF080C14);
   static const _surface   = Color(0xFF0F1523);
   static const _border    = Color(0xFF1C2740);
@@ -82,7 +81,7 @@ class _VerifyPageState extends State<VerifyPage>
     super.dispose();
   }
 
-  // ── Simulated Analysis Pipeline ─────────────
+  // â”€â”€ Simulated Analysis Pipeline â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   void _startAnalysis() {
     setState(() {
       _phase = _AnalysisPhase.extracting;
@@ -95,10 +94,10 @@ class _VerifyPageState extends State<VerifyPage>
       _framesExtracted = 0;
     });
 
-    _log('▶ Initiating VERIFRAME forensic pipeline...');
-    _log('▶ Input: ${widget.streamUrl ?? widget.videoUrl ?? widget.videoPath ?? "unknown"}');
+    _log('â–¶ Initiating VERIFRAME forensic pipeline...');
+    _log('â–¶ Input: ${widget.streamUrl ?? widget.videoUrl ?? widget.videoPath ?? "unknown"}');
 
-    // Phase 1 — Frame extraction (0–2 s)
+    // Phase 1 â€” Frame extraction (0â€“2 s)
     int tick = 0;
     _analysisTimer = Timer.periodic(const Duration(milliseconds: 80), (t) {
       tick++;
@@ -106,42 +105,42 @@ class _VerifyPageState extends State<VerifyPage>
       if (tick <= 25) {
         // Frame extraction progress
         setState(() => _framesExtracted = (tick * (_totalFrames / 25)).round());
-        if (tick == 5)  _log('▶ Normalizing resolution → 224×224');
-        if (tick == 15) _log('▶ Preparing DFDC-style input tensors...');
+        if (tick == 5)  _log('â–¶ Normalizing resolution â†’ 224Ã—224');
+        if (tick == 15) _log('â–¶ Preparing DFDC-style input tensors...');
         if (tick == 25) {
-          _log('✔ ${_totalFrames} frames extracted');
+          _log('âœ” ${_totalFrames} frames extracted');
           setState(() => _phase = _AnalysisPhase.efficientNet);
-          _log('▶ EfficientNet spatial analysis started...');
+          _log('â–¶ EfficientNet spatial analysis started...');
         }
       } else if (tick <= 45) {
         // EfficientNet scoring
         final progress = (tick - 25) / 20;
         setState(() => _efficientNetScore = progress * 72);
-        if (tick == 35) _log('▶ Detecting texture anomalies & GAN artifacts...');
+        if (tick == 35) _log('â–¶ Detecting texture anomalies & GAN artifacts...');
         if (tick == 45) {
-          _log('✔ EfficientNet score: ${_efficientNetScore.round()}%');
+          _log('âœ” EfficientNet score: ${_efficientNetScore.round()}%');
           setState(() => _phase = _AnalysisPhase.vit);
-          _log('▶ Vision Transformer temporal analysis started...');
+          _log('â–¶ Vision Transformer temporal analysis started...');
         }
       } else if (tick <= 65) {
         // ViT scoring
         final progress = (tick - 45) / 20;
         setState(() => _vitScore = progress * 81);
-        if (tick == 55) _log('▶ Analyzing inter-frame identity consistency...');
+        if (tick == 55) _log('â–¶ Analyzing inter-frame identity consistency...');
         if (tick == 65) {
-          _log('✔ ViT temporal score: ${_vitScore.round()}%');
+          _log('âœ” ViT temporal score: ${_vitScore.round()}%');
           setState(() => _phase = _AnalysisPhase.dfdc);
-          _log('▶ Matching against DFDC val/test distributions...');
+          _log('â–¶ Matching against DFDC val/test distributions...');
         }
       } else if (tick <= 80) {
         // DFDC matching
         final progress = (tick - 65) / 15;
         setState(() => _dfdcScore = progress * 68);
-        if (tick == 75) _log('▶ Computing dataset similarity score...');
+        if (tick == 75) _log('â–¶ Computing dataset similarity score...');
         if (tick == 80) {
-          _log('✔ DFDC pattern match: ${_dfdcScore.round()}%');
+          _log('âœ” DFDC pattern match: ${_dfdcScore.round()}%');
           setState(() => _phase = _AnalysisPhase.fusion);
-          _log('▶ Fusion decision agent aggregating outputs...');
+          _log('â–¶ Fusion decision agent aggregating outputs...');
         }
       } else if (tick <= 95) {
         // Confidence ramp
@@ -165,10 +164,10 @@ class _VerifyPageState extends State<VerifyPage>
                   : _Verdict.real;
         });
         _log('');
-        _log('══════════════════════════════');
+        _log('â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•');
         _log('VERDICT: ${_verdictLabel(_verdict!)}');
         _log('CONFIDENCE: ${_confidence.round()}%');
-        _log('══════════════════════════════');
+        _log('â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•');
       }
     });
   }
@@ -177,7 +176,7 @@ class _VerifyPageState extends State<VerifyPage>
     setState(() => _logLines.add(line));
   }
 
-  // ── UI ──────────────────────────────────────
+  // â”€â”€ UI â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   @override
   Widget build(BuildContext context) {
     return AnnotatedRegion<SystemUiOverlayStyle>(
@@ -218,7 +217,7 @@ class _VerifyPageState extends State<VerifyPage>
     );
   }
 
-  // ── Top bar ─────────────────────────────────
+  // â”€â”€ Top bar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   Widget _buildTopBar() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -269,9 +268,9 @@ class _VerifyPageState extends State<VerifyPage>
                   padding:
                       const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: _accent.withOpacity(0.12),
+                    color: _accent.withValues(alpha:0.12),
                     borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: _accent.withOpacity(0.4)),
+                    border: Border.all(color: _accent.withValues(alpha:0.4)),
                   ),
                   child: const Row(
                     children: [
@@ -299,7 +298,7 @@ class _VerifyPageState extends State<VerifyPage>
     );
   }
 
-  // ── Source card ──────────────────────────────
+  // â”€â”€ Source card â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   Widget _buildSourceCard() {
     final source = widget.videoUrl ?? widget.videoPath ?? 'No source provided';
     final isUrl = widget.videoUrl != null;
@@ -311,9 +310,9 @@ class _VerifyPageState extends State<VerifyPage>
             width: 44,
             height: 44,
             decoration: BoxDecoration(
-              color: _accent.withOpacity(0.08),
+              color: _accent.withValues(alpha:0.08),
               borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: _accent.withOpacity(0.2)),
+              border: Border.all(color: _accent.withValues(alpha:0.2)),
             ),
             child: Icon(
               isUrl ? Icons.link_rounded : Icons.video_file_rounded,
@@ -365,7 +364,7 @@ class _VerifyPageState extends State<VerifyPage>
     );
   }
 
-  // ── Pipeline progress steps ──────────────────
+  // â”€â”€ Pipeline progress steps â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   Widget _buildPipelineProgress() {
     final steps = [
       _PipelineStep('Frame Extraction', Icons.image_search_rounded,
@@ -434,7 +433,7 @@ class _VerifyPageState extends State<VerifyPage>
         ? _safe
         : isActive
             ? _accent
-            : _textSec.withOpacity(0.4);
+            : _textSec.withValues(alpha:0.4);
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
@@ -447,20 +446,20 @@ class _VerifyPageState extends State<VerifyPage>
               height: 32,
               decoration: BoxDecoration(
                 color: isActive
-                    ? _accent.withOpacity(0.1 + 0.08 * _pulseAnim.value)
+                    ? _accent.withValues(alpha:0.1 + 0.08 * _pulseAnim.value)
                     : isDone
-                        ? _safe.withOpacity(0.08)
+                        ? _safe.withValues(alpha:0.08)
                         : _surface,
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(
-                  color: color.withOpacity(isActive ? 0.7 : 0.3),
+                  color: color.withValues(alpha:isActive ? 0.7 : 0.3),
                 ),
               ),
               child: isDone
                   ? const Icon(Icons.check_rounded, color: _safe, size: 16)
                   : isActive
                       ? Icon(step.icon, color: _accent, size: 15)
-                      : Icon(step.icon, color: _textSec.withOpacity(0.4), size: 15),
+                      : Icon(step.icon, color: _textSec.withValues(alpha:0.4), size: 15),
             ),
           ),
           const SizedBox(width: 10),
@@ -468,7 +467,7 @@ class _VerifyPageState extends State<VerifyPage>
             child: Text(
               step.label,
               style: TextStyle(
-                color: isPending ? _textSec.withOpacity(0.4) : _textPri,
+                color: isPending ? _textSec.withValues(alpha:0.4) : _textPri,
                 fontSize: 13,
                 fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
               ),
@@ -495,7 +494,7 @@ class _VerifyPageState extends State<VerifyPage>
     );
   }
 
-  // ── Score grid ───────────────────────────────
+  // â”€â”€ Score grid â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   Widget _buildScoreGrid() {
     return Row(
       children: [
@@ -529,7 +528,7 @@ class _VerifyPageState extends State<VerifyPage>
     );
   }
 
-  // ── Verdict card ─────────────────────────────
+  // â”€â”€ Verdict card â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   Widget _buildVerdictCard() {
     final v = _verdict!;
     final color  = _verdictColor(v);
@@ -539,9 +538,9 @@ class _VerifyPageState extends State<VerifyPage>
 
     return Container(
       decoration: BoxDecoration(
-        color: color.withOpacity(0.07),
+        color: color.withValues(alpha:0.07),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: color.withOpacity(0.35), width: 1.5),
+        border: Border.all(color: color.withValues(alpha:0.35), width: 1.5),
       ),
       padding: const EdgeInsets.all(18),
       child: Column(
@@ -553,7 +552,7 @@ class _VerifyPageState extends State<VerifyPage>
                 width: 48,
                 height: 48,
                 decoration: BoxDecoration(
-                  color: color.withOpacity(0.12),
+                  color: color.withValues(alpha:0.12),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(icon, color: color, size: 26),
@@ -570,7 +569,7 @@ class _VerifyPageState extends State<VerifyPage>
                           letterSpacing: 1)),
                   Text('Confidence: ${_confidence.round()}%',
                       style: TextStyle(
-                          color: color.withOpacity(0.7), fontSize: 13)),
+                          color: color.withValues(alpha:0.7), fontSize: 13)),
                 ],
               ),
               const Spacer(),
@@ -580,7 +579,7 @@ class _VerifyPageState extends State<VerifyPage>
           const SizedBox(height: 14),
           Container(
             height: 1,
-            color: color.withOpacity(0.2),
+            color: color.withValues(alpha:0.2),
           ),
           const SizedBox(height: 14),
           Text(desc,
@@ -591,9 +590,9 @@ class _VerifyPageState extends State<VerifyPage>
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: _danger.withOpacity(0.08),
+                color: _danger.withValues(alpha:0.08),
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: _danger.withOpacity(0.3)),
+                border: Border.all(color: _danger.withValues(alpha:0.3)),
               ),
               child: const Row(
                 children: [
@@ -602,7 +601,7 @@ class _VerifyPageState extends State<VerifyPage>
                   SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      'HIGH RISK — Cybersecurity escalation recommended. DFDC-like manipulation pattern detected.',
+                      'HIGH RISK â€” Cybersecurity escalation recommended. DFDC-like manipulation pattern detected.',
                       style: TextStyle(
                           color: _danger, fontSize: 12, fontWeight: FontWeight.w500),
                     ),
@@ -616,7 +615,7 @@ class _VerifyPageState extends State<VerifyPage>
     );
   }
 
-  // ── Activity log ─────────────────────────────
+  // â”€â”€ Activity log â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   Widget _buildActivityLog() {
     return _Card(
       child: Column(
@@ -668,13 +667,13 @@ class _VerifyPageState extends State<VerifyPage>
                       final line = _logLines[i];
                       final isVerdict = line.contains('VERDICT') ||
                           line.contains('CONFIDENCE') ||
-                          line.startsWith('══');
+                          line.startsWith('â•â•');
                       return Text(
                         line,
                         style: TextStyle(
                           color: isVerdict
                               ? _verdictColor(_verdict ?? _Verdict.suspicious)
-                              : line.startsWith('✔')
+                              : line.startsWith('âœ”')
                                   ? _safe
                                   : _textSec,
                           fontSize: 11,
@@ -693,7 +692,7 @@ class _VerifyPageState extends State<VerifyPage>
     );
   }
 
-  // ── Bottom action bar ────────────────────────
+  // â”€â”€ Bottom action bar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   Widget _buildActionBar() {
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
@@ -731,7 +730,7 @@ class _VerifyPageState extends State<VerifyPage>
     );
   }
 
-  // ── Helpers ──────────────────────────────────
+  // â”€â”€ Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   Color _verdictColor(_Verdict v) => switch (v) {
         _Verdict.real       => _safe,
         _Verdict.suspicious => _warn,
@@ -754,7 +753,7 @@ class _VerifyPageState extends State<VerifyPage>
         _Verdict.real =>
           'No significant manipulation patterns detected. EfficientNet found no GAN artifacts in facial texture regions, and Vision Transformer temporal analysis shows consistent identity across all sampled frames. DFDC distribution alignment indicates authentic video.',
         _Verdict.suspicious =>
-          'Moderate anomalies detected. Some temporal inconsistencies were identified between frames 34–67, with minor texture irregularities near the facial boundary. Pattern similarity to known DFDC deepfake samples is elevated. Manual review recommended.',
+          'Moderate anomalies detected. Some temporal inconsistencies were identified between frames 34â€“67, with minor texture irregularities near the facial boundary. Pattern similarity to known DFDC deepfake samples is elevated. Manual review recommended.',
         _Verdict.fake =>
           'High-confidence deepfake detected. EfficientNet identified significant GAN-generated texture artifacts across facial regions. Vision Transformer detected identity drift across frame sequences. DFDC pattern match is highly correlated with known manipulation signatures.',
       };
@@ -764,9 +763,9 @@ class _VerifyPageState extends State<VerifyPage>
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha:0.1),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: color.withOpacity(0.5)),
+        border: Border.all(color: color.withValues(alpha:0.5)),
       ),
       child: Text(_verdictLabel(v),
           style: TextStyle(
@@ -778,9 +777,9 @@ class _VerifyPageState extends State<VerifyPage>
   }
 }
 
-// ─────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 //  Enums
-// ─────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 enum _AnalysisPhase {
   idle,
@@ -794,9 +793,9 @@ enum _AnalysisPhase {
 
 enum _Verdict { real, suspicious, fake }
 
-// ─────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 //  Data models
-// ─────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class _PipelineStep {
   final String label;
@@ -805,9 +804,9 @@ class _PipelineStep {
   const _PipelineStep(this.label, this.icon, this.phase);
 }
 
-// ─────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 //  Shared Widgets
-// ─────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class _Card extends StatelessWidget {
   final Widget child;
@@ -940,7 +939,7 @@ class _ArcPainter extends CustomPainter {
     final radius = size.width / 2 - 4;
 
     final bgPaint = Paint()
-      ..color = color.withOpacity(0.15)
+      ..color = color.withValues(alpha:0.15)
       ..strokeWidth = 5
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.round;
@@ -951,8 +950,8 @@ class _ArcPainter extends CustomPainter {
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.round;
 
-    const startAngle = -2.35619; // -135°
-    const sweepTotal = 4.71239;  // 270°
+    const startAngle = -2.35619; // -135Â°
+    const sweepTotal = 4.71239;  // 270Â°
 
     canvas.drawArc(Rect.fromCircle(center: center, radius: radius),
         startAngle, sweepTotal, false, bgPaint);
@@ -1002,7 +1001,7 @@ class _PulsingDotState extends State<_PulsingDot>
         width: 6,
         height: 6,
         decoration: BoxDecoration(
-          color: widget.color.withOpacity(_a.value),
+          color: widget.color.withValues(alpha:_a.value),
           shape: BoxShape.circle,
         ),
       ),

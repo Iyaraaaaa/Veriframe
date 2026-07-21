@@ -88,24 +88,44 @@ class HomeTopBar extends StatelessWidget implements PreferredSizeWidget {
                 stream: NotificationService.instance.getUnreadCountStream(uid),
                 builder: (context, countSnapshot) {
                   final count = countSnapshot.data ?? 0;
-                  if (count > 0) {
-                    return IconButton(
-                      icon: Badge(
-                        label: Text('$count'),
-                        backgroundColor: Colors.blue,
-                        textColor: Colors.white,
-                        child: const Icon(Icons.notifications_outlined, color: Colors.white),
+                  final badgeText = count > 99 ? '99+' : '$count';
+                  return Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.notifications_outlined, color: Colors.white),
+                        onPressed: onNotificationTap,
+                        tooltip: 'Notifications',
                       ),
-                      onPressed: onNotificationTap,
-                      tooltip: 'Notifications',
-                    );
-                  } else {
-                    return IconButton(
-                      icon: const Icon(Icons.notifications_outlined, color: Colors.white),
-                      onPressed: onNotificationTap,
-                      tooltip: 'Notifications',
-                    );
-                  }
+                      if (count > 0)
+                        Positioned(
+                          right: 8,
+                          top: 4,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: Colors.red,
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(color: Colors.white, width: 1.5),
+                            ),
+                            constraints: const BoxConstraints(
+                              minWidth: 18,
+                              minHeight: 18,
+                            ),
+                            child: Text(
+                              badgeText,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 10,
+                                fontWeight: FontWeight.w700,
+                                height: 1.0,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                        ),
+                    ],
+                  );
                 },
               );
             },

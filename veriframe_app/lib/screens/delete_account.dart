@@ -4,26 +4,46 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:veriframe_app/l10n/app_localizations.dart';
 
-Future<void> deleteAccountAndNavigate(BuildContext context, VoidCallback onConfirm) async {
-  final prefs = await SharedPreferences.getInstance();
-  await prefs.clear();
-  try {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user != null) {
-      await FirebaseFirestore.instance.collection('users').doc(user.uid).delete();
-      await user.delete();
-    }
-  } catch (e) {
-    debugPrint('Delete account error: $e');
-  }
-  await FirebaseAuth.instance.signOut();
-  onConfirm();
+class DeleteAccountDialog extends StatefulWidget {
+  const DeleteAccountDialog({super.key});
+
+  @override
+  State<DeleteAccountDialog> createState() => _DeleteAccountDialogState();
 }
 
-class DeleteAccountDialog extends StatelessWidget {
-  final VoidCallback onConfirm;
+class _DeleteAccountDialogState extends State<DeleteAccountDialog> {
+  bool _isDeleting = false;
 
-  const DeleteAccountDialog({super.key, required this.onConfirm});
+  Future<void> _deleteAccountAndNavigate() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.clear();
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user != null) {
+        await FirebaseFirestore.instance.collection('users').doc(user.uid).delete();
+        await user.delete();
+      }
+    } catch (e) {
+      debugPrint('Delete account error: $e');
+    }
+    await FirebaseAuth.instance.signOut();
+
+    if (mounted) {
+      final loc = AppLocalizations.of(context)!;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(loc.accountDeleted),
+          backgroundColor: Colors.green,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+
+    await Future.delayed(const Duration(milliseconds: 1500));
+    if (mounted) {
+      Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -39,19 +59,31 @@ class DeleteAccountDialog extends StatelessWidget {
       ),
       actions: [
         TextButton(
-          onPressed: () => Navigator.pop(context),
+          onPressed: _isDeleting ? null : () => Navigator.pop(context),
           child: Text(loc.verifyCancel),
         ),
         ElevatedButton(
-          onPressed: () {
-            Navigator.pop(context);
-            deleteAccountAndNavigate(context, onConfirm);
-          },
+          onPressed: _isDeleting
+              ? null
+              : () async {
+                  setState(() => _isDeleting = true);
+                  Navigator.pop(context);
+                  await _deleteAccountAndNavigate();
+                },
           style: ElevatedButton.styleFrom(
             backgroundColor: Colors.red,
             foregroundColor: Colors.white,
           ),
-          child: Text(loc.deletePermanently),
+          child: _isDeleting
+              ? const SizedBox(
+                  height: 20,
+                  width: 20,
+                  child: CircularProgressIndicator(
+                    color: Colors.white,
+                    strokeWidth: 2,
+                  ),
+                )
+              : Text(loc.deletePermanently),
         ),
       ],
     );
