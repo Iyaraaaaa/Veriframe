@@ -73,8 +73,9 @@ class _ReportDetailPageState extends State<ReportDetailPage> {
 
   @override
   Widget build(BuildContext context) {
-    final r = widget.report;
-    final isReal = r.verdict.toUpperCase() == 'AUTHENTIC';
+     final r = widget.report;
+     final loc = AppLocalizations.of(context)!;
+     final isReal = r.verdict.toUpperCase() == 'AUTHENTIC';
 
     final verdictColor = isReal ? _Pal.authentic : _Pal.manipulated;
     final verdictBg = isReal ? _pal.authenticBg : _pal.manipulatedBg;
@@ -88,7 +89,7 @@ class _ReportDetailPageState extends State<ReportDetailPage> {
       backgroundColor: _pal.bg,
       appBar: AppBar(
         title: Text(
-          'Forensic report',
+          loc.reportDetailTitle,
           style: TextStyle(
             color: _pal.textPrimary,
             fontWeight: FontWeight.w700,
@@ -218,6 +219,7 @@ class _HeroCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final _pal = _Pal(Theme.of(context).brightness == Brightness.dark);
+    final loc = AppLocalizations.of(context)!;
     final r = report;
 
     Widget thumb;
@@ -276,28 +278,28 @@ class _HeroCard extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            r.mediaName ?? 'Forensic media scan',
-                            style: TextStyle(
-                              fontSize: 15.5,
-                              fontWeight: FontWeight.w700,
-                              color: _pal.textPrimary,
-                              height: 1.25,
-                            ),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          const SizedBox(height: 3),
-                          Text(
-                            'ID ${r.verificationId}',
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontFamily: _Pal.mono,
-                              color: _pal.textSubtle,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
+                           Text(
+                             r.mediaName ?? loc.reportMediaScan,
+                             style: TextStyle(
+                               fontSize: 15.5,
+                               fontWeight: FontWeight.w700,
+                               color: _pal.textPrimary,
+                               height: 1.25,
+                             ),
+                             maxLines: 2,
+                             overflow: TextOverflow.ellipsis,
+                           ),
+                           const SizedBox(height: 3),
+                           Text(
+                             loc.reportIdLabel(r.verificationId),
+                             style: TextStyle(
+                               fontSize: 11,
+                               fontFamily: _Pal.mono,
+                               color: _pal.textSubtle,
+                             ),
+                             maxLines: 1,
+                             overflow: TextOverflow.ellipsis,
+                           ),
                         ],
                       ),
                     ),
@@ -331,26 +333,26 @@ class _HeroCard extends StatelessWidget {
                 const SizedBox(height: 12),
                 Row(
                   children: [
-                    _heroMeta(
-                      _pal,
-                      icon: Icons.source_rounded,
-                      label: 'Source',
-                      value: r.source,
-                    ),
-                    _heroMeta(
-                      _pal,
-                      icon: Icons.event_rounded,
-                      label: 'Verified',
-                      value: DateFormat('MMM dd, yyyy').format(r.verifiedAt),
-                      mono: true,
-                    ),
-                    _heroMeta(
-                      _pal,
-                      icon: Icons.flag_rounded,
-                      label: 'Risk',
-                      value: r.riskLevel,
-                      valueColor: riskColor,
-                    ),
+                     _heroMeta(
+                       _pal,
+                       icon: Icons.source_rounded,
+                       label: loc.reportSourceLabel,
+                       value: r.source,
+                     ),
+                     _heroMeta(
+                       _pal,
+                       icon: Icons.event_rounded,
+                       label: loc.reportVerifiedLabel,
+                       value: DateFormat('MMM dd, yyyy').format(r.verifiedAt),
+                       mono: true,
+                     ),
+                     _heroMeta(
+                       _pal,
+                       icon: Icons.flag_rounded,
+                       label: loc.reportRiskLabel,
+                       value: r.riskLevel,
+                       valueColor: riskColor,
+                     ),
                   ],
                 ),
               ],
@@ -437,6 +439,7 @@ class _ConfidenceCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final _pal = _Pal(Theme.of(context).brightness == Brightness.dark);
+    final loc = AppLocalizations.of(context)!;
     final r = report;
     final isReal = r.verdict.toUpperCase() == 'AUTHENTIC';
     final displayScore = isReal ? r.authenticityScore : r.fakeProbability;
@@ -447,8 +450,8 @@ class _ConfidenceCard extends StatelessWidget {
             children: [
               Expanded(
                 child: _CardHeader(
-                  title: 'Confidence assessment',
-                  subtitle: 'Fused score across verification pipelines',
+                  title: loc.reportConfidenceAssessment,
+                  subtitle: loc.reportConfidenceSubtitle,
                 ),
               ),
             ],
@@ -457,16 +460,15 @@ class _ConfidenceCard extends StatelessWidget {
           _CircularGauge(
             value: displayScore,
             color: verdictColor,
-            caption: isReal ? 'AUTHENTIC' : 'MANIPULATED',
+            caption: isReal ? loc.verifyAuthenticLabel : loc.verifyManipulatedLabel,
           ),
           const SizedBox(height: 22),
           Container(height: 1, color: _pal.border),
           const SizedBox(height: 16),
           _DataRow(
             icon: Icons.hub_rounded,
-            title: 'Fusion confidence rating',
-            subtitle:
-                'Model, frame and tracking scores combined into one rating.',
+            title: loc.reportFusionConfidenceRating,
+            subtitle: loc.reportFusionSubtitle,
             value: '${r.confidence.toStringAsFixed(1)}%',
             valueColor: _Pal.data,
           ),
@@ -490,6 +492,7 @@ class _CircularGauge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final _pal = _Pal(Theme.of(context).brightness == Brightness.dark);
+    final loc = AppLocalizations.of(context)!;
     final fraction = (value / 100).clamp(0.0, 1.0);
     return SizedBox(
       width: 168,
@@ -515,7 +518,7 @@ class _CircularGauge extends StatelessWidget {
               ),
               const SizedBox(height: 2),
               Text(
-                '% confidence',
+                loc.reportConfidencePercent,
                 style: TextStyle(fontSize: 11, color: _pal.textSubtle),
               ),
               const SizedBox(height: 8),
@@ -671,38 +674,36 @@ class _PipelineCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final r = report;
+    final loc = AppLocalizations.of(context)!;
     return _CardShell(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const _CardHeader(
-            title: 'Pipeline metrics',
-            subtitle: 'Deep-learning and structural verification checks',
+          _CardHeader(
+            title: loc.reportPipelineMetrics,
+            subtitle: loc.reportPipelineSubtitle,
           ),
           const SizedBox(height: 16),
           _MetricLine(
             icon: Icons.movie_rounded,
-            title: 'Frame consistency',
-            explanation:
-                'Frame-by-frame color histogram correlation. Low values indicate splicing.',
+            title: loc.reportFrameConsistency,
+            explanation: loc.reportFrameConsistencyExplanation,
             value: r.frameConsistency,
             color: verdictColor,
           ),
           const SizedBox(height: 14),
           _MetricLine(
             icon: Icons.face_retouching_natural_rounded,
-            title: 'Biometric face tracking',
-            explanation:
-                'Temporal displacement variance of detected face bounding boxes.',
+            title: loc.reportBiometricFaceTracking,
+            explanation: loc.reportBiometricExplanation,
             value: r.trackingConfidence,
             color: verdictColor,
           ),
           const SizedBox(height: 14),
           _MetricLine(
             icon: Icons.data_object_rounded,
-            title: 'Metadata validation',
-            explanation:
-                'Container structure, FPS range and header integrity validation.',
+            title: loc.reportMetadataValidation,
+            explanation: loc.reportMetadataExplanation,
             value: r.metadataScore,
             color: _Pal.data,
           ),
@@ -710,9 +711,8 @@ class _PipelineCard extends StatelessWidget {
             const SizedBox(height: 14),
             _MetricLine(
               icon: Icons.text_fields_rounded,
-              title: 'OCR confidence',
-              explanation:
-                  'Presence and edge contour quality of static text overlays.',
+              title: loc.reportOcrConfidence,
+              explanation: loc.reportOcrExplanation,
               value: r.ocrConfidence,
               color: _Pal.data,
             ),
@@ -820,9 +820,9 @@ class _ExportCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const _CardHeader(
-            title: 'Export',
-            subtitle: 'Generate and share the official forensic document',
+          _CardHeader(
+            title: loc.reportExport,
+            subtitle: loc.reportExportSubtitle,
           ),
           const SizedBox(height: 14),
           Container(
@@ -851,7 +851,7 @@ class _ExportCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'PDF forensic report',
+                        loc.reportPdfForensicReport,
                         style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w700,
@@ -860,7 +860,7 @@ class _ExportCard extends StatelessWidget {
                       ),
                       SizedBox(height: 2),
                       Text(
-                        'Signed, timestamped and court-ready export.',
+                        loc.reportPdfSubtitle,
                         style: TextStyle(fontSize: 11, color: _pal.textSubtle),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -887,7 +887,7 @@ class _ExportCard extends StatelessWidget {
                     )
                   : const Icon(Icons.picture_as_pdf_outlined, size: 18),
               label: Text(
-                generating ? 'Compiling report...' : 'Generate forensic PDF',
+                generating ? loc.reportCompiling : loc.reportGeneratePdf,
                 style: const TextStyle(
                   fontWeight: FontWeight.w700,
                   fontSize: 13.5,
@@ -910,9 +910,9 @@ class _ExportCard extends StatelessWidget {
             child: OutlinedButton.icon(
               onPressed: generating ? null : onShare,
               icon: const Icon(Icons.share_rounded, size: 17),
-              label: const Text(
-                'Share report',
-                style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13.5),
+              label: Text(
+                loc.reportShare,
+                style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13.5),
               ),
               style: OutlinedButton.styleFrom(
                 foregroundColor: _pal.textPrimary,

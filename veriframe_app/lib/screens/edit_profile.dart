@@ -1,11 +1,14 @@
 import 'dart:io';
 import 'dart:convert';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:veriframe_app/widgets/main_scaffold.dart';
+import 'package:veriframe_app/widgets/safe_avatar_widget.dart';
+import 'package:veriframe_app/service/user_profile_cache.dart';
 import 'package:veriframe_app/l10n/app_localizations.dart';
 
 class EditProfilePage extends StatefulWidget {
@@ -366,6 +369,16 @@ class _EditProfilePageState extends State<EditProfilePage> {
           .doc(currentUser.uid)
           .set(userData, SetOptions(merge: true));
 
+      // Clear Google profile photo when user explicitly removes their custom image
+      if (finalImageData == null || finalImageData.isEmpty) {
+        try {
+          await currentUser.updatePhotoURL(null);
+        } on FirebaseAuthException catch (_) {
+          debugPrint('Could not clear Google profile photo: requires-recent-login');
+        }
+        UserProfileCache.instance.updateCache(bytes: null, url: null);
+      }
+
       // Update SharedPreferences for immediate access
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('userId', currentUser.uid);
@@ -472,49 +485,32 @@ class _EditProfilePageState extends State<EditProfilePage> {
   }
 
   Widget _buildCircleAvatar(bool isDark) {
-    final imageProvider = _getImageProvider();
-    
-    // If we have a valid image and no error, show image only
-    if (imageProvider != null && !_hasImageError) {
+    if (_newImage != null) {
       return CircleAvatar(
         radius: 58,
-        backgroundColor: isDark ? Colors.grey[800] : Colors.blue.shade100,
-        backgroundImage: imageProvider,
-        onBackgroundImageError: (exception, stackTrace) {
-          debugPrint('Profile image error: $exception');
-          if (mounted) {
-            setState(() {
-              _hasImageError = true;
-            });
-          }
-        },
+        backgroundImage: FileImage(_newImage!),
       );
     }
-    
-    // If no image or error, show placeholder child only
-    return CircleAvatar(
+
+    String? imageUrl;
+    Uint8List? imageBytes;
+
+    if (_currentImageData != null && _currentImageData!.isNotEmpty) {
+      if (_currentImageData!.startsWith('data:image')) {
+        try {
+          final b64 = _currentImageData!.split(',')[1];
+          imageBytes = base64Decode(b64);
+        } catch (_) {}
+      } else if (_currentImageData!.startsWith('http')) {
+        imageUrl = _currentImageData!;
+      }
+    }
+
+    return SafeAvatarWidget(
       radius: 58,
-      backgroundColor: isDark ? Colors.grey[800] : Colors.blue.shade100,
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.person,
-            size: 40,
-            color: isDark ? Colors.grey[400] : Colors.grey[600],
-          ),
-          const SizedBox(height: 4),
-          Text(
-            _hasImageError ? loc.profileFailedToLoad : loc.profileNoPhoto,
-            style: TextStyle(
-              fontSize: 12,
-              color: isDark ? Colors.grey[400] : Colors.grey[600],
-              fontWeight: FontWeight.w500,
-            ),
-            textAlign: TextAlign.center,
-          ),
-        ],
-      ),
+      imageUrl: imageUrl,
+      imageBytes: imageBytes,
+      fallbackName: nameController.text,
     );
   }
 

@@ -3387,6 +3387,558 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'The technologies powering VeriFrame\'s forensic deepfake detection platform.'**
   String get techStackSubtitle;
+
+  /// No description provided for @notificationsJustNow.
+  ///
+  /// In en, this message translates to:
+  /// **'just now'**
+  String get notificationsJustNow;
+
+  /// No description provided for @notificationsMinutesAgo.
+  ///
+  /// In en, this message translates to:
+  /// **'{count}m ago'**
+  String notificationsMinutesAgo(Object count);
+
+  /// No description provided for @notificationsHoursAgo.
+  ///
+  /// In en, this message translates to:
+  /// **'{count}h ago'**
+  String notificationsHoursAgo(Object count);
+
+  /// No description provided for @notificationsDaysAgo.
+  ///
+  /// In en, this message translates to:
+  /// **'{count}d ago'**
+  String notificationsDaysAgo(Object count);
+
+  /// No description provided for @notificationsEmptyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No Notifications'**
+  String get notificationsEmptyTitle;
+
+  /// No description provided for @notificationsEmptySubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'re all caught up.\nNew verification results will appear here.'**
+  String get notificationsEmptySubtitle;
+
+  /// No description provided for @verifyAuthenticLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'AUTHENTIC'**
+  String get verifyAuthenticLabel;
+
+  /// No description provided for @verifyManipulatedLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'MANIPULATED'**
+  String get verifyManipulatedLabel;
+
+  /// No description provided for @cameraStopAnalyze.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop & Analyze'**
+  String get cameraStopAnalyze;
+
+  /// No description provided for @cameraStartLiveStream.
+  ///
+  /// In en, this message translates to:
+  /// **'Start Live Stream'**
+  String get cameraStartLiveStream;
+
+  /// No description provided for @cameraGoBack.
+  ///
+  /// In en, this message translates to:
+  /// **'Go Back'**
+  String get cameraGoBack;
+
+  /// No description provided for @cameraNoCamerasFound.
+  ///
+  /// In en, this message translates to:
+  /// **'No cameras found'**
+  String get cameraNoCamerasFound;
+
+  /// No description provided for @cameraError.
+  ///
+  /// In en, this message translates to:
+  /// **'Camera error: {error}'**
+  String cameraError(Object error);
+
+  /// No description provided for @cameraLiveStreamFrames.
+  ///
+  /// In en, this message translates to:
+  /// **'Live Stream • {count} frames'**
+  String cameraLiveStreamFrames(Object count);
+
+  /// No description provided for @cameraInitializing.
+  ///
+  /// In en, this message translates to:
+  /// **'Initializing Camera...'**
+  String get cameraInitializing;
+
+  /// No description provided for @verifyCancelAnalysis.
+  ///
+  /// In en, this message translates to:
+  /// **'CANCEL ANALYSIS'**
+  String get verifyCancelAnalysis;
+
+  /// No description provided for @reportDetailTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Forensic report'**
+  String get reportDetailTitle;
+
+  /// No description provided for @reportMediaScan.
+  ///
+  /// In en, this message translates to:
+  /// **'Forensic media scan'**
+  String get reportMediaScan;
+
+  /// No description provided for @reportIdLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'ID {id}'**
+  String reportIdLabel(Object id);
+
+  /// No description provided for @reportSourceLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Source'**
+  String get reportSourceLabel;
+
+  /// No description provided for @reportVerifiedLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Verified'**
+  String get reportVerifiedLabel;
+
+  /// No description provided for @reportRiskLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Risk'**
+  String get reportRiskLabel;
+
+  /// No description provided for @reportConfidenceAssessment.
+  ///
+  /// In en, this message translates to:
+  /// **'Confidence assessment'**
+  String get reportConfidenceAssessment;
+
+  /// No description provided for @reportConfidenceSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Fused score across verification pipelines'**
+  String get reportConfidenceSubtitle;
+
+  /// No description provided for @reportConfidencePercent.
+  ///
+  /// In en, this message translates to:
+  /// **'% confidence'**
+  String get reportConfidencePercent;
+
+  /// No description provided for @reportFusionConfidenceRating.
+  ///
+  /// In en, this message translates to:
+  /// **'Fusion confidence rating'**
+  String get reportFusionConfidenceRating;
+
+  /// No description provided for @reportFusionSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Model, frame and tracking scores combined into one rating.'**
+  String get reportFusionSubtitle;
+
+  /// No description provided for @reportPipelineMetrics.
+  ///
+  /// In en, this message translates to:
+  /// **'Pipeline metrics'**
+  String get reportPipelineMetrics;
+
+  /// No description provided for @reportPipelineSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Deep-learning and structural verification checks'**
+  String get reportPipelineSubtitle;
+
+  /// No description provided for @reportFrameConsistency.
+  ///
+  /// In en, this message translates to:
+  /// **'Frame consistency'**
+  String get reportFrameConsistency;
+
+  /// No description provided for @reportFrameConsistencyExplanation.
+  ///
+  /// In en, this message translates to:
+  /// **'Frame-by-frame color histogram correlation. Low values indicate splicing.'**
+  String get reportFrameConsistencyExplanation;
+
+  /// No description provided for @reportBiometricFaceTracking.
+  ///
+  /// In en, this message translates to:
+  /// **'Biometric face tracking'**
+  String get reportBiometricFaceTracking;
+
+  /// No description provided for @reportBiometricExplanation.
+  ///
+  /// In en, this message translates to:
+  /// **'Temporal displacement variance of detected face bounding boxes.'**
+  String get reportBiometricExplanation;
+
+  /// No description provided for @reportMetadataValidation.
+  ///
+  /// In en, this message translates to:
+  /// **'Metadata validation'**
+  String get reportMetadataValidation;
+
+  /// No description provided for @reportMetadataExplanation.
+  ///
+  /// In en, this message translates to:
+  /// **'Container structure, FPS range and header integrity validation.'**
+  String get reportMetadataExplanation;
+
+  /// No description provided for @reportOcrConfidence.
+  ///
+  /// In en, this message translates to:
+  /// **'OCR confidence'**
+  String get reportOcrConfidence;
+
+  /// No description provided for @reportOcrExplanation.
+  ///
+  /// In en, this message translates to:
+  /// **'Presence and edge contour quality of static text overlays.'**
+  String get reportOcrExplanation;
+
+  /// No description provided for @reportExport.
+  ///
+  /// In en, this message translates to:
+  /// **'Export'**
+  String get reportExport;
+
+  /// No description provided for @reportExportSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Generate and share the official forensic document'**
+  String get reportExportSubtitle;
+
+  /// No description provided for @reportPdfForensicReport.
+  ///
+  /// In en, this message translates to:
+  /// **'PDF forensic report'**
+  String get reportPdfForensicReport;
+
+  /// No description provided for @reportPdfSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Signed, timestamped and court-ready export.'**
+  String get reportPdfSubtitle;
+
+  /// No description provided for @reportGeneratePdf.
+  ///
+  /// In en, this message translates to:
+  /// **'Generate forensic PDF'**
+  String get reportGeneratePdf;
+
+  /// No description provided for @reportCompiling.
+  ///
+  /// In en, this message translates to:
+  /// **'Compiling report...'**
+  String get reportCompiling;
+
+  /// No description provided for @reportShare.
+  ///
+  /// In en, this message translates to:
+  /// **'Share report'**
+  String get reportShare;
+
+  /// No description provided for @timelineTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'AI Forensic Verification Timeline'**
+  String get timelineTitle;
+
+  /// No description provided for @timelineStage.
+  ///
+  /// In en, this message translates to:
+  /// **'Stage {current} / {total}'**
+  String timelineStage(Object current, Object total);
+
+  /// No description provided for @pipelineTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'AI Verification Pipeline'**
+  String get pipelineTitle;
+
+  /// No description provided for @pipelineCompleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Completed'**
+  String get pipelineCompleted;
+
+  /// No description provided for @stagePreparingAnalysis.
+  ///
+  /// In en, this message translates to:
+  /// **'Preparing Analysis'**
+  String get stagePreparingAnalysis;
+
+  /// No description provided for @stageValidatingMedia.
+  ///
+  /// In en, this message translates to:
+  /// **'Validating Media'**
+  String get stageValidatingMedia;
+
+  /// No description provided for @stageDownloading.
+  ///
+  /// In en, this message translates to:
+  /// **'Downloading'**
+  String get stageDownloading;
+
+  /// No description provided for @stageExtractingMetadata.
+  ///
+  /// In en, this message translates to:
+  /// **'Extracting Metadata'**
+  String get stageExtractingMetadata;
+
+  /// No description provided for @stageSelectingFrames.
+  ///
+  /// In en, this message translates to:
+  /// **'Selecting Frames'**
+  String get stageSelectingFrames;
+
+  /// No description provided for @stageDetectingFaces.
+  ///
+  /// In en, this message translates to:
+  /// **'Detecting Faces'**
+  String get stageDetectingFaces;
+
+  /// No description provided for @stageTrackingFaces.
+  ///
+  /// In en, this message translates to:
+  /// **'Tracking Faces'**
+  String get stageTrackingFaces;
+
+  /// No description provided for @stageAssessingQuality.
+  ///
+  /// In en, this message translates to:
+  /// **'Assessing Quality'**
+  String get stageAssessingQuality;
+
+  /// No description provided for @stageRunningAiAnalysis.
+  ///
+  /// In en, this message translates to:
+  /// **'Running AI Analysis'**
+  String get stageRunningAiAnalysis;
+
+  /// No description provided for @stageVerifyingTemporalConsistency.
+  ///
+  /// In en, this message translates to:
+  /// **'Verifying Temporal Consistency'**
+  String get stageVerifyingTemporalConsistency;
+
+  /// No description provided for @stageAggregatingEvidence.
+  ///
+  /// In en, this message translates to:
+  /// **'Aggregating Evidence'**
+  String get stageAggregatingEvidence;
+
+  /// No description provided for @stageCalibratingConfidence.
+  ///
+  /// In en, this message translates to:
+  /// **'Calibrating Confidence'**
+  String get stageCalibratingConfidence;
+
+  /// No description provided for @stageGeneratingReport.
+  ///
+  /// In en, this message translates to:
+  /// **'Generating Report'**
+  String get stageGeneratingReport;
+
+  /// No description provided for @stageVerificationComplete.
+  ///
+  /// In en, this message translates to:
+  /// **'Verification Complete'**
+  String get stageVerificationComplete;
+
+  /// No description provided for @mediaValidationLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Media Validation'**
+  String get mediaValidationLabel;
+
+  /// No description provided for @mediaValidationDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Validating media headers, SHA-256 hash, and format integrity...'**
+  String get mediaValidationDesc;
+
+  /// No description provided for @metadataInspectionLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Metadata Inspection'**
+  String get metadataInspectionLabel;
+
+  /// No description provided for @metadataInspectionDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Analyzing EXIF, container metadata, and timestamp consistency...'**
+  String get metadataInspectionDesc;
+
+  /// No description provided for @frameExtractionLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Frame Extraction'**
+  String get frameExtractionLabel;
+
+  /// No description provided for @frameExtractionDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Extracting keyframes using adaptive temporal sampling...'**
+  String get frameExtractionDesc;
+
+  /// No description provided for @sceneDetectionLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Scene Detection'**
+  String get sceneDetectionLabel;
+
+  /// No description provided for @sceneDetectionDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Partitioning video into dynamic visual scenes and cuts...'**
+  String get sceneDetectionDesc;
+
+  /// No description provided for @faceDetectionLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Face Detection'**
+  String get faceDetectionLabel;
+
+  /// No description provided for @faceDetectionDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Running RetinaFace / SCRFD face locator cascade...'**
+  String get faceDetectionDesc;
+
+  /// No description provided for @faceTrackingLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Face Tracking'**
+  String get faceTrackingLabel;
+
+  /// No description provided for @faceTrackingDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Tracking facial bounding boxes across continuous frames...'**
+  String get faceTrackingDesc;
+
+  /// No description provided for @qualityAssessmentLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Quality Assessment'**
+  String get qualityAssessmentLabel;
+
+  /// No description provided for @qualityAssessmentDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Evaluating frame resolution, blur, compression, and lighting...'**
+  String get qualityAssessmentDesc;
+
+  /// No description provided for @artifactDetectionLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Artifact Detection'**
+  String get artifactDetectionLabel;
+
+  /// No description provided for @artifactDetectionDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Searching for facial boundary glitches and warping artifacts...'**
+  String get artifactDetectionDesc;
+
+  /// No description provided for @deepfakeAiModelLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Deepfake AI Model'**
+  String get deepfakeAiModelLabel;
+
+  /// No description provided for @deepfakeAiModelDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Executing EfficientViT TFLite neural inference engine...'**
+  String get deepfakeAiModelDesc;
+
+  /// No description provided for @temporalConsistencyLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Temporal Consistency'**
+  String get temporalConsistencyLabel;
+
+  /// No description provided for @temporalConsistencyDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Evaluating frame-to-frame feature persistence and jitter...'**
+  String get temporalConsistencyDesc;
+
+  /// No description provided for @confidenceCalibrationLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Confidence Calibration'**
+  String get confidenceCalibrationLabel;
+
+  /// No description provided for @confidenceCalibrationDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Applying Temperature Scaling (T=1.5) probability smoothing...'**
+  String get confidenceCalibrationDesc;
+
+  /// No description provided for @evidenceAggregationLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Evidence Aggregation'**
+  String get evidenceAggregationLabel;
+
+  /// No description provided for @evidenceAggregationDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Correlating neural predictions with forensic spatial heuristic data...'**
+  String get evidenceAggregationDesc;
+
+  /// No description provided for @riskScoringLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Risk Scoring'**
+  String get riskScoringLabel;
+
+  /// No description provided for @riskScoringDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Computing multi-factor threat assessment and risk matrix...'**
+  String get riskScoringDesc;
+
+  /// No description provided for @finalDecisionLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Final Decision'**
+  String get finalDecisionLabel;
+
+  /// No description provided for @finalDecisionDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Synthesizing adaptive ensemble verdict...'**
+  String get finalDecisionDesc;
+
+  /// No description provided for @generatingReportLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Generating Report'**
+  String get generatingReportLabel;
+
+  /// No description provided for @generatingReportDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Assembling complete forensic verification report...'**
+  String get generatingReportDesc;
 }
 
 class _AppLocalizationsDelegate

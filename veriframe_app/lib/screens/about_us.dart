@@ -229,77 +229,117 @@ class _AboutValuesSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
-    return ThemedCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(6),
-                decoration: BoxDecoration(
-                  color: c.accent.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Icon(Icons.lightbulb_outline, size: 16, color: c.accent),
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    final valueIcons = [
+      Icons.shield_outlined,
+      Icons.psychology_outlined,
+      Icons.auto_awesome_outlined,
+    ];
+
+    final valueTitles = [
+      "Uncompromising Forensic Integrity",
+      "Calibrated AI Deepfake Rigor",
+      "Transparent & Actionable Intelligence",
+    ];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: c.accent.withOpacity(0.12),
+                borderRadius: BorderRadius.circular(10),
               ),
-              const SizedBox(width: 10),
-              Text(
-                label,
-                style: TextStyle(
-                  color: c.text,
-                  fontSize: 14.5,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 0.2,
-                ),
+              child: Icon(Icons.lightbulb_outline, size: 18, color: c.accent),
+            ),
+            const SizedBox(width: 12),
+            Text(
+              label,
+              style: TextStyle(
+                color: c.text,
+                fontSize: 18,
+                fontWeight: FontWeight.w800,
+                letterSpacing: -0.3,
               ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          for (int i = 0; i < values.length; i++) ...[
-            if (i > 0)
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 10),
-                child: Divider(height: 1, color: c.text.withOpacity(0.06)),
-              ),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  width: 20,
-                  height: 20,
-                  margin: const EdgeInsets.only(top: 1),
-                  decoration: BoxDecoration(
-                    color: c.accent.withOpacity(0.12),
-                    shape: BoxShape.circle,
-                  ),
-                  alignment: Alignment.center,
-                  child: Text(
-                    '${i + 1}',
-                    style: TextStyle(
-                      color: c.accent,
-                      fontSize: 10.5,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    values[i],
-                    style: TextStyle(
-                      color: c.textMuted,
-                      fontSize: 13,
-                      height: 1.6,
-                      letterSpacing: 0.1,
-                    ),
-                  ),
-                ),
-              ],
             ),
           ],
-        ],
-      ),
+        ),
+        const SizedBox(height: 18),
+        LayoutBuilder(
+          builder: (context, constraints) {
+            return Column(
+              children: List.generate(values.length, (i) {
+                final icon = valueIcons[i % valueIcons.length];
+                final title = valueTitles[i % valueTitles.length];
+
+                return Container(
+                  width: double.infinity,
+                  margin: const EdgeInsets.only(bottom: 14),
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: c.surfaceVariant,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: c.text.withOpacity(0.08),
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(isDark ? 0.2 : 0.04),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: c.accent.withOpacity(0.12),
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        child: Icon(icon, size: 24, color: c.accent),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              title,
+                              style: TextStyle(
+                                color: c.text,
+                                fontSize: 15,
+                                fontWeight: FontWeight.w700,
+                                letterSpacing: -0.2,
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              values[i],
+                              style: TextStyle(
+                                color: c.textMuted,
+                                fontSize: 13,
+                                height: 1.5,
+                                letterSpacing: 0.1,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }),
+            );
+          },
+        ),
+      ],
     );
   }
 }

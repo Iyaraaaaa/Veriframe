@@ -1788,4 +1788,318 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get techStackSubtitle =>
       'The technologies powering VeriFrame\'s forensic deepfake detection platform.';
+
+  @override
+  String get notificationsJustNow => 'just now';
+
+  @override
+  String notificationsMinutesAgo(Object count) {
+    return '${count}m ago';
+  }
+
+  @override
+  String notificationsHoursAgo(Object count) {
+    return '${count}h ago';
+  }
+
+  @override
+  String notificationsDaysAgo(Object count) {
+    return '${count}d ago';
+  }
+
+  @override
+  String get notificationsEmptyTitle => 'No Notifications';
+
+  @override
+  String get notificationsEmptySubtitle =>
+      'You\'re all caught up.\nNew verification results will appear here.';
+
+  @override
+  String get verifyAuthenticLabel => 'AUTHENTIC';
+
+  @override
+  String get verifyManipulatedLabel => 'MANIPULATED';
+
+  @override
+  String get cameraStopAnalyze => 'Stop & Analyze';
+
+  @override
+  String get cameraStartLiveStream => 'Start Live Stream';
+
+  @override
+  String get cameraGoBack => 'Go Back';
+
+  @override
+  String get cameraNoCamerasFound => 'No cameras found';
+
+  @override
+  String cameraError(Object error) {
+    return 'Camera error: $error';
+  }
+
+  @override
+  String cameraLiveStreamFrames(Object count) {
+    return 'Live Stream • $count frames';
+  }
+
+  @override
+  String get cameraInitializing => 'Initializing Camera...';
+
+  @override
+  String get verifyCancelAnalysis => 'CANCEL ANALYSIS';
+
+  @override
+  String get reportDetailTitle => 'Forensic report';
+
+  @override
+  String get reportMediaScan => 'Forensic media scan';
+
+  @override
+  String reportIdLabel(Object id) {
+    return 'ID $id';
+  }
+
+  @override
+  String get reportSourceLabel => 'Source';
+
+  @override
+  String get reportVerifiedLabel => 'Verified';
+
+  @override
+  String get reportRiskLabel => 'Risk';
+
+  @override
+  String get reportConfidenceAssessment => 'Confidence assessment';
+
+  @override
+  String get reportConfidenceSubtitle =>
+      'Fused score across verification pipelines';
+
+  @override
+  String get reportConfidencePercent => '% confidence';
+
+  @override
+  String get reportFusionConfidenceRating => 'Fusion confidence rating';
+
+  @override
+  String get reportFusionSubtitle =>
+      'Model, frame and tracking scores combined into one rating.';
+
+  @override
+  String get reportPipelineMetrics => 'Pipeline metrics';
+
+  @override
+  String get reportPipelineSubtitle =>
+      'Deep-learning and structural verification checks';
+
+  @override
+  String get reportFrameConsistency => 'Frame consistency';
+
+  @override
+  String get reportFrameConsistencyExplanation =>
+      'Frame-by-frame color histogram correlation. Low values indicate splicing.';
+
+  @override
+  String get reportBiometricFaceTracking => 'Biometric face tracking';
+
+  @override
+  String get reportBiometricExplanation =>
+      'Temporal displacement variance of detected face bounding boxes.';
+
+  @override
+  String get reportMetadataValidation => 'Metadata validation';
+
+  @override
+  String get reportMetadataExplanation =>
+      'Container structure, FPS range and header integrity validation.';
+
+  @override
+  String get reportOcrConfidence => 'OCR confidence';
+
+  @override
+  String get reportOcrExplanation =>
+      'Presence and edge contour quality of static text overlays.';
+
+  @override
+  String get reportExport => 'Export';
+
+  @override
+  String get reportExportSubtitle =>
+      'Generate and share the official forensic document';
+
+  @override
+  String get reportPdfForensicReport => 'PDF forensic report';
+
+  @override
+  String get reportPdfSubtitle => 'Signed, timestamped and court-ready export.';
+
+  @override
+  String get reportGeneratePdf => 'Generate forensic PDF';
+
+  @override
+  String get reportCompiling => 'Compiling report...';
+
+  @override
+  String get reportShare => 'Share report';
+
+  @override
+  String get timelineTitle => 'AI Forensic Verification Timeline';
+
+  @override
+  String timelineStage(Object current, Object total) {
+    return 'Stage $current / $total';
+  }
+
+  @override
+  String get pipelineTitle => 'AI Verification Pipeline';
+
+  @override
+  String get pipelineCompleted => 'Completed';
+
+  @override
+  String get stagePreparingAnalysis => 'Preparing Analysis';
+
+  @override
+  String get stageValidatingMedia => 'Validating Media';
+
+  @override
+  String get stageDownloading => 'Downloading';
+
+  @override
+  String get stageExtractingMetadata => 'Extracting Metadata';
+
+  @override
+  String get stageSelectingFrames => 'Selecting Frames';
+
+  @override
+  String get stageDetectingFaces => 'Detecting Faces';
+
+  @override
+  String get stageTrackingFaces => 'Tracking Faces';
+
+  @override
+  String get stageAssessingQuality => 'Assessing Quality';
+
+  @override
+  String get stageRunningAiAnalysis => 'Running AI Analysis';
+
+  @override
+  String get stageVerifyingTemporalConsistency =>
+      'Verifying Temporal Consistency';
+
+  @override
+  String get stageAggregatingEvidence => 'Aggregating Evidence';
+
+  @override
+  String get stageCalibratingConfidence => 'Calibrating Confidence';
+
+  @override
+  String get stageGeneratingReport => 'Generating Report';
+
+  @override
+  String get stageVerificationComplete => 'Verification Complete';
+
+  @override
+  String get mediaValidationLabel => 'Media Validation';
+
+  @override
+  String get mediaValidationDesc =>
+      'Validating media headers, SHA-256 hash, and format integrity...';
+
+  @override
+  String get metadataInspectionLabel => 'Metadata Inspection';
+
+  @override
+  String get metadataInspectionDesc =>
+      'Analyzing EXIF, container metadata, and timestamp consistency...';
+
+  @override
+  String get frameExtractionLabel => 'Frame Extraction';
+
+  @override
+  String get frameExtractionDesc =>
+      'Extracting keyframes using adaptive temporal sampling...';
+
+  @override
+  String get sceneDetectionLabel => 'Scene Detection';
+
+  @override
+  String get sceneDetectionDesc =>
+      'Partitioning video into dynamic visual scenes and cuts...';
+
+  @override
+  String get faceDetectionLabel => 'Face Detection';
+
+  @override
+  String get faceDetectionDesc =>
+      'Running RetinaFace / SCRFD face locator cascade...';
+
+  @override
+  String get faceTrackingLabel => 'Face Tracking';
+
+  @override
+  String get faceTrackingDesc =>
+      'Tracking facial bounding boxes across continuous frames...';
+
+  @override
+  String get qualityAssessmentLabel => 'Quality Assessment';
+
+  @override
+  String get qualityAssessmentDesc =>
+      'Evaluating frame resolution, blur, compression, and lighting...';
+
+  @override
+  String get artifactDetectionLabel => 'Artifact Detection';
+
+  @override
+  String get artifactDetectionDesc =>
+      'Searching for facial boundary glitches and warping artifacts...';
+
+  @override
+  String get deepfakeAiModelLabel => 'Deepfake AI Model';
+
+  @override
+  String get deepfakeAiModelDesc =>
+      'Executing EfficientViT TFLite neural inference engine...';
+
+  @override
+  String get temporalConsistencyLabel => 'Temporal Consistency';
+
+  @override
+  String get temporalConsistencyDesc =>
+      'Evaluating frame-to-frame feature persistence and jitter...';
+
+  @override
+  String get confidenceCalibrationLabel => 'Confidence Calibration';
+
+  @override
+  String get confidenceCalibrationDesc =>
+      'Applying Temperature Scaling (T=1.5) probability smoothing...';
+
+  @override
+  String get evidenceAggregationLabel => 'Evidence Aggregation';
+
+  @override
+  String get evidenceAggregationDesc =>
+      'Correlating neural predictions with forensic spatial heuristic data...';
+
+  @override
+  String get riskScoringLabel => 'Risk Scoring';
+
+  @override
+  String get riskScoringDesc =>
+      'Computing multi-factor threat assessment and risk matrix...';
+
+  @override
+  String get finalDecisionLabel => 'Final Decision';
+
+  @override
+  String get finalDecisionDesc => 'Synthesizing adaptive ensemble verdict...';
+
+  @override
+  String get generatingReportLabel => 'Generating Report';
+
+  @override
+  String get generatingReportDesc =>
+      'Assembling complete forensic verification report...';
 }

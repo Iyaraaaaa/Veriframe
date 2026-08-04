@@ -28,18 +28,19 @@ class _NotificationsPageState extends State<NotificationsPage> {
     await NotificationService.instance.markAllAsRead(_uid);
   }
 
-  String _formatTimeAgo(DateTime dateTime) {
+  String _formatTimeAgo(BuildContext context, DateTime dateTime) {
+    final loc = AppLocalizations.of(context)!;
     final now = DateTime.now();
     final difference = now.difference(dateTime);
 
     if (difference.inMinutes < 1) {
-      return "just now";
+      return loc.notificationsJustNow;
     } else if (difference.inMinutes < 60) {
-      return "${difference.inMinutes}m ago";
+      return loc.notificationsMinutesAgo(difference.inMinutes);
     } else if (difference.inHours < 24) {
-      return "${difference.inHours}h ago";
+      return loc.notificationsHoursAgo(difference.inHours);
     } else if (difference.inDays < 7) {
-      return "${difference.inDays}d ago";
+      return loc.notificationsDaysAgo(difference.inDays);
     } else {
       return "${dateTime.day}/${dateTime.month}/${dateTime.year}";
     }
@@ -112,141 +113,58 @@ class _NotificationsPageState extends State<NotificationsPage> {
                 style: TextStyle(color: muted),
               ),
             )
-          : Column(
-              children: [
-                _buildHeader(isDark, text, muted),
-                Expanded(
-                  child: Stack(
-                    children: [
-                      StreamBuilder<List<NotificationModel>>(
-                        stream: NotificationService.instance
-                            .getNotificationsStream(_uid),
-                        builder: (context, snapshot) {
-                          if (snapshot.connectionState ==
-                              ConnectionState.waiting) {
-                            return const Center(
-                              child: CircularProgressIndicator(),
-                            );
-                          }
-                          if (snapshot.hasError) {
-                            return Center(
-                              child: Text(
-                                loc.notificationsError(snapshot.error.toString()),
-                                style: TextStyle(color: text),
-                              ),
-                            );
-                          }
-                          final notifications = snapshot.data ?? [];
-                          if (notifications.isEmpty) {
-                            return _buildEmptyState(isDark, text, muted);
-                          }
+          : Expanded(
+              child: Stack(
+                children: [
+                  StreamBuilder<List<NotificationModel>>(
+                    stream: NotificationService.instance
+                        .getNotificationsStream(_uid),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState ==
+                          ConnectionState.waiting) {
+                        return const Center(
+                          child: CircularProgressIndicator(),
+                        );
+                      }
+                      if (snapshot.hasError) {
+                        return Center(
+                          child: Text(
+                            loc.notificationsError(snapshot.error.toString()),
+                            style: TextStyle(color: text),
+                          ),
+                        );
+                      }
+                      final notifications = snapshot.data ?? [];
+                      if (notifications.isEmpty) {
+                        return _buildEmptyState(isDark, text, muted, loc);
+                      }
 
-                          return ListView.separated(
-                            itemCount: notifications.length,
-                            padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
-                            separatorBuilder: (_, _) =>
-                                const SizedBox(height: 10),
-                            itemBuilder: (context, index) {
-                              final notif = notifications[index];
-                              return _buildNotificationTile(
-                                notif,
-                                isDark,
-                                text,
-                                muted,
-                                accent,
-                              );
-                            },
-                          );
+                      return ListView.separated(
+                        itemCount: notifications.length,
+                        padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+                        separatorBuilder: (_, _) =>
+                            const SizedBox(height: 10),
+                        itemBuilder: (context, index) {
+                          final notif = notifications[index];
+                          return _buildNotificationTile(
+                             notif,
+                             isDark,
+                             text,
+                             muted,
+                             accent,
+                             loc,
+                           );
                         },
-                      ),
-                    ],
+                      );
+                    },
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
     );
   }
 
-  Widget _buildHeader(bool isDark, Color text, Color muted) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 18),
-      decoration: BoxDecoration(
-        color: VFColors.adaptiveCard(isDark),
-        border: Border(
-          bottom: BorderSide(
-            color: isDark ? VFColors.gray800 : VFColors.gray200,
-          ),
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          StreamBuilder<int>(
-            stream: _uid != null
-                ? NotificationService.instance.getUnreadCountStream(_uid)
-                : const Stream.empty(),
-            builder: (context, snapshot) {
-              final unread = snapshot.data ?? 0;
-              return Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Row(
-                    children: [
-                      if (unread > 0)
-                        Container(
-                          width: 8,
-                          height: 8,
-                          decoration: BoxDecoration(
-                            color: VFColors.blue600,
-                            shape: BoxShape.circle,
-                          ),
-                        ),
-                      if (unread > 0) const SizedBox(width: 8),
-                      Text(
-                        'Notifications',
-                        style: TextStyle(
-                          color: text,
-                          fontSize: 15,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ],
-                  ),
-                  if (unread > 0)
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 3,
-                      ),
-                      decoration: BoxDecoration(
-                        color: VFColors.blue600.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Text(
-                        unread > 99 ? '99+' : '$unread',
-                        style: TextStyle(
-                          color: VFColors.blue600,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ),
-                ],
-              );
-            },
-          ),
-          const SizedBox(height: 6),
-          Text(
-            "Stay updated with your verification results.",
-            style: TextStyle(color: muted, fontSize: 12, height: 1.4),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildEmptyState(bool isDark, Color text, Color muted) {
+  Widget _buildEmptyState(bool isDark, Color text, Color muted, AppLocalizations loc) {
     return Center(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 32),
@@ -267,7 +185,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
             ),
             const SizedBox(height: 20),
             Text(
-              "No Notifications",
+              loc.notificationsEmptyTitle,
               style: TextStyle(
                 color: text,
                 fontSize: 16,
@@ -276,7 +194,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
             ),
             const SizedBox(height: 8),
             Text(
-              "You're all caught up.\nNew verification results will appear here.",
+              loc.notificationsEmptySubtitle,
               textAlign: TextAlign.center,
               style: TextStyle(color: muted, fontSize: 13, height: 1.5),
             ),
@@ -292,6 +210,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
     Color text,
     Color muted,
     Color accent,
+    AppLocalizations loc,
   ) {
     final isFake = notif.prediction.toUpperCase() == 'FAKE';
     final statusColor = isFake ? VFColors.red600 : VFColors.emerald600;
@@ -429,7 +348,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
                               children: [
                                 Flexible(
                                   child: _NotificationChip(
-                                    label: isFake ? 'MANIPULATED' : 'AUTHENTIC',
+                                    label: isFake ? loc.verifyManipulatedLabel : loc.verifyAuthenticLabel,
                                     color: statusColor,
                                     bg: isDark ? statusBgDark : statusBg,
                                   ),
@@ -447,7 +366,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
                           ),
                           const SizedBox(width: 8),
                           Text(
-                            _formatTimeAgo(notif.createdAt),
+                            _formatTimeAgo(context, notif.createdAt),
                             style: TextStyle(
                               fontSize: 11,
                               color: muted,

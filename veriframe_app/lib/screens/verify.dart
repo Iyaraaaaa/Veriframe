@@ -1,4 +1,4 @@
-﻿import 'dart:async';
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'package:camera/camera.dart';
@@ -22,6 +22,10 @@ import 'package:veriframe_app/service/notification_service.dart';
 import 'package:veriframe_app/service/pdf_service.dart';
 import 'package:intl/intl.dart';
 import 'package:open_filex/open_filex.dart';
+import 'package:veriframe_app/widgets/forensic_loading_experience.dart';
+import 'package:veriframe_app/widgets/pipeline_timeline_widget.dart';
+import 'package:veriframe_app/widgets/forensic_progress_timeline.dart';
+import 'package:veriframe_app/service/verification_agent_service.dart';
 
 /// Theme-aware palette
 class _VerifyPalette {
@@ -85,6 +89,24 @@ class _VerifyPageState extends ConsumerState<VerifyPage> with TickerProviderStat
   
   // Link Verification specific steps
   int _linkStep = 0; // 0: Idle, 1: Downloading, 2: Extracting Frames, 3: Detecting Faces, 4: Running AI, 5: Completed
+
+  /// Maps the internal pipeline/link step counters to the 15-stage UI index.
+  /// Local video: _pipelineStep 0-7 → stages 0-14 (spread across groups)
+  /// Link tab: _linkStep 0-4 drives the first 8 stages; then _pipelineStep 4-7 finishes.
+  int get _currentStageIndex {
+    if (_activeTab == 1) {
+      // Link tab – combine download steps with post-processing
+      if (_pipelineStep < 4) {
+        // During download: linkStep 0-4 → stages 0-7
+        return (_linkStep * 1.6).round().clamp(0, 7);
+      } else {
+        // Post-processing stages 8-14 mapped from pipelineStep 4-7
+        return (8 + (_pipelineStep - 4) * 1.5).round().clamp(8, 14);
+      }
+    }
+    // Local video tab: distribute 0-7 across 0-14 uniformly
+    return (_pipelineStep * 2).clamp(0, 14);
+  }
   
   // Results
   bool _showResults = false;
@@ -1733,126 +1755,26 @@ class _VerifyPageState extends ConsumerState<VerifyPage> with TickerProviderStat
   }
 
   Widget _buildAnalysisProgressPipeline(AppColors colors) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: _vp.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: _vp.borderBright),
-      ),
-      child: Column(
-        children: [
-          const SizedBox(
-            width: 48,
-            height: 48,
-            child: CircularProgressIndicator(color: Color(0xFF00C8FF), strokeWidth: 3),
-          ),
-          const SizedBox(height: 24),
-          Text(
-            _statusMessage,
-            style: TextStyle(color: _vp.text, fontSize: 14, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 16),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(6),
-            child: LinearProgressIndicator(
-              value: _uploadProgress,
-              backgroundColor: _vp.surfaceVariant,
-              valueColor: const AlwaysStoppedAnimation(Color(0xFF00C8FF)),
-              minHeight: 8,
-            ),
-          ),
-          const SizedBox(height: 24),
-          // Vertical Pipeline Tracker
-          if (_activeTab == 0) _buildPipelineTimelineSteps(),
-          if (_activeTab == 1) _buildLinkVerificationStepper(),
-          const SizedBox(height: 24),
-          OutlinedButton.icon(
-            onPressed: _cancelAnalysis,
-            icon: Icon(Icons.cancel_outlined),
-            label: Text(loc.verifyCancelScan),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: const Color(0xFFFF3B5C),
-              side: const BorderSide(color: Color(0xFFFF3B5C)),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildPipelineTimelineSteps() {
-    // Pipeline including post-verification (PDF, Notification, Completed)
-    final steps = [
-      loc.verifyStepFormatValidation,
-      loc.verifyStepFrameExtraction,
-      loc.verifyStepFaceDetection,
-      loc.verifyStepModelInference,
-      loc.verifyStepGeneratingReasoning,
-      loc.verifyStepGeneratingPdf,
-      loc.verifyStepSendingNotification,
-      loc.verifyStepCompleted,
-    ];
-
     return Column(
-      children: List.generate(steps.length, (index) {
-        final isDone = _pipelineStep > index;
-        final isCurrent = _pipelineStep == index;
-        return Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Column(
-              children: [
-                Container(
-                  width: 20,
-                  height: 20,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: isDone
-                        ? const Color(0xFF00E896)
-                        : isCurrent
-                            ? const Color(0xFF00C8FF)
-                            : _vp.surfaceVariant,
-                    border: Border.all(
-                      color: isCurrent ? Colors.white : Colors.transparent,
-                      width: 2,
-                    ),
-                  ),
-                  child: Icon(
-                    isDone ? Icons.check : Icons.circle,
-                    size: 10,
-                    color: isDone ? const Color(0xFF0A0F1D) : Colors.transparent,
-                  ),
-                ),
-                if (index < steps.length - 1)
-                  Container(
-                    width: 2,
-                    height: 24,
-                    color: isDone ? const Color(0xFF00E896) : _vp.surfaceVariant,
-                  ),
-              ],
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        ForensicProgressTimeline(
+          currentStageIndex: _currentStageIndex.clamp(0, 13),
+          stageStatusMessage: _statusMessage,
+        ),
+        const SizedBox(height: 16),
+        SizedBox(
+          width: double.infinity,
+          child: TextButton.icon(
+            onPressed: _cancelAnalysis,
+            icon: const Icon(Icons.cancel_outlined, color: Color(0xFFFF3B5C), size: 18),
+            label: Text(
+              loc.verifyCancelAnalysis,
+              style: const TextStyle(color: Color(0xFFFF3B5C), fontWeight: FontWeight.bold, fontSize: 12),
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.only(top: 2),
-                child: Text(
-                  steps[index],
-                  style: TextStyle(
-                    color: isDone
-                        ? const Color(0xFF00E896)
-                        : isCurrent
-                            ? _vp.text
-                            : _vp.textMuted,
-                    fontSize: 12,
-                    fontWeight: isCurrent ? FontWeight.bold : FontWeight.normal,
-                  ),
-                ),
-              ),
-            ),
-          ],
-        );
-      }),
+          ),
+        ),
+      ],
     );
   }
 
@@ -2254,8 +2176,8 @@ class _VerifyPageState extends ConsumerState<VerifyPage> with TickerProviderStat
                 icon: Icon(Icons.share_outlined),
                 label: Text(loc.verifyLinkCopied),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: _vp.canvas,
-                  foregroundColor: _vp.text,
+                  backgroundColor: const Color(0xFF2563EB),
+                  foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 14),
                 ),
               ),

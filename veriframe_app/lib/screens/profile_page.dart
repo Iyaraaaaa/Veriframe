@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:veriframe_app/widgets/main_scaffold.dart';
+import 'package:veriframe_app/service/user_profile_cache.dart';
 import 'package:veriframe_app/l10n/app_localizations.dart';
 
 class EditProfilePage extends StatefulWidget {
@@ -365,6 +366,15 @@ class _EditProfilePageState extends State<EditProfilePage> {
           .collection('users')
           .doc(currentUser.uid)
           .set(userData, SetOptions(merge: true));
+
+      if (finalImageData == null || finalImageData.isEmpty) {
+        try {
+          await currentUser.updatePhotoURL(null);
+        } on FirebaseAuthException catch (_) {
+          debugPrint('Could not clear Google profile photo: requires-recent-login');
+        }
+        UserProfileCache.instance.updateCache(bytes: null, url: null);
+      }
 
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('userId', currentUser.uid);

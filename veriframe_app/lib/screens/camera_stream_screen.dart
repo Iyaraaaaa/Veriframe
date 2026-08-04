@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:veriframe_app/screens/verify.dart';
+import 'package:veriframe_app/l10n/app_localizations.dart';
 
 class CameraStreamScreen extends StatefulWidget {
   final String? streamUrl;
@@ -30,7 +31,7 @@ class _CameraStreamScreenState extends State<CameraStreamScreen> {
     try {
       final cameras = await availableCameras();
       if (cameras.isEmpty) {
-        setState(() => _error = 'No cameras found');
+        setState(() => _error = 'no_cameras');
         return;
       }
       final camera = cameras.firstWhere(
@@ -48,7 +49,7 @@ class _CameraStreamScreenState extends State<CameraStreamScreen> {
       }
     } catch (e) {
       if (mounted) {
-        setState(() => _error = 'Camera error: $e');
+        setState(() => _error = 'camera_error');
       }
     }
   }
@@ -99,13 +100,14 @@ class _CameraStreamScreenState extends State<CameraStreamScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context)!;
     return Scaffold(
       backgroundColor: Colors.black,
       body: SafeArea(
         child: _error != null
-            ? _buildErrorView()
+            ? _buildErrorView(loc)
             : !_isInitialized
-                ? _buildLoadingView()
+                ? _buildLoadingView(loc)
                 : Column(
                     children: [
                       Expanded(child: CameraPreview(_controller!)),
@@ -117,7 +119,7 @@ class _CameraStreamScreenState extends State<CameraStreamScreen> {
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Text(
-                                'Live Stream • $_framesCaptured frames',
+                                loc.cameraLiveStreamFrames(_framesCaptured),
                                 style: const TextStyle(
                                   color: Colors.white,
                                   fontSize: 14,
@@ -126,7 +128,7 @@ class _CameraStreamScreenState extends State<CameraStreamScreen> {
                               ElevatedButton.icon(
                                 onPressed: _stopStreaming,
                                 icon: const Icon(Icons.stop),
-                                label: const Text('Stop & Analyze'),
+                                label: Text(loc.cameraStopAnalyze),
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: const Color(0xFFFF3B5C),
                                   foregroundColor: Colors.white,
@@ -144,7 +146,7 @@ class _CameraStreamScreenState extends State<CameraStreamScreen> {
                             child: ElevatedButton.icon(
                               onPressed: _startStreaming,
                               icon: const Icon(Icons.play_arrow),
-                              label: const Text('Start Live Stream'),
+                              label: Text(loc.cameraStartLiveStream),
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: const Color(0xFF00C8FF),
                                 foregroundColor: Colors.white,
@@ -161,7 +163,12 @@ class _CameraStreamScreenState extends State<CameraStreamScreen> {
     );
   }
 
-  Widget _buildErrorView() {
+  Widget _buildErrorView(AppLocalizations loc) {
+    final errorMessage = _error == 'no_cameras'
+        ? loc.cameraNoCamerasFound
+        : _error == 'camera_error'
+            ? loc.cameraError('')
+            : _error ?? '';
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24),
@@ -171,14 +178,14 @@ class _CameraStreamScreenState extends State<CameraStreamScreen> {
             const Icon(Icons.error_outline, color: Colors.red, size: 48),
             const SizedBox(height: 16),
             Text(
-              _error ?? 'Unknown error',
+              errorMessage,
               style: const TextStyle(color: Colors.white, fontSize: 16),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 20),
             ElevatedButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('Go Back'),
+              child: Text(loc.cameraGoBack),
             ),
           ],
         ),
@@ -186,16 +193,16 @@ class _CameraStreamScreenState extends State<CameraStreamScreen> {
     );
   }
 
-  Widget _buildLoadingView() {
-    return const Center(
+  Widget _buildLoadingView(AppLocalizations loc) {
+    return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          CircularProgressIndicator(color: Color(0xFF00C8FF)),
-          SizedBox(height: 16),
+          const CircularProgressIndicator(color: Color(0xFF00C8FF)),
+          const SizedBox(height: 16),
           Text(
-            'Initializing Camera...',
-            style: TextStyle(color: Colors.white, fontSize: 14),
+            loc.cameraInitializing,
+            style: const TextStyle(color: Colors.white, fontSize: 14),
           ),
         ],
       ),

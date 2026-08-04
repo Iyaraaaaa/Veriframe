@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:veriframe_app/service/user_profile_cache.dart';
 
 class UserService {
   static final CollectionReference usersCollection =
@@ -166,13 +167,23 @@ class UserService {
     };
   }
 
-  // Clear user data from SharedPreferences (for logout)
+   // Clear user data from SharedPreferences (for logout)
   static Future<void> clearUserData() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('userId');
     await prefs.remove('userName');
     await prefs.remove('userEmail');
     await prefs.remove('userImage');
+    await prefs.remove('profileImageBase64');
+    await prefs.remove('signUpMethod');
+  }
+
+  // Clear saved login credentials
+  static Future<void> clearSavedCredentials() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('saved_email');
+    await prefs.remove('saved_password');
+    await prefs.remove('remember_me');
   }
 
   // Check if user exists in Firestore
@@ -186,20 +197,30 @@ class UserService {
     }
   }
 
-  // Delete user account
+   // Delete user account
   static Future<void> deleteUser(String uid) async {
+    final currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser == null || currentUser.uid != uid) {
+      throw FirebaseAuthException(
+        code: 'user-not-found',
+        message: 'No authenticated user found.',
+      );
+    }
+
     try {
+      // Delete Firebase Auth account first — if this requires re-auth,
+      // we fail fast before wiping any local or remote data.
+      await currentUser.delete();
+
       // Delete from Firestore
       await usersCollection.doc(uid).delete();
-      
-      // Clear SharedPreferences
+
+      // Clear SharedPreferences user data and saved credentials
       await clearUserData();
-      
-      // Delete Firebase Auth account
-      final currentUser = FirebaseAuth.instance.currentUser;
-      if (currentUser != null && currentUser.uid == uid) {
-        await currentUser.delete();
-      }
+      await clearSavedCredentials();
+
+      // Clear in-memory profile cache
+      UserProfileCache.instance.clear();
     } catch (e) {
       print('Error deleting user: $e');
       rethrow;

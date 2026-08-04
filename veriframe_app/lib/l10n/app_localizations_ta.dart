@@ -1482,139 +1482,147 @@ class AppLocalizationsTa extends AppLocalizations {
   String get verifyEnterVideoUrl => 'வீடியோ URL ஐ உள்ளிடவும்...';
 
   @override
-  String get verifyNoCameras => 'No cameras available on this device.';
+  String get verifyNoCameras => 'இந்த சாதனத்தில் கேமராக்கள் கிடைக்கவில்லை.';
 
   @override
   String verifyCameraError(Object error) {
-    return 'Camera error: $error';
+    return 'கேமரா பிழை: $error';
   }
 
   @override
   String get verifyUnsupportedFormat =>
-      'Unsupported video format. Please use MP4, MOV, MKV, or AVI.';
+      'ஆதரிக்கப்படாத வீடியோ வடிவம். தயவுசெய்து MP4, MOV, MKV, அல்லது AVI ஐப் பயன்படுத்தவும்.';
 
   @override
-  String get verifyConnectingServer => 'Connecting to forensic server...';
+  String get verifyConnectingServer => 'நீதித்துறை சேவையகத்துடன் இணைக்கிறது...';
 
   @override
   String get verifyBackendOffline =>
-      'Backend offline — switching to on-device analysis.';
+      'பின்புல இணைப்பில்லை — சாதனத்தில் உள்ள பகுப்பாய்வுக்கு மாறுகிறது.';
 
   @override
-  String get verifyUploadingFile => 'Uploading video file...';
+  String get verifyUploadingFile => 'வீடியோ கோப்பை பதிவேற்றுகிறது...';
 
   @override
   String verifyUploadingProgress(Object percent) {
-    return 'Uploading... $percent%';
+    return 'பதிவேற்றுகிறது... $percent%';
   }
 
   @override
-  String get verifyAggregatingPredictions => 'Aggregating predictions...';
+  String get verifyAggregatingPredictions =>
+      'முன்மதிப்புகளை திருப்பிச் சேர்க்கிறது...';
 
   @override
   String verifyOfflineModelFailed(Object error) {
-    return 'Offline model failed: $error';
+    return 'உள்ளூர் மாதிரி தோல்வியடைந்தது: $error';
   }
 
   @override
-  String get verifyModelLoading => 'Loading model...';
+  String get verifyModelLoading => 'மாதிரியை ஏற்றுகிறது...';
 
   @override
-  String get verifyValidatingFile => 'Validating file...';
+  String get verifyValidatingFile => 'கோப்பை சரிபார்க்கிறது...';
 
   @override
-  String get verifyExtractingFrames => 'Extracting frames...';
+  String get verifyExtractingFrames =>
+      'ஒவ்வொரு கட்டங்களையும் பிரித்துடங்குகிறது...';
 
   @override
   String verifyAnalyzingFrame(Object current, Object total) {
-    return 'Analyzing frame $current of $total...';
+    return 'ஒவ்வொரு கட்டத்தையும் பகுப்பாய்வு செய்கிறது $current / $total...';
   }
 
   @override
-  String get verifyDetectingRegions => 'Detecting facial regions...';
+  String get verifyDetectingRegions => 'முக பகுதிகளை கண்டறிகிறது...';
 
   @override
-  String get verifyPreparingTensors => 'Preparing tensors...';
+  String get verifyPreparingTensors => 'டென்சர்களை தயாரிக்கிறது...';
 
   @override
-  String get verifyRunningInference => 'Running inference...';
+  String get verifyRunningInference => 'பகுப்பாய்வை இயக்குகிறது...';
 
   @override
-  String get verifyInferenceFailed => 'Inference failed. Please try again.';
+  String get verifyInferenceFailed =>
+      'பகுப்பாய்வு தோல்வியடைந்தது. தயவுசெய்து மீண்டும் முயற்சிக்கவும்.';
 
   @override
-  String get verifyPleasePasteUrl => 'Please paste a video URL first.';
+  String get verifyPleasePasteUrl =>
+      'தயவுசெய்து முதலில் வீடியோ URL ஐ ஒட்டவும்.';
 
   @override
-  String get verifyDownloadingVideo => 'Downloading video...';
+  String get verifyDownloadingVideo => 'வீடியோவைப் பதிவிறக்குகிறது...';
 
   @override
-  String get verifyFeatureUnavailable => 'Feature unavailable while offline.';
+  String get verifyFeatureUnavailable =>
+      'இணைப்பு இல்லாதபோது அம்சம் கிடைக்காது.';
 
   @override
-  String get verifyPollingTimeout => 'Analysis timed out. Please try again.';
+  String get verifyPollingTimeout =>
+      'பகுப்பாய்வு நேரம் முடிந்தது. தயவுசெய்து மீண்டும் முயற்சிக்கவும்.';
 
   @override
-  String get verifyEnterStreamUrl => 'Please enter a stream URL first.';
+  String get verifyEnterStreamUrl => 'தயவுசெய்து முதலில் ஓடை URL ஐ உள்ளிடவும்.';
 
   @override
-  String get verifyCompilingSessionReport => 'Compiling session report...';
+  String get verifyCompilingSessionReport => 'அமரவு அறிக்கையை சேர்க்கிறது...';
 
   @override
   String verifyLocalReportExplanation(Object frames, Object score) {
-    return 'Analyzed $frames frames with $score% average confidence.';
+    return '$frames கட்டங்களை $score% சராசரி நம்பிக்கையுடன் பகுப்பாய்வு செய்தது.';
   }
 
   @override
-  String get verifyAuthError => 'You must be signed in to verify media.';
+  String get verifyAuthError => 'ஊடகத்தைச் சரிபார்க்க உங்கள் உள்நுழைவு தேவை.';
 
   @override
-  String get verifyCompilingForensicReport => 'Compiling forensic report...';
+  String get verifyCompilingForensicReport =>
+      'நீதித்துறை அறிக்கையை சேர்க்கிறது...';
 
   @override
-  String get verifyNotificationTitle => 'Verification Complete';
+  String get verifyNotificationTitle => 'சரிபார்ப்பு முடிந்தது';
 
   @override
   String get verifyNotificationTitleBranded =>
-      'VeriFrame Verification Complete';
+      'VeriFrame சரிபார்ப்பு முடிந்தது';
 
   @override
-  String get verifyCompleteTitle => 'Analysis Complete';
+  String get verifyCompleteTitle => 'பகுப்பாய்வு முடிந்தது';
 
   @override
-  String get verifyVerdictLabel => 'VERDICT';
+  String get verifyVerdictLabel => 'தீர்மானம்';
 
   @override
-  String get verifyAuthenticityLabel => 'AUTHENTICITY';
+  String get verifyAuthenticityLabel => 'உண்மைத்தன்மை';
 
   @override
-  String get verifyManipulationLabel => 'MANIPULATION';
+  String get verifyManipulationLabel => 'கையாளுதல்';
 
   @override
-  String get verifyConfidenceLabel => 'CONFIDENCE';
+  String get verifyConfidenceLabel => 'நம்பிக்கை';
 
   @override
-  String get verifyRiskLevelLabel => 'RISK LEVEL';
+  String get verifyRiskLevelLabel => 'ஆபத்து நிலை';
 
   @override
-  String get verifyVerifiedAtLabel => 'VERIFIED AT';
+  String get verifyVerifiedAtLabel => 'சரிபார்க்கப்பட்ட நாள்';
 
   @override
-  String get verifyViewHistory => 'View History';
+  String get verifyViewHistory => 'வரலாற்றைப் பார்க்கவும்';
 
   @override
-  String get verifyDone => 'Done';
+  String get verifyDone => 'முடிந்தது';
 
   @override
-  String get verifyGeneratingPdf => 'Generating PDF report...';
+  String get verifyGeneratingPdf => 'PDF அறிக்கையை உருவாக்குகிறது...';
 
   @override
   String verifyPdfFailed(Object error) {
-    return 'Failed to generate PDF: $error';
+    return 'PDF உருவாக்க தோல்வி: $error';
   }
 
   @override
-  String get verifyLinkCopied => 'Report link copied to clipboard.';
+  String get verifyLinkCopied =>
+      'அறிக்கை இணைப்பு கிளிப்போர்டுக்கு நகலெடுக்கப்பட்டது.';
 
   @override
   String reportErrorOpeningPdf(Object error) {
@@ -1631,71 +1639,71 @@ class AppLocalizationsTa extends AppLocalizations {
 
   @override
   String verifyEscalationFailed(Object error) {
-    return 'Escalation failed: $error';
+    return 'மேல்முறையீடு தோல்வியடைந்தது: $error';
   }
 
   @override
-  String get verifyAnalyzeStream => 'Analyze Stream';
+  String get verifyAnalyzeStream => 'ஓடையைப் பகுப்பாய்வு செய்யுங்கள்';
 
   @override
-  String get verifyCancelScan => 'Cancel Scan';
+  String get verifyCancelScan => 'ஸ்கான் ரத்துசெய்';
 
   @override
-  String get verifyStepFormatValidation => 'Format Validation';
+  String get verifyStepFormatValidation => 'வடிவமைப்பு சரிபார்ப்பு';
 
   @override
-  String get verifyStepFrameExtraction => 'Frame Extraction';
+  String get verifyStepFrameExtraction => 'கட்டம் எடுத்தல்';
 
   @override
-  String get verifyStepFaceDetection => 'Face Detection';
+  String get verifyStepFaceDetection => 'முக கண்டறிதல்';
 
   @override
-  String get verifyStepModelInference => 'Model Inference';
+  String get verifyStepModelInference => 'மாதிரி பகுப்பாய்வு';
 
   @override
-  String get verifyStepGeneratingReasoning => 'Generating Reasoning';
+  String get verifyStepGeneratingReasoning => 'பகுப்பாய்வு உருவாக்குகிறது';
 
   @override
-  String get verifyStepGeneratingPdf => 'Generating PDF';
+  String get verifyStepGeneratingPdf => 'PDF உருவாக்குகிறது';
 
   @override
-  String get verifyStepSendingNotification => 'Sending Notification';
+  String get verifyStepSendingNotification => 'அறிவிப்பைச் செய்தியடிக்கிறது';
 
   @override
-  String get verifyStepCompleted => 'Completed';
+  String get verifyStepCompleted => 'முடிந்தது';
 
   @override
-  String get verifyLinkStepRequestInitiated => 'Request Initiated';
+  String get verifyLinkStepRequestInitiated => 'கோரிக்கை தொடங்கப்பட்டது';
 
   @override
-  String get verifyLinkStepDownloading => 'Downloading';
+  String get verifyLinkStepDownloading => 'பதிவிறக்குகிறது';
 
   @override
-  String get verifyLinkStepExtracting => 'Extracting Frames';
+  String get verifyLinkStepExtracting => 'கட்டங்களை எடுத்தல்';
 
   @override
-  String get verifyLinkStepDetecting => 'Detecting Faces';
+  String get verifyLinkStepDetecting => 'முகங்களை கண்டறிதல்';
 
   @override
-  String get verifyLinkStepInference => 'Running Inference';
+  String get verifyLinkStepInference => 'பகுப்பாய்வை இயக்குகிறது';
 
   @override
-  String get verifyConnectingLiveStream => 'Connecting to live stream...';
+  String get verifyConnectingLiveStream => 'நேரலையுடன் இணைக்கிறது...';
 
   @override
   String verifyFpsFrames(Object fps, Object frames) {
-    return '$fps FPS · $frames frames';
+    return '$fps FPS · $frames கட்டங்கள்';
   }
 
   @override
-  String get verifyCurrentProbability => 'Current Probability';
+  String get verifyCurrentProbability => 'தற்போதைய நிகழ்தகவு';
 
   @override
-  String get verifyProbabilityGraph => 'Probability Graph';
+  String get verifyProbabilityGraph => 'நிகழ்தகவு வரைபடம்';
 
   @override
   String verifyLandmarkMap(Object count) {
-    return 'Landmark map: $count points';
+    return 'லேக்மார்க் வரைபடம்: $count புள்ளிகள்';
   }
 
   @override
@@ -1709,110 +1717,426 @@ class AppLocalizationsTa extends AppLocalizations {
   String get deletePermanently => 'நிரந்தரமாக நீக்கு';
 
   @override
-  String get homeStatsAiModels => 'AI Models';
+  String get homeStatsAiModels => 'AI மாதிரிகள்';
 
   @override
-  String get homeStatsRealtime => 'Real-time';
+  String get homeStatsRealtime => 'நேரலை';
 
   @override
-  String get homeStatsLiveAnalysis => 'Live analysis';
+  String get homeStatsLiveAnalysis => 'நேரலை பகுப்பாய்வு';
 
   @override
-  String get homeStatsForensic => 'Forensic';
+  String get homeStatsForensic => 'நீதித்துறை';
 
   @override
-  String get homeStatsEvidenceReports => 'Evidence reports';
+  String get homeStatsEvidenceReports => 'ஆதார அறிக்கைகள்';
 
   @override
-  String get homeFooterTagline => 'Media forensics for a trustworthy internet.';
+  String get homeFooterTagline => 'நம்பகமான இணையத்திற்கான ஊடக நீதித்துறை.';
 
   @override
   String homeCopyright(Object year) {
-    return '© $year VeriFrame. All rights reserved.';
+    return '© $year VeriFrame. அனைத்து உரிமைகளும் பாதுகாக்கப்பட்டவை.';
   }
 
   @override
-  String get verifyBackendServerTitle => 'Configure Backend Server';
+  String get verifyBackendServerTitle =>
+      'பின்புல சேவையகத்தை வழிமுறைப்படுத்தவும்';
 
   @override
   String get verifyBackendUrlHint => 'http://192.168.1.100:8000';
 
   @override
   String get verifyBackendHelper =>
-      'Specify host base address (use LAN IP on physical phones)';
+      'அடிப்படை முகவரியைக் குறிப்பிடவும் (பொதுவான தொலைபேசிகளில் LAN IP ஐப் பயன்படுத்தவும்)';
 
   @override
   String notificationsMarkAllRead(Object count) {
-    return 'Mark all read ($count)';
+    return 'எல்லாம் படிக்கப்பட்டவாக குறிக்கவும் ($count)';
   }
 
   @override
-  String get notificationsDeleteTitle => 'Delete notification?';
+  String get notificationsDeleteTitle => 'அறிவிப்பை நீக்கவா?';
 
   @override
   String get notificationsDeleteMessage =>
-      'This notification will be permanently removed.';
+      'இந்த அறிவிப்பு நிரந்தரமாக நீக்கப்படும்.';
 
   @override
-  String get notificationsDeleteConfirm => 'Delete';
+  String get notificationsDeleteConfirm => 'நீக்கு';
 
   @override
-  String get notificationsNotLoggedIn => 'User not logged in.';
+  String get notificationsNotLoggedIn => 'பயனர் உள்நுழைந்திருக்கவில்லை.';
 
   @override
   String notificationsError(Object error) {
-    return 'Error: $error';
+    return 'பிழை: $error';
   }
 
   @override
   String get accountDeleted => 'உங்கள் கணக்கு வெற்றிகரமாக நீக்கப்பட்டது.';
 
   @override
-  String get reportsTitle => 'Forensic reports';
+  String get reportsTitle => 'நீதித்துறை அறிக்கைகள்';
 
   @override
-  String get reportsHistoryTitle => 'Video history';
+  String get reportsHistoryTitle => 'வீடியோ வரலாறு';
 
   @override
   String get reportsHistorySubtitle =>
-      'Secure history of all completed media verification analyses.';
+      'முடிந்த ஊடக சரிபார்ப்பு பகுப்பாய்வுகளின் பாதுகாக்கப்பட்ட வரலாறு.';
 
   @override
-  String get reportsNotLoggedIn => 'User not logged in.';
+  String get reportsNotLoggedIn => 'பயனர் உள்நுழைந்திருக்கவில்லை.';
 
   @override
   String get reportsNoReports =>
-      'No reports yet\nYour completed forensic analyses will appear here once a verification has finished.';
+      'இன்னும் எந்த அறிக்கையும் இல்லை\nஒரு சரிபார்ப்பு முடிந்த பிறகு உங்கள் முடிந்த நீதித்துறை பகுப்பாய்வுகள் இங்கே தோன்றும்.';
 
   @override
-  String get reportsForensicVerification => 'Forensic verification';
+  String get reportsForensicVerification => 'நீதித்துறை சரிபார்ப்பு';
 
   @override
-  String get reportsDeleteTitle => 'Delete report';
+  String get reportsDeleteTitle => 'அறிக்கையை நீக்கு';
 
   @override
   String reportsDeleteMessage(Object name) {
-    return 'Permanently remove \"$name\"? This action cannot be undone.';
+    return '\"$name\" ஐ நிரந்தரமாக அகற்றவா? இந்த செயலை மாற்ற முடியாது.';
   }
 
   @override
-  String get reportsDeleteConfirm => 'Delete';
+  String get reportsDeleteConfirm => 'நீக்கு';
 
   @override
-  String get reportsDeleted => 'Report deleted';
+  String get reportsDeleted => 'அறிக்கை நீக்கப்பட்டது';
 
   @override
   String reportsDeleteFailed(Object error) {
-    return 'Couldn\'t delete report: $error';
+    return 'அறிக்கையை நீக்க முடியவில்லை: $error';
   }
 
   @override
-  String get reportsDeleteTooltip => 'Delete report';
+  String get reportsDeleteTooltip => 'அறிக்கையை நீக்கு';
 
   @override
-  String get techStackTitle => 'Technology Stack';
+  String get techStackTitle => 'தொழில்நுட்ப கட்டமைப்பு';
 
   @override
   String get techStackSubtitle =>
-      'The technologies powering VeriFrame\'s forensic deepfake detection platform.';
+      'VeriFrame விகிதமான கற்கை டீப்ஃபேக் கண்டறிதல் தளத்தை இயக்கும் தொழில்நுட்பங்கள்.';
+
+  @override
+  String get notificationsJustNow => 'இப்போது';
+
+  @override
+  String notificationsMinutesAgo(Object count) {
+    return '$count நிமிடங்கள் முன்பு';
+  }
+
+  @override
+  String notificationsHoursAgo(Object count) {
+    return '$count மணிநேரம் முன்பு';
+  }
+
+  @override
+  String notificationsDaysAgo(Object count) {
+    return '$count நாட்கள் முன்பு';
+  }
+
+  @override
+  String get notificationsEmptyTitle => 'அறிவிப்புகள் இல்லை';
+
+  @override
+  String get notificationsEmptySubtitle =>
+      'நீங்கள் அனைத்தையும் பார்த்துவிட்டீர்கள்.\nபுதிய சரிபார்ப்பு முடிவுகள் இங்கே தோன்றும்.';
+
+  @override
+  String get verifyAuthenticLabel => 'நம்பகமான';
+
+  @override
+  String get verifyManipulatedLabel => 'மாற்றப்பட்ட';
+
+  @override
+  String get cameraStopAnalyze => 'நிறுத்தி பகுப்பாய்வு செய்யுங்கள்';
+
+  @override
+  String get cameraStartLiveStream => 'நேரடி ஓடையைத் தொடங்கவும்';
+
+  @override
+  String get cameraGoBack => 'திரும்பி செல்லுங்கள்';
+
+  @override
+  String get cameraNoCamerasFound => 'கேமராக்கள் இல்லை';
+
+  @override
+  String cameraError(Object error) {
+    return 'கேமரா பிழை: $error';
+  }
+
+  @override
+  String cameraLiveStreamFrames(Object count) {
+    return 'நேரடி ஓடை • $count ரேம்கள்';
+  }
+
+  @override
+  String get cameraInitializing => 'கேமரா தயாரிக்கப்படுகிறது...';
+
+  @override
+  String get verifyCancelAnalysis => 'பகுப்பாய்வை ரத்துசெய்';
+
+  @override
+  String get reportDetailTitle => 'நிலைநாட்டு அறிக்கை';
+
+  @override
+  String get reportMediaScan => 'நிலைநாட்டு ஊடக ஸ்கான்';
+
+  @override
+  String reportIdLabel(Object id) {
+    return 'ID $id';
+  }
+
+  @override
+  String get reportSourceLabel => 'மூலம்';
+
+  @override
+  String get reportVerifiedLabel => 'சரிபார்க்கப்பட்டது';
+
+  @override
+  String get reportRiskLabel => 'அபாயம்';
+
+  @override
+  String get reportConfidenceAssessment => 'நம்பிக்கை மதிப்பீடு';
+
+  @override
+  String get reportConfidenceSubtitle =>
+      'சரிபார்ப்பு Pipelineகளில் கலந்த அளவீடு';
+
+  @override
+  String get reportConfidencePercent => '% நம்பிக்கை';
+
+  @override
+  String get reportFusionConfidenceRating => 'ஒன்றிணைப்பு நம்பிக்கை மதிப்பீடு';
+
+  @override
+  String get reportFusionSubtitle =>
+      'மாதிரி, ரேம் மற்றும் கண்காணிப்பு மதிப்புகள் ஒன்றாக இணைக்கப்பட்டன.';
+
+  @override
+  String get reportPipelineMetrics => 'Pipeline அளவீடுகள்';
+
+  @override
+  String get reportPipelineSubtitle =>
+      'ஆழமான கற்றல் மற்றும் கட்டுமான சரிபார்ப்பு தotechnical checks';
+
+  @override
+  String get reportFrameConsistency => 'ரேம் நிலைத்திறன்';
+
+  @override
+  String get reportFrameConsistencyExplanation =>
+      'ரேம்-விருப்பம் ரேம் வண்ண ப thalir ஒப்பீடு. குறைந்த மதிப்புகள் மurai தகவல்களை குறிக்கின்றன.';
+
+  @override
+  String get reportBiometricFaceTracking => 'உயிரியல் முகம் கண்காணிப்பு';
+
+  @override
+  String get reportBiometricExplanation =>
+      'கண்டறியப்பட்ட முக பரப்பளவு ரேம்-விருப்பம் இடத்துருத்தlikes விஶ்லேசனம்.';
+
+  @override
+  String get reportMetadataValidation => 'மடங்கு தரவு சரிபார்ப்பு';
+
+  @override
+  String get reportMetadataExplanation =>
+      'கன pavalam கட்டமைப்பு, FPS வரம்பு மற்றும் தலைப்பு முழுமை சரிபார்ப்பு.';
+
+  @override
+  String get reportOcrConfidence => 'OCR நம்பிக்கை';
+
+  @override
+  String get reportOcrExplanation =>
+      'நிலையான உரை மேற்பரப்பு தரத்தின் இருப்பslug மற்றும் அரை circumferential தரம்.';
+
+  @override
+  String get reportExport => 'ஏற்றுதல்';
+
+  @override
+  String get reportExportSubtitle =>
+      'அதிகாரப்பூர்வ நிலைநாட்டு ஆவணத்தை உருவாக்கி பகிருங்கள்';
+
+  @override
+  String get reportPdfForensicReport => 'PDF நிலைநாட்டு அறிக்கை';
+
+  @override
+  String get reportPdfSubtitle =>
+      'கையொளமைக்கப்பட்ட, நேர முத்திரை, நீதிமன்றத்திற்கு தயாரான ஏற்றுதல்.';
+
+  @override
+  String get reportGeneratePdf => 'நிலைநாட்டு PDF உருவாக்குங்கள்';
+
+  @override
+  String get reportCompiling => 'அறிக்கை தொகுத்துக்கொண்டிருக்கிறது...';
+
+  @override
+  String get reportShare => 'அறிக்கையை பகிருங்கள்';
+
+  @override
+  String get timelineTitle => 'AI நிலைநாட்டு சரிபார்ப்பு காலவரிசை';
+
+  @override
+  String timelineStage(Object current, Object total) {
+    return 'படியில் $current / $total';
+  }
+
+  @override
+  String get pipelineTitle => 'AI சரிபார்ப்பு Pipeline';
+
+  @override
+  String get pipelineCompleted => 'நிறைவேற்றப்பட்டது';
+
+  @override
+  String get stagePreparingAnalysis => 'பகுப்பாய்வு தயாரிக்கிறது';
+
+  @override
+  String get stageValidatingMedia => 'ஊடகத்தை சரிபார்க்கிறது';
+
+  @override
+  String get stageDownloading => 'பதிவிறக்குகிறது';
+
+  @override
+  String get stageExtractingMetadata => 'மடங்கு தரவை எடுக்கிறது';
+
+  @override
+  String get stageSelectingFrames => 'ரேம் தேர்ந்தெடுக்கிறது';
+
+  @override
+  String get stageDetectingFaces => 'முகங்களை கண்டறிகிறது';
+
+  @override
+  String get stageTrackingFaces => 'முகங்களை கண்காணிக்கிறது';
+
+  @override
+  String get stageAssessingQuality => 'தரத்தை மதிப்பிடுகிறது';
+
+  @override
+  String get stageRunningAiAnalysis => 'AI பகுப்பாய்வு செய்கிறது';
+
+  @override
+  String get stageVerifyingTemporalConsistency =>
+      'கால நிலைத்திறனை சரிபார்க்கிறது';
+
+  @override
+  String get stageAggregatingEvidence => 'ஆதாரங்களை ஒன்றிணைக்கிறது';
+
+  @override
+  String get stageCalibratingConfidence => 'நம்பிக்கையை அளவீடு செய்கிறது';
+
+  @override
+  String get stageGeneratingReport => 'அறிக்கையை உருவாக்குகிறது';
+
+  @override
+  String get stageVerificationComplete => 'சரிபார்ப்பு முடிந்தது';
+
+  @override
+  String get mediaValidationLabel => 'ஊடக சரிபார்ப்பு';
+
+  @override
+  String get mediaValidationDesc =>
+      'ஊடக தலையங்கங்கள், SHA-256 hash மற்றும் வடிவமைப்பு முழுமையை சரிபார்ப்பு...';
+
+  @override
+  String get metadataInspectionLabel => 'மடங்கு தரவு ஆய்வு';
+
+  @override
+  String get metadataInspectionDesc =>
+      'EXIF, கன pavatan மடங்கு தரவு மற்றும் நேர முழுமையை சரிபார்ப்பு பகுப்பாய்வு...';
+
+  @override
+  String get frameExtractionLabel => 'ரேம் எடுப்பு';
+
+  @override
+  String get frameExtractionDesc =>
+      'த niluvu கால நிறுவேgae பயன்படுத்தி முக்கிய ரேம் எடுப்பு...';
+
+  @override
+  String get sceneDetectionLabel => 'காட்சி கண்டறிதல்';
+
+  @override
+  String get sceneDetectionDesc =>
+      'வீடியோவை நடைமுறை ப Marshal தரvision-cutவுகளாக பிரித்து...';
+
+  @override
+  String get faceDetectionLabel => 'முகம் கண்டறிதல்';
+
+  @override
+  String get faceDetectionDesc =>
+      'RetinaFace / SCRFD முக நிலை வெட்டு cascade இயக்குகிறது...';
+
+  @override
+  String get faceTrackingLabel => 'முகம் கண்காணிப்பு';
+
+  @override
+  String get faceTrackingDesc =>
+      'தொடர்ந்த ரேம்களில் முக பரப்பளவு கட்டுக்கண்களை கண்காணிக்கிறது...';
+
+  @override
+  String get qualityAssessmentLabel => 'தர மதிப்பீடு';
+
+  @override
+  String get qualityAssessmentDesc =>
+      'ரேம்分辨率, த Sar劫, சுருக்கம் மற்றும் ஒளியை மதிப்பிடுவது...';
+
+  @override
+  String get artifactDetectionLabel => 'கலை tacos கண்டறிதல்';
+
+  @override
+  String get artifactDetectionDesc =>
+      'முக எல்லை வழliable பிழைகள் மற்றும் வளைக்கும் பாதைகளை தேடி பார்...';
+
+  @override
+  String get deepfakeAiModelLabel => 'ஆழ்வைக் க Puerto AI மாதிரி';
+
+  @override
+  String get deepfakeAiModelDesc =>
+      'EfficientViT TFLite அறிவியல் சுருக்கம் இயந்திரத்தை இயக்குகிறது...';
+
+  @override
+  String get temporalConsistencyLabel => 'நேர நிலைத்திறன்';
+
+  @override
+  String get temporalConsistencyDesc =>
+      'ரேம்-லிருந்து ரேம் குள் அமைப்பு நிலைத்திறன் மற்றும் அசtl சரிபார்ப்பு...';
+
+  @override
+  String get confidenceCalibrationLabel => 'நம்பிக்கை அளவீடு';
+
+  @override
+  String get confidenceCalibrationDesc =>
+      'Temperature Scaling (T=1.5) சாத்திய மென்மைசேர்க்கை...';
+
+  @override
+  String get evidenceAggregationLabel => 'ஆதாரங்கள் ஒன்றிணைப்பு';
+
+  @override
+  String get evidenceAggregationDesc =>
+      'அறிவியல் துப்பு முடிவுகளை நிலைநாட்டு ப deslogy தரவுடன் ஒப்பிடுதல்...';
+
+  @override
+  String get riskScoringLabel => 'அபாய மதிப்பெண்';
+
+  @override
+  String get riskScoringDesc =>
+      'பல காரணி அபாய மதிப்பீடு மற்றும் அபாய மேட்டிரிக்ஸ் கணக்கிடுதல்...';
+
+  @override
+  String get finalDecisionLabel => 'இறுதி முடிவு';
+
+  @override
+  String get finalDecisionDesc => 'தன் custom கூட்டு தீர்ப்பை உருவாக்குவது...';
+
+  @override
+  String get generatingReportLabel => 'அறிக்கையை உருவாக்குகிறது';
+
+  @override
+  String get generatingReportDesc =>
+      'முழுமையான நிலைநாட்டு சரிபார்ப்பு அறிக்கையை தொகுக்கிறது...';
 }

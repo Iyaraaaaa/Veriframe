@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:veriframe_app/service/user_service.dart';
+import 'package:veriframe_app/service/user_profile_cache.dart';
 
 class LoginPage extends StatefulWidget {
   final Future<void> Function(bool isDark) onThemeChanged;
@@ -210,8 +211,8 @@ class _LoginPageState extends State<LoginPage> {
       final User? user = userCredential.user;
 
       if (user != null) {
-        // Save Google user data to Firestore for immediate profile access
-        await _saveGoogleUserToFirestore(user);
+        _saveGoogleUserLocally(user);
+        _saveGoogleUserToFirestore(user);
       }
 
       _showSuccessSnackBar('Welcome back!');
@@ -245,6 +246,27 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
+  Future<void> _saveGoogleUserLocally(User user) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('userId', user.uid);
+      await prefs.setString('userName', user.displayName ?? 'User Name');
+      await prefs.setString('userEmail', user.email ?? '');
+      if (user.photoURL != null && user.photoURL!.isNotEmpty) {
+        await prefs.setString('userImage', user.photoURL!);
+      }
+      await prefs.setString('signUpMethod', 'google');
+
+      UserProfileCache.instance.updateCache(
+        name: user.displayName ?? 'User Name',
+        email: user.email ?? '',
+        url: user.photoURL,
+      );
+    } catch (e) {
+      debugPrint('Error saving Google user locally: $e');
+    }
+  }
+
   Future<void> _saveGoogleUserToFirestore(User user) async {
     try {
       final userData = {
@@ -262,16 +284,6 @@ class _LoginPageState extends State<LoginPage> {
           .collection('users')
           .doc(user.uid)
           .set(userData, SetOptions(merge: true));
-
-      // Save to SharedPreferences for immediate access
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('userId', user.uid);
-      await prefs.setString('userName', user.displayName ?? 'User Name');
-      await prefs.setString('userEmail', user.email ?? '');
-      if (user.photoURL != null && user.photoURL!.isNotEmpty) {
-        await prefs.setString('userImage', user.photoURL!);
-      }
-      await prefs.setString('signUpMethod', 'google');
     } catch (e) {
       debugPrint('Error saving Google user to Firestore: $e');
     }

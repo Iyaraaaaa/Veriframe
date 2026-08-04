@@ -13,9 +13,15 @@ import 'package:veriframe_app/screens/privacy.dart';
 import 'package:veriframe_app/screens/settings_page.dart';
 import 'package:veriframe_app/screens/reports_page.dart';
 import 'package:veriframe_app/screens/technology_stack_page.dart';
+import 'package:veriframe_app/screens/splash_screen.dart';
+import 'package:veriframe_app/service/user_profile_cache.dart';
 import 'package:veriframe_app/theme/app_theme.dart';
 import 'package:veriframe_app/utils/navigator_key.dart';
 import 'package:veriframe_app/widgets/error_screen.dart';
+
+Future<void> _initializeApp() async {
+  await UserProfileCache.instance.preload();
+}
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -52,7 +58,7 @@ class MyApp extends StatelessWidget {
           themeMode: controller.themeMode,
           theme: AppTheme.lightTheme,
           darkTheme: AppTheme.darkTheme,
-          home: const OnBoardingScreen(),
+          home: const SplashScreen(onInitialized: _initializeApp),
           routes: {
             '/on_boarding': (_) => const OnBoardingScreen(),
             '/login': (_) => LoginPage(

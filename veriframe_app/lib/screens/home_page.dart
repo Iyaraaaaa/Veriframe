@@ -16,6 +16,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:veriframe_app/utils/theme.dart';
 import 'package:veriframe_app/widgets/main_scaffold.dart';
 import 'package:veriframe_app/widgets/home_top_bar.dart';
+import 'package:veriframe_app/service/user_profile_cache.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:veriframe_app/widgets/safe_avatar_widget.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -51,6 +54,12 @@ class _HomePageState extends State<HomePage> {
         _userEmail = prefs.getString('userEmail') ?? "user@example.com";
         _userImage = prefs.getString('userImage') ?? '';
       });
+
+      // Pre-cache network profile images (e.g. Google photoURL) in both
+      // disk cache and memory so the sidebar drawer renders instantly.
+      if (_userImage.isNotEmpty && !_userImage.startsWith('data:image')) {
+        precacheImage(CachedNetworkImageProvider(_userImage), context);
+      }
     }
   }
 
@@ -73,6 +82,8 @@ class _HomePageState extends State<HomePage> {
       if (currentUser != null) {
         _userId = currentUser.uid;
         _userEmail = currentUser.email ?? "user@example.com";
+        _userName = currentUser.displayName ?? _userName;
+        _userImage = currentUser.photoURL ?? _userImage;
 
         final userDoc = await FirebaseFirestore.instance
             .collection('users')
@@ -84,30 +95,47 @@ class _HomePageState extends State<HomePage> {
           final userData = userDoc.data();
           if (userData != null) {
             _userName =
-                userData['name'] ?? currentUser.displayName ?? "User Name";
+                userData['name'] ?? currentUser.displayName ?? _userName;
             _userEmail =
-                userData['email'] ?? currentUser.email ?? "user@example.com";
+                userData['email'] ?? currentUser.email ?? _userEmail;
 
             if (userData['profileImageBase64'] != null &&
                 (userData['profileImageBase64'] as String).isNotEmpty) {
               _userImage =
                   'data:image/jpeg;base64,${userData['profileImageBase64']}';
-            } else if (userData['imageUrl'] != null &&
+            } else if (userData.containsKey('imageUrl') &&
+                userData['imageUrl'] is String &&
                 (userData['imageUrl'] as String).isNotEmpty) {
               _userImage = userData['imageUrl'];
-            } else if (currentUser.photoURL?.isNotEmpty == true) {
-              _userImage = currentUser.photoURL!;
             }
           }
         }
 
         final prefs = await SharedPreferences.getInstance();
-        await prefs.setString('userId', _userId);
-        await prefs.setString('userName', _userName);
-        await prefs.setString('userEmail', _userEmail);
+        await prefs.remove('userId');
+        await prefs.remove('userName');
+        await prefs.remove('userEmail');
         if (_userImage.isNotEmpty) {
           await prefs.setString('userImage', _userImage);
+        } else {
+          await prefs.remove('userImage');
         }
+        UserProfileCache.instance.updateCache(
+          name: _userName,
+          email: _userEmail,
+          bytes: _userImage.startsWith('data:image')
+              ? (() {
+                  try {
+                    return base64Decode(_userImage.split(',')[1]);
+                  } catch (_) {
+                    return null;
+                  }
+                })()
+              : null,
+          url: !_userImage.startsWith('data:image') && _userImage.isNotEmpty
+              ? _userImage
+              : null,
+        );
       }
     } catch (e) {
       debugPrint('Error loading user data: $e');
@@ -123,46 +151,21 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _getProfileImage({double radius = 20}) {
-    if (_userImage.isEmpty) {
-      return CircleAvatar(
-        radius: radius,
-        backgroundColor: VFColors.blue600,
-        child: Text(
-          _userName.isNotEmpty ? _userName[0].toUpperCase() : 'U',
-          style: const TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-      );
-    } else if (_userImage.startsWith('data:image')) {
-      try {
-        final b64 = _userImage.split(',')[1];
-        final bytes = _base64ImageCache[b64] ?? base64Decode(b64);
-        _base64ImageCache[b64] = bytes;
-        return CircleAvatar(
-          radius: radius,
-          backgroundImage: MemoryImage(bytes),
-        );
-      } catch (_) {
-        return CircleAvatar(
-          radius: radius,
-          backgroundColor: VFColors.blue600,
-          child: Text(
-            _userName.isNotEmpty ? _userName[0].toUpperCase() : 'U',
-            style: const TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        );
-      }
-    } else {
-      return CircleAvatar(
-        radius: radius,
-        backgroundImage: NetworkImage(_userImage),
-      );
-    }
+    return SafeAvatarWidget(
+      radius: radius,
+      imageUrl: _userImage.isNotEmpty && !_userImage.startsWith('data:image') ? _userImage : null,
+      imageBytes: _userImage.startsWith('data:image')
+          ? () {
+              try {
+                final b64 = _userImage.split(',')[1];
+                return _base64ImageCache[b64] ?? base64Decode(b64);
+              } catch (_) {
+                return null;
+              }
+            }()
+          : UserProfileCache.instance.cachedImageBytes,
+      fallbackName: _userName,
+    );
   }
 
   void _onItemTapped(int index) => setState(() => _selectedIndex = index);

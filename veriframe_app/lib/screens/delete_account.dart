@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:veriframe_app/l10n/app_localizations.dart';
+import 'package:veriframe_app/service/user_service.dart';
 
 class DeleteAccountDialog extends StatefulWidget {
   const DeleteAccountDialog({super.key});
@@ -14,35 +13,70 @@ class DeleteAccountDialog extends StatefulWidget {
 class _DeleteAccountDialogState extends State<DeleteAccountDialog> {
   bool _isDeleting = false;
 
-  Future<void> _deleteAccountAndNavigate() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.clear();
+  Future<void> _deleteAccount() async {
+    final loc = AppLocalizations.of(context)!;
+    final user = FirebaseAuth.instance.currentUser;
+
+    if (user == null) {
+      _closeAndNavigateToLogin();
+      return;
+    }
+
+    setState(() => _isDeleting = true);
+
     try {
-      final user = FirebaseAuth.instance.currentUser;
-      if (user != null) {
-        await FirebaseFirestore.instance.collection('users').doc(user.uid).delete();
-        await user.delete();
-      }
+      await UserService.deleteUser(user.uid);
+      _showSnackBar(loc.accountDeleted, Colors.green);
+      await Future.delayed(const Duration(milliseconds: 1500));
+      _closeAndNavigateToLogin();
+    } on FirebaseAuthException catch (e) {
+      debugPrint('Delete account error: $e');
+      _showSnackBar(_errorMessage(e.code), Colors.red);
+      await Future.delayed(const Duration(milliseconds: 1500));
+      _closeAndNavigateToLogin();
     } catch (e) {
       debugPrint('Delete account error: $e');
+      _showSnackBar('Failed to delete account. Please try again.', Colors.red);
+      await Future.delayed(const Duration(milliseconds: 1500));
+      _closeAndNavigateToLogin();
     }
-    await FirebaseAuth.instance.signOut();
+  }
 
-    if (mounted) {
-      final loc = AppLocalizations.of(context)!;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(loc.accountDeleted),
-          backgroundColor: Colors.green,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
+  String _errorMessage(String code) {
+    switch (code) {
+      case 'requires-recent-login':
+        return 'Please sign in again to delete your account.';
+      case 'user-token-expired':
+        return 'Session expired. Please sign in again.';
+      case 'user-not-found':
+        return 'Account not found.';
+      case 'network-request-failed':
+        return 'Network error. Please check your connection.';
+      default:
+        return 'Failed to delete account. Please try again.';
     }
+  }
 
-    await Future.delayed(const Duration(milliseconds: 1500));
-    if (mounted) {
-      Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
-    }
+  void _showSnackBar(String message, Color color) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: color,
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
+  void _closeAndNavigateToLogin() {
+    if (!mounted) return;
+    Navigator.pop(context);
+    ScaffoldMessenger.of(context).clearSnackBars();
+    Navigator.pushNamedAndRemoveUntil(
+      context,
+      '/login',
+      (route) => false,
+    );
   }
 
   @override
@@ -63,13 +97,7 @@ class _DeleteAccountDialogState extends State<DeleteAccountDialog> {
           child: Text(loc.verifyCancel),
         ),
         ElevatedButton(
-          onPressed: _isDeleting
-              ? null
-              : () async {
-                  setState(() => _isDeleting = true);
-                  Navigator.pop(context);
-                  await _deleteAccountAndNavigate();
-                },
+          onPressed: _isDeleting ? null : _deleteAccount,
           style: ElevatedButton.styleFrom(
             backgroundColor: Colors.red,
             foregroundColor: Colors.white,

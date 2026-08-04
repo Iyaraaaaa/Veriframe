@@ -22,9 +22,16 @@ class _OnBoardingScreenState extends State<OnBoardingScreen>
 
   final List<Map<String, dynamic>> pageArr = [
     {
+      "headline": "Detect Deepfakes.\nTrust What's Real.",
+      "subtitle":
+          "An AI system built to detect\ndeepfake videos automatically.",
+      "badgeLabel": "Deepfake Detection",
+      "illustration": 2,
+    },
+    {
       "headline": "Deepfake හඳුනා\nගන්න AI සමඟ",
       "subtitle":
-          "AI පද්ධතියක් තොළින් deepfake වීඩියෝ\nස්වයංක්‍රීයව හඳුනා ගැනීම.",
+          "AI පද්ධතියක් තුළින් deepfake වීඩියෝ\nස්වයංක්‍රීයව හඳුනා ගැනීම.",
       "badgeLabel": "VeriFrame AI",
       "illustration": 0,
     },
@@ -33,13 +40,6 @@ class _OnBoardingScreenState extends State<OnBoardingScreen>
       "subtitle": "AI மூலம் deepfake வீடியோக்களை\nதானாக கண்டறியும் அமைப்பு.",
       "badgeLabel": "Frame Analysis",
       "illustration": 1,
-    },
-    {
-      "headline": "Detect Deepfakes.\nTrust What's Real.",
-      "subtitle":
-          "An AI system built to detect\ndeepfake videos automatically.",
-      "badgeLabel": "Deepfake Detection",
-      "illustration": 2,
     },
   ];
 
@@ -310,43 +310,45 @@ class _OnBoardingScreenState extends State<OnBoardingScreen>
                 childAspectRatio: 1.3,
                 physics: const NeverScrollableScrollPhysics(),
                 children: statuses.map((s) {
-              final bg = s == null
-                  ? Colors.white.withOpacity(0.04)
-                  : s
-                  ? Colors.green.withOpacity(0.12)
-                  : Colors.red.withOpacity(0.10);
-              final border = s == null
-                  ? Colors.white.withOpacity(0.08)
-                  : s
-                  ? Colors.green.withOpacity(0.3)
-                  : Colors.red.withOpacity(0.25);
-              return Container(
-                decoration: BoxDecoration(
-                  color: bg,
-                  borderRadius: BorderRadius.circular(6),
-                  border: Border.all(color: border),
-                ),
-                child: s == null
-                    ? null
-                    : Align(
-                        alignment: Alignment.bottomRight,
-                        child: Padding(
-                          padding: const EdgeInsets.all(3),
-                          child: Text(
-                            s ? "✓" : "✗",
-                            style: TextStyle(
-                              fontSize: 9,
-                              fontWeight: FontWeight.bold,
-                              color: s ? Colors.greenAccent : Colors.redAccent,
+                  final bg = s == null
+                      ? Colors.white.withOpacity(0.04)
+                      : s
+                      ? Colors.green.withOpacity(0.12)
+                      : Colors.red.withOpacity(0.10);
+                  final border = s == null
+                      ? Colors.white.withOpacity(0.08)
+                      : s
+                      ? Colors.green.withOpacity(0.3)
+                      : Colors.red.withOpacity(0.25);
+                  return Container(
+                    decoration: BoxDecoration(
+                      color: bg,
+                      borderRadius: BorderRadius.circular(6),
+                      border: Border.all(color: border),
+                    ),
+                    child: s == null
+                        ? null
+                        : Align(
+                            alignment: Alignment.bottomRight,
+                            child: Padding(
+                              padding: const EdgeInsets.all(3),
+                              child: Text(
+                                s ? "✓" : "✗",
+                                style: TextStyle(
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.bold,
+                                  color: s
+                                      ? Colors.greenAccent
+                                      : Colors.redAccent,
+                                ),
+                              ),
                             ),
                           ),
-                        ),
-                      ),
-              );
-            }).toList(),
+                  );
+                }).toList(),
+              ),
+            ],
           ),
-        ],
-      ),
         ),
       ),
     );
