@@ -1,4 +1,4 @@
-﻿import 'dart:math' as math;
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -8,6 +8,8 @@ import 'package:veriframe_app/models/verification_result.dart';
 import 'package:veriframe_app/provider/verification_notifier.dart';
 import 'package:veriframe_app/screens/report_detail_screen.dart';
 import 'package:veriframe_app/widgets/main_scaffold.dart';
+
+import 'package:veriframe_app/widgets/escalate_bottom_sheet.dart';
 
 // Theme-aware palette
 class _Pal {
@@ -24,8 +26,8 @@ class _Pal {
   static const authentic = Color(0xFF1F7A54);
   static const manipulated = Color(0xFFC1483F);
   Color get manipulatedBg => isDark ? const Color(0x33C1483F) : const Color(0xFFFBEDEC);
-  static const data = Color(0xFF35608F);
-  Color get dataBg => isDark ? const Color(0x33EAF1F8) : const Color(0xFFEAF1F8);
+  Color get data => isDark ? const Color(0xFF64B5F6) : const Color(0xFF35608F);
+  Color get dataBg => isDark ? const Color(0x3364B5F6) : const Color(0xFFEAF1F8);
 
   static const mono = 'monospace';
 }
@@ -157,6 +159,103 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
     }
   }
 
+  Future<void> _deleteAllReports() async {
+    final loc = AppLocalizations.of(context)!;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: _pal.bg,
+        surfaceTintColor: Colors.transparent,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        icon: Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: _pal.manipulatedBg,
+            shape: BoxShape.circle,
+          ),
+          child: const Icon(
+            Icons.delete_sweep_rounded,
+            color: _Pal.manipulated,
+            size: 26,
+          ),
+        ),
+        title: Text(
+          loc.reportsDeleteAllTitle,
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w800,
+            color: _pal.textPrimary,
+          ),
+          textAlign: TextAlign.center,
+        ),
+        content: Text(
+          loc.reportsDeleteAllMessage,
+          style: TextStyle(
+            fontSize: 14,
+            height: 1.5,
+            color: _pal.textSecondary,
+          ),
+          textAlign: TextAlign.center,
+        ),
+        actionsPadding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+        actions: [
+          Row(
+            children: [
+              Expanded(
+                child: TextButton(
+                  onPressed: () => Navigator.pop(context, false),
+                  style: TextButton.styleFrom(
+                    foregroundColor: _pal.textSecondary,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  child: Text(loc.verifyCancel),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: FilledButton(
+                  onPressed: () => Navigator.pop(context, true),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: _Pal.manipulated,
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  child: Text(loc.reportsDeleteAllConfirm),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      try {
+        await ref.read(verificationRepositoryProvider).deleteAllResults();
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(loc.reportsDeleted),
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+          );
+        }
+      } catch (e) {
+        debugPrint('[ReportsPage] Error deleting all reports: $e');
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final args = ModalRoute.of(context)?.settings.arguments;
@@ -169,6 +268,13 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
     return MainScaffold(
       showBack: true,
       title: Text(loc.reportsTitle),
+      extraActions: [
+        IconButton(
+          icon: const Icon(Icons.delete_sweep_outlined),
+          tooltip: loc.reportsDeleteAllTitle,
+          onPressed: _deleteAllReports,
+        ),
+      ],
       body: content,
     );
   }
@@ -187,7 +293,7 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return Center(
-                  child: CircularProgressIndicator(color: _Pal.data),
+                  child: CircularProgressIndicator(color: _pal.data),
                 );
               }
               if (snapshot.hasError) {
@@ -228,7 +334,7 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _DashboardHeader(_pal),
+                  _DashboardHeader(_pal, onDeleteAll: _deleteAllReports, showDeleteAll: reports.isNotEmpty),
                   Expanded(
                     child: ListView.builder(
                       padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
@@ -288,14 +394,16 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
   }
 }
 
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─────────────────────────────────────────────────────────────────────────
 // Dashboard header with statistics
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─────────────────────────────────────────────────────────────────────────
 
 class _DashboardHeader extends StatelessWidget {
-  const _DashboardHeader(this.pal);
+  const _DashboardHeader(this.pal, {this.onDeleteAll, this.showDeleteAll = true});
 
   final _Pal pal;
+  final VoidCallback? onDeleteAll;
+  final bool showDeleteAll;
 
   @override
   Widget build(BuildContext context) {
@@ -330,15 +438,24 @@ class _DashboardHeader extends StatelessWidget {
               ],
             ),
           ),
+          if (showDeleteAll && onDeleteAll != null) ...[
+            IconButton(
+              icon: const Icon(Icons.delete_sweep_outlined),
+              color: _Pal.manipulated,
+              tooltip: loc.reportsDeleteAllTitle,
+              onPressed: onDeleteAll,
+            ),
+            const SizedBox(width: 4),
+          ],
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
               color: pal.dataBg,
               borderRadius: BorderRadius.circular(11),
             ),
-            child: const Icon(
+            child: Icon(
               Icons.description_rounded,
-              color: _Pal.data,
+              color: pal.data,
               size: 20,
             ),
           ),
@@ -363,6 +480,9 @@ class _ReportCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context)!;
     final isReal = report.verdict.toUpperCase() == 'AUTHENTIC';
+    final isManipulatedOrHighRisk = !isReal ||
+        report.riskLevel.toUpperCase() == 'HIGH' ||
+        report.riskLevel.toUpperCase() == 'CRITICAL';
     final statusColor = isReal ? _Pal.authentic : _Pal.manipulated;
     final displayScore = isReal
         ? report.authenticityScore
@@ -503,15 +623,40 @@ class _ReportCard extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
-                    IconButton(
-                      visualDensity: VisualDensity.compact,
-                      icon: Icon(
-                        Icons.delete_outline_rounded,
-                        size: 18,
-                        color: pal.textSubtle,
-                      ),
-                      tooltip: loc.reportsDeleteTooltip,
-                      onPressed: onDelete,
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (isManipulatedOrHighRisk)
+                          IconButton(
+                            visualDensity: VisualDensity.compact,
+                            icon: const Icon(
+                              Icons.shield_outlined,
+                              size: 18,
+                              color: _Pal.manipulated,
+                            ),
+                            tooltip: loc.escalateReportTitle,
+                            onPressed: () {
+                              showModalBottomSheet(
+                                context: context,
+                                isScrollControlled: true,
+                                backgroundColor: Colors.transparent,
+                                builder: (context) => EscalateBottomSheet(
+                                  report: report,
+                                ),
+                              );
+                            },
+                          ),
+                        IconButton(
+                          visualDensity: VisualDensity.compact,
+                          icon: Icon(
+                            Icons.delete_outline_rounded,
+                            size: 18,
+                            color: pal.textSubtle,
+                          ),
+                          tooltip: loc.reportsDeleteTooltip,
+                          onPressed: onDelete,
+                        ),
+                      ],
                     ),
                     Padding(
                       padding: const EdgeInsets.only(right: 2, bottom: 2),
@@ -569,44 +714,35 @@ class _MiniRing extends StatelessWidget {
 }
 
 class _MiniRingPainter extends CustomPainter {
-  _MiniRingPainter({required this.fraction, required this.color, required this.trackColor});
   final double fraction;
   final Color color;
   final Color trackColor;
 
+  _MiniRingPainter({required this.fraction, required this.color, required this.trackColor});
+
   @override
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, size.height / 2);
-    final radius = (size.width - 6) / 2;
-    const strokeWidth = 3.5;
-
-    final trackPaint = Paint()
+    final radius = size.width / 2 - 2;
+    final bgPaint = Paint()
       ..color = trackColor
+      ..strokeWidth = 4
       ..style = PaintingStyle.stroke
-      ..strokeWidth = strokeWidth
       ..strokeCap = StrokeCap.round;
-
-    final progressPaint = Paint()
+    final fgPaint = Paint()
       ..color = color
+      ..strokeWidth = 4
       ..style = PaintingStyle.stroke
-      ..strokeWidth = strokeWidth
       ..strokeCap = StrokeCap.round;
-
-    canvas.drawCircle(center, radius, trackPaint);
-
     const startAngle = -math.pi / 2;
-    final sweepAngle = 2 * math.pi * fraction;
-    canvas.drawArc(
-      Rect.fromCircle(center: center, radius: radius),
-      startAngle,
-      sweepAngle,
-      false,
-      progressPaint,
-    );
+    final sweep = 2 * math.pi * fraction.clamp(0.0, 1.0);
+    canvas.drawArc(Rect.fromCircle(center: center, radius: radius), startAngle, 2 * math.pi, false, bgPaint);
+    canvas.drawArc(Rect.fromCircle(center: center, radius: radius), startAngle, sweep, false, fgPaint);
   }
 
   @override
-  bool shouldRepaint(covariant _MiniRingPainter oldDelegate) =>
-      oldDelegate.fraction != fraction || oldDelegate.color != color;
+  bool shouldRepaint(covariant _MiniRingPainter old) =>
+      old.fraction != fraction || old.color != color || old.trackColor != trackColor;
 }
+
 

@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:veriframe_app/models/verification_result.dart';
 import 'package:veriframe_app/service/verification_repository.dart';
 import 'package:veriframe_app/service/verify_backend_service.dart';
+import 'package:veriframe_app/service/engines/link_verification_engine.dart';
 
 final verificationRepositoryProvider = Provider<VerificationRepository>((ref) {
   return VerificationRepositoryImpl();
@@ -51,41 +52,57 @@ class VerificationNotifier extends StateNotifier<AsyncValue<VerificationResult?>
   Future<void> verifyLink(String url) async {
     state = const AsyncValue.loading();
     _uploadProgress = 0.1;
-    _statusMessage = "Initiating video link download...";
+    _statusMessage = "Initiating video link verification...";
     try {
-      final jobId = await _repository.verifyLink(url);
-      
-      const int maxPolls = 60;
-      int polls = 0;
-      while (polls < maxPolls) {
-        await Future.delayed(const Duration(seconds: 2));
-        polls++;
+      final baseUrl = await VerifyBackendService.instance.getBaseUrl();
+      final isOnline = await VerifyBackendService.instance.isBackendAvailable(baseUrl);
+
+      if (isOnline) {
+        final jobId = await _repository.verifyLink(url);
         
-        final baseUrl = await VerifyBackendService.instance.getBaseUrl();
-        final statusRes = await VerifyBackendService.instance.getAnalysis(baseUrl, jobId);
-        final status = statusRes['status']?.toString().toLowerCase();
-        
-        if (status == 'downloading') {
-          _statusMessage = "Downloading media stream...";
-          _uploadProgress = 0.3;
-        } else if (status == 'extracting') {
-          _statusMessage = "Extracting face crops...";
-          _uploadProgress = 0.5;
-        } else if (status == 'completed') {
-          _statusMessage = "Compiling report...";
-          _uploadProgress = 0.9;
-          final result = await _repository.createReport(
-            jobId: jobId,
-            mediaName: url.length > 50 ? '${url.substring(0, 47)}...' : url,
-            mediaPath: url,
-          );
-          state = AsyncValue.data(result);
-          return;
-        } else if (status == 'failed') {
-          throw Exception(statusRes['error'] ?? 'Forensic server failed to verify the link.');
+        const int maxPolls = 60;
+        int polls = 0;
+        while (polls < maxPolls) {
+          await Future.delayed(const Duration(seconds: 2));
+          polls++;
+          
+          final statusRes = await VerifyBackendService.instance.getAnalysis(baseUrl, jobId);
+          final status = statusRes['status']?.toString().toLowerCase();
+          
+          if (status == 'downloading') {
+            _statusMessage = "Downloading media stream...";
+            _uploadProgress = 0.3;
+          } else if (status == 'extracting') {
+            _statusMessage = "Extracting face crops...";
+            _uploadProgress = 0.5;
+          } else if (status == 'completed') {
+            _statusMessage = "Compiling report...";
+            _uploadProgress = 0.9;
+            final result = await _repository.createReport(
+              jobId: jobId,
+              mediaName: url.length > 50 ? '${url.substring(0, 47)}...' : url,
+              mediaPath: url,
+            );
+            state = AsyncValue.data(result);
+            return;
+          } else if (status == 'failed') {
+            throw Exception(statusRes['error'] ?? 'Forensic server failed to verify the link.');
+          }
         }
+        throw TimeoutException('Verification request timed out on the forensic server.');
+      } else {
+        _statusMessage = "Running offline link verification...";
+        _uploadProgress = 0.2;
+        final result = await LinkVerificationEngine.instance.verify(
+          url,
+          onProgress: (step, progress, message) {
+            _statusMessage = message;
+            _uploadProgress = progress;
+          },
+        );
+        await _repository.saveResult(result);
+        state = AsyncValue.data(result);
       }
-      throw TimeoutException('Verification request timed out on the forensic server.');
     } catch (e, stack) {
       state = AsyncValue.error(e, stack);
     }

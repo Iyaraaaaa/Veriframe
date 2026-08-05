@@ -28,6 +28,17 @@ class VerificationResult with _$VerificationResult {
     String? mediaPath,
     String? pdfPath,
     String? thumbnailBase64,
+    String? videoUrl,
+    // Link verification forensic fields
+    String? platform,
+    String? videoLength,
+    String? resolution,
+    int? framesAnalysedCount,
+    int? suspiciousFramesCount,
+    double? faceDetectionRate,
+    double? processingTimeSec,
+    List<Map<String, dynamic>>? suspiciousFrames,
+    List<String>? timelineLogs,
   }) = _VerificationResult;
 
   factory VerificationResult.fromJson(Map<String, dynamic> json) =>

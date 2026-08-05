@@ -81,6 +81,62 @@ class PdfService {
                             mutedInk,
                             isBold: true,
                           ),
+                          // Source block — always show something, never omit
+                          () {
+                            final url = result.videoUrl?.trim();
+                            final mp = result.mediaPath;
+                            final String label;
+                            final bool isLink;
+                            if (url != null && url.isNotEmpty) {
+                              label = url;
+                              isLink = true;
+                            } else if (mp != null && mp.isNotEmpty && mp.startsWith('stream-')) {
+                              label = 'Live camera session — $mp';
+                              isLink = false;
+                            } else if (mp != null && mp.isNotEmpty) {
+                              label = 'Local file: $mp';
+                              isLink = false;
+                            } else {
+                              label = 'Live camera stream (no file)';
+                              isLink = false;
+                            }
+                            return pw.Padding(
+                              padding: const pw.EdgeInsets.only(bottom: 6),
+                              child: pw.Column(
+                                crossAxisAlignment: pw.CrossAxisAlignment.start,
+                                children: [
+                                  pw.Text(
+                                    'Source',
+                                    style: pw.TextStyle(
+                                      fontSize: 7.5,
+                                      color: mutedInk,
+                                    ),
+                                  ),
+                                  pw.SizedBox(height: 1),
+                                  if (isLink)
+                                    pw.UrlLink(
+                                      destination: label,
+                                      child: pw.Text(
+                                        label,
+                                        style: pw.TextStyle(
+                                          fontSize: 8.5,
+                                          color: PdfColor.fromHex('#1E88E5'),
+                                          decoration: pw.TextDecoration.underline,
+                                        ),
+                                      ),
+                                    )
+                                  else
+                                    pw.Text(
+                                      label,
+                                      style: pw.TextStyle(
+                                        fontSize: 8.5,
+                                        color: inkText,
+                                      ),
+                                    ),
+                                ],
+                              ),
+                            );
+                          }(),
                           _buildDetailLine(
                             'Verified at',
                             formattedDate,

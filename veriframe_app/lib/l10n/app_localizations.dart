@@ -2353,19 +2353,19 @@ abstract class AppLocalizations {
   /// No description provided for @aboutValueOne.
   ///
   /// In en, this message translates to:
-  /// **'Transparency in every verdict'**
+  /// **'Uncompromising Forensic Integrity'**
   String get aboutValueOne;
 
   /// No description provided for @aboutValueTwo.
   ///
   /// In en, this message translates to:
-  /// **'Privacy-first, on-device analysis'**
+  /// **'Calibrated AI Deepfake Rigor'**
   String get aboutValueTwo;
 
   /// No description provided for @aboutValueThree.
   ///
   /// In en, this message translates to:
-  /// **'Accessible protection for everyone'**
+  /// **'Transparent & Actionable Intelligence'**
   String get aboutValueThree;
 
   /// No description provided for @aboutValuesLabel.
@@ -3286,6 +3286,24 @@ abstract class AppLocalizations {
   /// **'Delete'**
   String get notificationsDeleteConfirm;
 
+  /// No description provided for @notificationsDeleteAllTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete all notifications?'**
+  String get notificationsDeleteAllTitle;
+
+  /// No description provided for @notificationsDeleteAllMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'All notifications will be permanently deleted. This cannot be undone.'**
+  String get notificationsDeleteAllMessage;
+
+  /// No description provided for @notificationsDeleteAllConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete All'**
+  String get notificationsDeleteAllConfirm;
+
   /// No description provided for @notificationsNotLoggedIn.
   ///
   /// In en, this message translates to:
@@ -3319,7 +3337,7 @@ abstract class AppLocalizations {
   /// No description provided for @reportsHistorySubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Secure history of all completed media verification analyses.'**
+  /// **'History of media Verification'**
   String get reportsHistorySubtitle;
 
   /// No description provided for @reportsNotLoggedIn.
@@ -3375,6 +3393,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Delete report'**
   String get reportsDeleteTooltip;
+
+  /// No description provided for @reportsDeleteAllTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete all reports?'**
+  String get reportsDeleteAllTitle;
+
+  /// No description provided for @reportsDeleteAllMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'All reports will be permanently deleted. This cannot be undone.'**
+  String get reportsDeleteAllMessage;
+
+  /// No description provided for @reportsDeleteAllConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete All'**
+  String get reportsDeleteAllConfirm;
 
   /// No description provided for @techStackTitle.
   ///
@@ -3939,6 +3975,562 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Assembling complete forensic verification report...'**
   String get generatingReportDesc;
+
+  /// No description provided for @verifyNoVideoSelected.
+  ///
+  /// In en, this message translates to:
+  /// **'No video file selected. Please pick a video first.'**
+  String get verifyNoVideoSelected;
+
+  /// No description provided for @verifyFrameExtractionFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not extract any frames from the video. It may be corrupt or use an unsupported codec.'**
+  String get verifyFrameExtractionFailed;
+
+  /// No description provided for @verifyOfflineLinkVerification.
+  ///
+  /// In en, this message translates to:
+  /// **'Running offline link verification...'**
+  String get verifyOfflineLinkVerification;
+
+  /// No description provided for @verifyExtractingFramesServer.
+  ///
+  /// In en, this message translates to:
+  /// **'Extracting frames on server...'**
+  String get verifyExtractingFramesServer;
+
+  /// No description provided for @verifyDownloadingMediaStream.
+  ///
+  /// In en, this message translates to:
+  /// **'Downloading media stream...'**
+  String get verifyDownloadingMediaStream;
+
+  /// No description provided for @verifyExtractingFaceCrops.
+  ///
+  /// In en, this message translates to:
+  /// **'Extracting face crops...'**
+  String get verifyExtractingFaceCrops;
+
+  /// No description provided for @verifyLocatingBiometricPoints.
+  ///
+  /// In en, this message translates to:
+  /// **'Locating biometric points...'**
+  String get verifyLocatingBiometricPoints;
+
+  /// No description provided for @verifyRunningDeepLearningClassifiers.
+  ///
+  /// In en, this message translates to:
+  /// **'Running deep learning classifiers...'**
+  String get verifyRunningDeepLearningClassifiers;
+
+  /// No description provided for @verifyLinkAnalysisEmptyResults.
+  ///
+  /// In en, this message translates to:
+  /// **'Link analysis returned empty results.'**
+  String get verifyLinkAnalysisEmptyResults;
+
+  /// No description provided for @verifyForensicServerFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Forensic server failed to process link.'**
+  String get verifyForensicServerFailed;
+
+  /// No description provided for @verifyLiveCameraStream.
+  ///
+  /// In en, this message translates to:
+  /// **'Live Camera Stream'**
+  String get verifyLiveCameraStream;
+
+  /// No description provided for @verifyLiveStreamSession.
+  ///
+  /// In en, this message translates to:
+  /// **'Live Stream Session'**
+  String get verifyLiveStreamSession;
+
+  /// No description provided for @verifySavingToDatabase.
+  ///
+  /// In en, this message translates to:
+  /// **'Saving to forensic database...'**
+  String get verifySavingToDatabase;
+
+  /// No description provided for @verifySendingNotification.
+  ///
+  /// In en, this message translates to:
+  /// **'Sending Notification...'**
+  String get verifySendingNotification;
+
+  /// No description provided for @verifyAnalysisCompleteNotification.
+  ///
+  /// In en, this message translates to:
+  /// **'Analysis complete. Verdict: {verdict}. {score}% {type}. Tap to view report.'**
+  String verifyAnalysisCompleteNotification(
+    Object score,
+    Object type,
+    Object verdict,
+  );
+
+  /// No description provided for @verifyCompletedStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Completed'**
+  String get verifyCompletedStatus;
+
+  /// No description provided for @verifyConfigureConnectionSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Configure connection settings'**
+  String get verifyConfigureConnectionSettings;
+
+  /// No description provided for @notificationsDeleteFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to delete notifications: {error}'**
+  String notificationsDeleteFailed(Object error);
+
+  /// No description provided for @profileFailedToPickImage.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to pick image'**
+  String get profileFailedToPickImage;
+
+  /// No description provided for @profileUserNotAuthenticated.
+  ///
+  /// In en, this message translates to:
+  /// **'User not authenticated'**
+  String get profileUserNotAuthenticated;
+
+  /// No description provided for @profilePasswordTooShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Password should be at least 6 characters'**
+  String get profilePasswordTooShort;
+
+  /// No description provided for @profilePasswordUpdatedSuccessfully.
+  ///
+  /// In en, this message translates to:
+  /// **'Password updated successfully!'**
+  String get profilePasswordUpdatedSuccessfully;
+
+  /// No description provided for @profilePleaseLoginAgain.
+  ///
+  /// In en, this message translates to:
+  /// **'Please log in again to update your account'**
+  String get profilePleaseLoginAgain;
+
+  /// No description provided for @profilePasswordTooWeak.
+  ///
+  /// In en, this message translates to:
+  /// **'Password is too weak'**
+  String get profilePasswordTooWeak;
+
+  /// No description provided for @profilePasswordUpdateFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to update password'**
+  String get profilePasswordUpdateFailed;
+
+  /// No description provided for @profileSaveChangesFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to save changes'**
+  String get profileSaveChangesFailed;
+
+  /// No description provided for @searchHintExample.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g., 945061685V'**
+  String get searchHintExample;
+
+  /// No description provided for @logoutConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm Logout'**
+  String get logoutConfirmTitle;
+
+  /// No description provided for @logoutConfirmMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to log out?'**
+  String get logoutConfirmMessage;
+
+  /// No description provided for @logoutCancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get logoutCancel;
+
+  /// No description provided for @logoutButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Logout'**
+  String get logoutButton;
+
+  /// No description provided for @escalateReportTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Escalate Report'**
+  String get escalateReportTitle;
+
+  /// No description provided for @escalateReportSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Forward this finding to a national authority'**
+  String get escalateReportSubtitle;
+
+  /// No description provided for @authoritySectionLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'AUTHORITY'**
+  String get authoritySectionLabel;
+
+  /// No description provided for @sendViaLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'SEND VIA'**
+  String get sendViaLabel;
+
+  /// No description provided for @slThreatRadarTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'SL Threat Intelligence Radar'**
+  String get slThreatRadarTitle;
+
+  /// No description provided for @slThreatRadarSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Track viral deepfake scams & voice clones circulating in Sri Lanka.'**
+  String get slThreatRadarSubtitle;
+
+  /// No description provided for @slThreatRadarLiveSoon.
+  ///
+  /// In en, this message translates to:
+  /// **'LIVE monitoring coming soon'**
+  String get slThreatRadarLiveSoon;
+
+  /// No description provided for @loadingFinishingVerification.
+  ///
+  /// In en, this message translates to:
+  /// **'Finishing verification...'**
+  String get loadingFinishingVerification;
+
+  /// No description provided for @loadingEstimatedTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Est. ~{seconds} sec remaining'**
+  String loadingEstimatedTime(Object seconds);
+
+  /// No description provided for @cancelAnalysis.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel Analysis'**
+  String get cancelAnalysis;
+
+  /// No description provided for @errorAnalysisInterrupted.
+  ///
+  /// In en, this message translates to:
+  /// **'Analysis Interrupted'**
+  String get errorAnalysisInterrupted;
+
+  /// No description provided for @errorOfflineTFLiteAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Offline TFLite Fallback Available'**
+  String get errorOfflineTFLiteAvailable;
+
+  /// No description provided for @errorWhatHappened.
+  ///
+  /// In en, this message translates to:
+  /// **'What happened'**
+  String get errorWhatHappened;
+
+  /// No description provided for @errorPossibleReason.
+  ///
+  /// In en, this message translates to:
+  /// **'Possible reason'**
+  String get errorPossibleReason;
+
+  /// No description provided for @errorRetryAnalysis.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry Analysis'**
+  String get errorRetryAnalysis;
+
+  /// No description provided for @errorContactSupport.
+  ///
+  /// In en, this message translates to:
+  /// **'Contact Support'**
+  String get errorContactSupport;
+
+  /// No description provided for @errorOopsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Oops! Something went wrong'**
+  String get errorOopsTitle;
+
+  /// No description provided for @errorTryAgain.
+  ///
+  /// In en, this message translates to:
+  /// **'Try Again'**
+  String get errorTryAgain;
+
+  /// No description provided for @emptyNoReports.
+  ///
+  /// In en, this message translates to:
+  /// **'No Verification Reports'**
+  String get emptyNoReports;
+
+  /// No description provided for @emptyNoNotifications.
+  ///
+  /// In en, this message translates to:
+  /// **'No Notifications Yet'**
+  String get emptyNoNotifications;
+
+  /// No description provided for @emptyNoHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'No History Available'**
+  String get emptyNoHistory;
+
+  /// No description provided for @emptyNoSearches.
+  ///
+  /// In en, this message translates to:
+  /// **'No Searches Found'**
+  String get emptyNoSearches;
+
+  /// No description provided for @emptyNoResults.
+  ///
+  /// In en, this message translates to:
+  /// **'No Analysis Results'**
+  String get emptyNoResults;
+
+  /// No description provided for @emptyNoReportsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Upload a video or image link to generate your first AI deepfake forensic report.'**
+  String get emptyNoReportsSubtitle;
+
+  /// No description provided for @emptyNoNotificationsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'You are all caught up! New forensic alerts will appear here.'**
+  String get emptyNoNotificationsSubtitle;
+
+  /// No description provided for @emptyNoHistorySubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Completed media analysis records will be stored securely in your history.'**
+  String get emptyNoHistorySubtitle;
+
+  /// No description provided for @emptyNoSearchesSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Try adjusting your search criteria or keywords to find matching records.'**
+  String get emptyNoSearchesSubtitle;
+
+  /// No description provided for @emptyNoResultsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Run a verification task to display detailed deepfake metrics and evidence.'**
+  String get emptyNoResultsSubtitle;
+
+  /// No description provided for @backTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Back'**
+  String get backTooltip;
+
+  /// No description provided for @changeLanguageTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Change Language'**
+  String get changeLanguageTooltip;
+
+  /// No description provided for @lightModeTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Switch to Light Mode'**
+  String get lightModeTooltip;
+
+  /// No description provided for @darkModeTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Switch to Dark Mode'**
+  String get darkModeTooltip;
+
+  /// No description provided for @notificationsTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications'**
+  String get notificationsTooltip;
+
+  /// No description provided for @formTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Staff Affirmation Form'**
+  String get formTitle;
+
+  /// No description provided for @selectOption.
+  ///
+  /// In en, this message translates to:
+  /// **'Select'**
+  String get selectOption;
+
+  /// No description provided for @submitting.
+  ///
+  /// In en, this message translates to:
+  /// **'Submitting...'**
+  String get submitting;
+
+  /// No description provided for @errorSaving.
+  ///
+  /// In en, this message translates to:
+  /// **'Error saving data. Please try again.'**
+  String get errorSaving;
+
+  /// No description provided for @connectionError.
+  ///
+  /// In en, this message translates to:
+  /// **'Connection error. Please check your internet connection.'**
+  String get connectionError;
+
+  /// No description provided for @loginRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'You must be logged in to submit this form.'**
+  String get loginRequired;
+
+  /// No description provided for @datesSectionHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Use YYYY-MM-DD format for all dates'**
+  String get datesSectionHint;
+
+  /// No description provided for @editProfileTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Profile'**
+  String get editProfileTitle;
+
+  /// No description provided for @profileName.
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get profileName;
+
+  /// No description provided for @profileEmail.
+  ///
+  /// In en, this message translates to:
+  /// **'Email'**
+  String get profileEmail;
+
+  /// No description provided for @profileNewPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'New Password'**
+  String get profileNewPassword;
+
+  /// No description provided for @profileConfirmPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm Password'**
+  String get profileConfirmPassword;
+
+  /// No description provided for @profilePhoto.
+  ///
+  /// In en, this message translates to:
+  /// **'Profile Photo'**
+  String get profilePhoto;
+
+  /// No description provided for @profileChangePhoto.
+  ///
+  /// In en, this message translates to:
+  /// **'Change Photo'**
+  String get profileChangePhoto;
+
+  /// No description provided for @profileRemovePhoto.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove Photo'**
+  String get profileRemovePhoto;
+
+  /// No description provided for @profilePasswordChange.
+  ///
+  /// In en, this message translates to:
+  /// **'Change Password'**
+  String get profilePasswordChange;
+
+  /// No description provided for @profileCurrentPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Current Password'**
+  String get profileCurrentPassword;
+
+  /// No description provided for @profileSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get profileSave;
+
+  /// No description provided for @profileCancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get profileCancel;
+
+  /// No description provided for @profileUploading.
+  ///
+  /// In en, this message translates to:
+  /// **'Uploading...'**
+  String get profileUploading;
+
+  /// No description provided for @profileImageTooLarge.
+  ///
+  /// In en, this message translates to:
+  /// **'Image size should be less than 5MB'**
+  String get profileImageTooLarge;
+
+  /// No description provided for @reportShareReport.
+  ///
+  /// In en, this message translates to:
+  /// **'Share Report'**
+  String get reportShareReport;
+
+  /// No description provided for @reportShareVia.
+  ///
+  /// In en, this message translates to:
+  /// **'Share via'**
+  String get reportShareVia;
+
+  /// No description provided for @reportShareLink.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy Link'**
+  String get reportShareLink;
+
+  /// No description provided for @reportSharePdf.
+  ///
+  /// In en, this message translates to:
+  /// **'Share PDF'**
+  String get reportSharePdf;
+
+  /// No description provided for @reportShareImage.
+  ///
+  /// In en, this message translates to:
+  /// **'Share Image'**
+  String get reportShareImage;
+
+  /// No description provided for @reportCopiedToClipboard.
+  ///
+  /// In en, this message translates to:
+  /// **'Report link copied to clipboard.'**
+  String get reportCopiedToClipboard;
+
+  /// No description provided for @reportShareFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to share report'**
+  String get reportShareFailed;
 }
 
 class _AppLocalizationsDelegate

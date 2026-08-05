@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:veriframe_app/l10n/app_localizations.dart';
 import 'package:veriframe_app/service/user_service.dart';
+import 'package:veriframe_app/utils/navigator_key.dart';
 
 class DeleteAccountDialog extends StatefulWidget {
   const DeleteAccountDialog({super.key});
@@ -27,18 +28,16 @@ class _DeleteAccountDialogState extends State<DeleteAccountDialog> {
     try {
       await UserService.deleteUser(user.uid);
       _showSnackBar(loc.accountDeleted, Colors.green);
-      await Future.delayed(const Duration(milliseconds: 1500));
+      await Future.delayed(const Duration(milliseconds: 1200));
       _closeAndNavigateToLogin();
     } on FirebaseAuthException catch (e) {
       debugPrint('Delete account error: $e');
       _showSnackBar(_errorMessage(e.code), Colors.red);
-      await Future.delayed(const Duration(milliseconds: 1500));
-      _closeAndNavigateToLogin();
+      if (mounted) setState(() => _isDeleting = false);
     } catch (e) {
       debugPrint('Delete account error: $e');
       _showSnackBar('Failed to delete account. Please try again.', Colors.red);
-      await Future.delayed(const Duration(milliseconds: 1500));
-      _closeAndNavigateToLogin();
+      if (mounted) setState(() => _isDeleting = false);
     }
   }
 
@@ -70,10 +69,13 @@ class _DeleteAccountDialogState extends State<DeleteAccountDialog> {
 
   void _closeAndNavigateToLogin() {
     if (!mounted) return;
-    Navigator.pop(context);
+    // Clear any lingering snack bars before closing the dialog
     ScaffoldMessenger.of(context).clearSnackBars();
-    Navigator.pushNamedAndRemoveUntil(
-      context,
+    // Pop the dialog
+    Navigator.pop(context);
+    // Use the global navigator key to push to /login and remove all routes,
+    // so we never reference the now-deactivated dialog context.
+    navigatorKey.currentState?.pushNamedAndRemoveUntil(
       '/login',
       (route) => false,
     );

@@ -81,7 +81,6 @@ class NotificationService {
         .doc(uid)
         .collection('notifications')
         .orderBy('createdAt', descending: true)
-        .limit(3)
         .snapshots()
         .map((snapshot) => snapshot.docs
             .map((doc) => NotificationModel.fromMap(doc.data(), doc.id))
@@ -192,5 +191,41 @@ class NotificationService {
     } catch (e) {
       debugPrint('[NotificationService] Error deleting notification: $e');
     }
+  }
+
+  Future<void> deleteAllNotifications(String uid) async {
+    try {
+      const batchLimit = 500;
+      while (true) {
+        final snapshot = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(uid)
+            .collection('notifications')
+            .limit(batchLimit)
+            .get();
+        if (snapshot.docs.isEmpty) break;
+        final batch = FirebaseFirestore.instance.batch();
+        for (final doc in snapshot.docs) {
+          batch.delete(doc.reference);
+        }
+        await batch.commit();
+        if (snapshot.docs.length < batchLimit) break;
+      }
+    } catch (e) {
+      debugPrint('[NotificationService] Error deleting all notifications: $e');
+      rethrow;
+    }
+  }
+
+  /// Cancels all displayed/pending local (system-tray) notifications and
+  /// clears the app badge. Call this when the user deletes their account.
+  Future<void> cancelAllLocalNotifications() async {
+    try {
+      await init();
+      await _localNotificationsPlugin.cancelAll();
+    } catch (e) {
+      debugPrint('[NotificationService] Error cancelling local notifications: $e');
+    }
+    await updateAppBadge(0);
   }
 }

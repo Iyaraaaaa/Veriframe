@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:veriframe_app/service/verify_backend_service.dart';
+import 'package:veriframe_app/service/engines/link_verification_engine.dart';
 
 class VerificationProgress {
   final int stageIndex;
@@ -114,45 +115,20 @@ class VerificationAgentService {
       'Verification Complete',
     ];
 
+    final result = await LinkVerificationEngine.instance.verify(input);
+    final reportMap = result.toJson();
+
     for (int i = 0; i < stages.length; i++) {
-      await Future.delayed(const Duration(milliseconds: 300));
+      await Future.delayed(const Duration(milliseconds: 150));
       final isLast = i == stages.length - 1;
       yield VerificationProgress(
         stageIndex: i,
         stageName: stages[i],
-        statusMessage: 'Offline Mode: Local TFLite execution',
+        statusMessage: 'Offline Mode: Local rule & cryptographic engine execution',
         progress: (i + 1) / stages.length,
         isCompleted: isLast,
-        finalReport: isLast ? _buildOfflineFallbackReport(input) : null,
+        finalReport: isLast ? reportMap : null,
       );
     }
-  }
-
-  Map<String, dynamic> _buildOfflineFallbackReport(String input) {
-    return {
-      'verificationId': 'VRF-OFFLINE-${DateTime.now().millisecondsSinceEpoch}',
-      'verifiedAt': DateTime.now().toUtc().toIso8601String(),
-      'mediaType': 'video/mp4',
-      'source': input,
-      'verdict': 'AUTHENTIC',
-      'authenticityScore': 88.5,
-      'fakeProbability': 11.5,
-      'confidence': 92.0,
-      'uncertainty': 8.0,
-      'riskLevel': 'LOW',
-      'whyDecisionMade': [
-        'Local TFLite model verified authentic facial texture distributions.',
-        'Inter-frame continuity matches authentic camera profiles.'
-      ],
-      'detectedEvidence': ['No manipulation signatures detected.'],
-      'recommendations': ['Media is cleared.'],
-      'metrics': {
-        'framesAnalyzed': 30,
-        'facesAnalyzed': 30,
-        'processingTimeSec': 3.2,
-        'modelVersion': 'EfficientViT-Mobile-Offline',
-      },
-      'reportHash': 'offline-hash-${DateTime.now().millisecondsSinceEpoch}',
-    };
   }
 }

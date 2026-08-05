@@ -43,6 +43,18 @@ mixin _$VerificationResult {
   String? get mediaPath => throw _privateConstructorUsedError;
   String? get pdfPath => throw _privateConstructorUsedError;
   String? get thumbnailBase64 => throw _privateConstructorUsedError;
+  String? get videoUrl =>
+      throw _privateConstructorUsedError; // Link verification forensic fields
+  String? get platform => throw _privateConstructorUsedError;
+  String? get videoLength => throw _privateConstructorUsedError;
+  String? get resolution => throw _privateConstructorUsedError;
+  int? get framesAnalysedCount => throw _privateConstructorUsedError;
+  int? get suspiciousFramesCount => throw _privateConstructorUsedError;
+  double? get faceDetectionRate => throw _privateConstructorUsedError;
+  double? get processingTimeSec => throw _privateConstructorUsedError;
+  List<Map<String, dynamic>>? get suspiciousFrames =>
+      throw _privateConstructorUsedError;
+  List<String>? get timelineLogs => throw _privateConstructorUsedError;
 
   /// Serializes this VerificationResult to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -83,6 +95,16 @@ abstract class $VerificationResultCopyWith<$Res> {
     String? mediaPath,
     String? pdfPath,
     String? thumbnailBase64,
+    String? videoUrl,
+    String? platform,
+    String? videoLength,
+    String? resolution,
+    int? framesAnalysedCount,
+    int? suspiciousFramesCount,
+    double? faceDetectionRate,
+    double? processingTimeSec,
+    List<Map<String, dynamic>>? suspiciousFrames,
+    List<String>? timelineLogs,
   });
 }
 
@@ -122,6 +144,16 @@ class _$VerificationResultCopyWithImpl<$Res, $Val extends VerificationResult>
     Object? mediaPath = freezed,
     Object? pdfPath = freezed,
     Object? thumbnailBase64 = freezed,
+    Object? videoUrl = freezed,
+    Object? platform = freezed,
+    Object? videoLength = freezed,
+    Object? resolution = freezed,
+    Object? framesAnalysedCount = freezed,
+    Object? suspiciousFramesCount = freezed,
+    Object? faceDetectionRate = freezed,
+    Object? processingTimeSec = freezed,
+    Object? suspiciousFrames = freezed,
+    Object? timelineLogs = freezed,
   }) {
     return _then(
       _value.copyWith(
@@ -209,6 +241,46 @@ class _$VerificationResultCopyWithImpl<$Res, $Val extends VerificationResult>
                 ? _value.thumbnailBase64
                 : thumbnailBase64 // ignore: cast_nullable_to_non_nullable
                       as String?,
+            videoUrl: freezed == videoUrl
+                ? _value.videoUrl
+                : videoUrl // ignore: cast_nullable_to_non_nullable
+                      as String?,
+            platform: freezed == platform
+                ? _value.platform
+                : platform // ignore: cast_nullable_to_non_nullable
+                      as String?,
+            videoLength: freezed == videoLength
+                ? _value.videoLength
+                : videoLength // ignore: cast_nullable_to_non_nullable
+                      as String?,
+            resolution: freezed == resolution
+                ? _value.resolution
+                : resolution // ignore: cast_nullable_to_non_nullable
+                      as String?,
+            framesAnalysedCount: freezed == framesAnalysedCount
+                ? _value.framesAnalysedCount
+                : framesAnalysedCount // ignore: cast_nullable_to_non_nullable
+                      as int?,
+            suspiciousFramesCount: freezed == suspiciousFramesCount
+                ? _value.suspiciousFramesCount
+                : suspiciousFramesCount // ignore: cast_nullable_to_non_nullable
+                      as int?,
+            faceDetectionRate: freezed == faceDetectionRate
+                ? _value.faceDetectionRate
+                : faceDetectionRate // ignore: cast_nullable_to_non_nullable
+                      as double?,
+            processingTimeSec: freezed == processingTimeSec
+                ? _value.processingTimeSec
+                : processingTimeSec // ignore: cast_nullable_to_non_nullable
+                      as double?,
+            suspiciousFrames: freezed == suspiciousFrames
+                ? _value.suspiciousFrames
+                : suspiciousFrames // ignore: cast_nullable_to_non_nullable
+                      as List<Map<String, dynamic>>?,
+            timelineLogs: freezed == timelineLogs
+                ? _value.timelineLogs
+                : timelineLogs // ignore: cast_nullable_to_non_nullable
+                      as List<String>?,
           )
           as $Val,
     );
@@ -246,6 +318,16 @@ abstract class _$$VerificationResultImplCopyWith<$Res>
     String? mediaPath,
     String? pdfPath,
     String? thumbnailBase64,
+    String? videoUrl,
+    String? platform,
+    String? videoLength,
+    String? resolution,
+    int? framesAnalysedCount,
+    int? suspiciousFramesCount,
+    double? faceDetectionRate,
+    double? processingTimeSec,
+    List<Map<String, dynamic>>? suspiciousFrames,
+    List<String>? timelineLogs,
   });
 }
 
@@ -284,6 +366,16 @@ class __$$VerificationResultImplCopyWithImpl<$Res>
     Object? mediaPath = freezed,
     Object? pdfPath = freezed,
     Object? thumbnailBase64 = freezed,
+    Object? videoUrl = freezed,
+    Object? platform = freezed,
+    Object? videoLength = freezed,
+    Object? resolution = freezed,
+    Object? framesAnalysedCount = freezed,
+    Object? suspiciousFramesCount = freezed,
+    Object? faceDetectionRate = freezed,
+    Object? processingTimeSec = freezed,
+    Object? suspiciousFrames = freezed,
+    Object? timelineLogs = freezed,
   }) {
     return _then(
       _$VerificationResultImpl(
@@ -371,6 +463,46 @@ class __$$VerificationResultImplCopyWithImpl<$Res>
             ? _value.thumbnailBase64
             : thumbnailBase64 // ignore: cast_nullable_to_non_nullable
                   as String?,
+        videoUrl: freezed == videoUrl
+            ? _value.videoUrl
+            : videoUrl // ignore: cast_nullable_to_non_nullable
+                  as String?,
+        platform: freezed == platform
+            ? _value.platform
+            : platform // ignore: cast_nullable_to_non_nullable
+                  as String?,
+        videoLength: freezed == videoLength
+            ? _value.videoLength
+            : videoLength // ignore: cast_nullable_to_non_nullable
+                  as String?,
+        resolution: freezed == resolution
+            ? _value.resolution
+            : resolution // ignore: cast_nullable_to_non_nullable
+                  as String?,
+        framesAnalysedCount: freezed == framesAnalysedCount
+            ? _value.framesAnalysedCount
+            : framesAnalysedCount // ignore: cast_nullable_to_non_nullable
+                  as int?,
+        suspiciousFramesCount: freezed == suspiciousFramesCount
+            ? _value.suspiciousFramesCount
+            : suspiciousFramesCount // ignore: cast_nullable_to_non_nullable
+                  as int?,
+        faceDetectionRate: freezed == faceDetectionRate
+            ? _value.faceDetectionRate
+            : faceDetectionRate // ignore: cast_nullable_to_non_nullable
+                  as double?,
+        processingTimeSec: freezed == processingTimeSec
+            ? _value.processingTimeSec
+            : processingTimeSec // ignore: cast_nullable_to_non_nullable
+                  as double?,
+        suspiciousFrames: freezed == suspiciousFrames
+            ? _value._suspiciousFrames
+            : suspiciousFrames // ignore: cast_nullable_to_non_nullable
+                  as List<Map<String, dynamic>>?,
+        timelineLogs: freezed == timelineLogs
+            ? _value._timelineLogs
+            : timelineLogs // ignore: cast_nullable_to_non_nullable
+                  as List<String>?,
       ),
     );
   }
@@ -401,8 +533,20 @@ class _$VerificationResultImpl implements _VerificationResult {
     this.mediaPath,
     this.pdfPath,
     this.thumbnailBase64,
+    this.videoUrl,
+    this.platform,
+    this.videoLength,
+    this.resolution,
+    this.framesAnalysedCount,
+    this.suspiciousFramesCount,
+    this.faceDetectionRate,
+    this.processingTimeSec,
+    final List<Map<String, dynamic>>? suspiciousFrames,
+    final List<String>? timelineLogs,
   }) : _detectedEvidence = detectedEvidence,
-       _forensicObservations = forensicObservations;
+       _forensicObservations = forensicObservations,
+       _suspiciousFrames = suspiciousFrames,
+       _timelineLogs = timelineLogs;
 
   factory _$VerificationResultImpl.fromJson(Map<String, dynamic> json) =>
       _$$VerificationResultImplFromJson(json);
@@ -464,10 +608,47 @@ class _$VerificationResultImpl implements _VerificationResult {
   final String? pdfPath;
   @override
   final String? thumbnailBase64;
+  @override
+  final String? videoUrl;
+  // Link verification forensic fields
+  @override
+  final String? platform;
+  @override
+  final String? videoLength;
+  @override
+  final String? resolution;
+  @override
+  final int? framesAnalysedCount;
+  @override
+  final int? suspiciousFramesCount;
+  @override
+  final double? faceDetectionRate;
+  @override
+  final double? processingTimeSec;
+  final List<Map<String, dynamic>>? _suspiciousFrames;
+  @override
+  List<Map<String, dynamic>>? get suspiciousFrames {
+    final value = _suspiciousFrames;
+    if (value == null) return null;
+    if (_suspiciousFrames is EqualUnmodifiableListView)
+      return _suspiciousFrames;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(value);
+  }
+
+  final List<String>? _timelineLogs;
+  @override
+  List<String>? get timelineLogs {
+    final value = _timelineLogs;
+    if (value == null) return null;
+    if (_timelineLogs is EqualUnmodifiableListView) return _timelineLogs;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(value);
+  }
 
   @override
   String toString() {
-    return 'VerificationResult(verificationId: $verificationId, verifiedAt: $verifiedAt, mediaType: $mediaType, source: $source, authenticityScore: $authenticityScore, fakeProbability: $fakeProbability, confidence: $confidence, metadataScore: $metadataScore, frameConsistency: $frameConsistency, ocrConfidence: $ocrConfidence, trackingConfidence: $trackingConfidence, manipulationScore: $manipulationScore, verdict: $verdict, riskLevel: $riskLevel, detectedEvidence: $detectedEvidence, forensicObservations: $forensicObservations, reportHash: $reportHash, mediaName: $mediaName, mediaPath: $mediaPath, pdfPath: $pdfPath, thumbnailBase64: $thumbnailBase64)';
+    return 'VerificationResult(verificationId: $verificationId, verifiedAt: $verifiedAt, mediaType: $mediaType, source: $source, authenticityScore: $authenticityScore, fakeProbability: $fakeProbability, confidence: $confidence, metadataScore: $metadataScore, frameConsistency: $frameConsistency, ocrConfidence: $ocrConfidence, trackingConfidence: $trackingConfidence, manipulationScore: $manipulationScore, verdict: $verdict, riskLevel: $riskLevel, detectedEvidence: $detectedEvidence, forensicObservations: $forensicObservations, reportHash: $reportHash, mediaName: $mediaName, mediaPath: $mediaPath, pdfPath: $pdfPath, thumbnailBase64: $thumbnailBase64, videoUrl: $videoUrl, platform: $platform, videoLength: $videoLength, resolution: $resolution, framesAnalysedCount: $framesAnalysedCount, suspiciousFramesCount: $suspiciousFramesCount, faceDetectionRate: $faceDetectionRate, processingTimeSec: $processingTimeSec, suspiciousFrames: $suspiciousFrames, timelineLogs: $timelineLogs)';
   }
 
   @override
@@ -517,7 +698,31 @@ class _$VerificationResultImpl implements _VerificationResult {
                 other.mediaPath == mediaPath) &&
             (identical(other.pdfPath, pdfPath) || other.pdfPath == pdfPath) &&
             (identical(other.thumbnailBase64, thumbnailBase64) ||
-                other.thumbnailBase64 == thumbnailBase64));
+                other.thumbnailBase64 == thumbnailBase64) &&
+            (identical(other.videoUrl, videoUrl) ||
+                other.videoUrl == videoUrl) &&
+            (identical(other.platform, platform) ||
+                other.platform == platform) &&
+            (identical(other.videoLength, videoLength) ||
+                other.videoLength == videoLength) &&
+            (identical(other.resolution, resolution) ||
+                other.resolution == resolution) &&
+            (identical(other.framesAnalysedCount, framesAnalysedCount) ||
+                other.framesAnalysedCount == framesAnalysedCount) &&
+            (identical(other.suspiciousFramesCount, suspiciousFramesCount) ||
+                other.suspiciousFramesCount == suspiciousFramesCount) &&
+            (identical(other.faceDetectionRate, faceDetectionRate) ||
+                other.faceDetectionRate == faceDetectionRate) &&
+            (identical(other.processingTimeSec, processingTimeSec) ||
+                other.processingTimeSec == processingTimeSec) &&
+            const DeepCollectionEquality().equals(
+              other._suspiciousFrames,
+              _suspiciousFrames,
+            ) &&
+            const DeepCollectionEquality().equals(
+              other._timelineLogs,
+              _timelineLogs,
+            ));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -545,6 +750,16 @@ class _$VerificationResultImpl implements _VerificationResult {
     mediaPath,
     pdfPath,
     thumbnailBase64,
+    videoUrl,
+    platform,
+    videoLength,
+    resolution,
+    framesAnalysedCount,
+    suspiciousFramesCount,
+    faceDetectionRate,
+    processingTimeSec,
+    const DeepCollectionEquality().hash(_suspiciousFrames),
+    const DeepCollectionEquality().hash(_timelineLogs),
   ]);
 
   /// Create a copy of VerificationResult
@@ -587,6 +802,16 @@ abstract class _VerificationResult implements VerificationResult {
     final String? mediaPath,
     final String? pdfPath,
     final String? thumbnailBase64,
+    final String? videoUrl,
+    final String? platform,
+    final String? videoLength,
+    final String? resolution,
+    final int? framesAnalysedCount,
+    final int? suspiciousFramesCount,
+    final double? faceDetectionRate,
+    final double? processingTimeSec,
+    final List<Map<String, dynamic>>? suspiciousFrames,
+    final List<String>? timelineLogs,
   }) = _$VerificationResultImpl;
 
   factory _VerificationResult.fromJson(Map<String, dynamic> json) =
@@ -634,6 +859,26 @@ abstract class _VerificationResult implements VerificationResult {
   String? get pdfPath;
   @override
   String? get thumbnailBase64;
+  @override
+  String? get videoUrl; // Link verification forensic fields
+  @override
+  String? get platform;
+  @override
+  String? get videoLength;
+  @override
+  String? get resolution;
+  @override
+  int? get framesAnalysedCount;
+  @override
+  int? get suspiciousFramesCount;
+  @override
+  double? get faceDetectionRate;
+  @override
+  double? get processingTimeSec;
+  @override
+  List<Map<String, dynamic>>? get suspiciousFrames;
+  @override
+  List<String>? get timelineLogs;
 
   /// Create a copy of VerificationResult
   /// with the given fields replaced by the non-null parameter values.

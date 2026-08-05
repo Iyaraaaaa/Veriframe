@@ -24,10 +24,10 @@ class EditProfilePage extends StatefulWidget {
   });
 
   @override
-  _EditProfilePageState createState() => _EditProfilePageState();
+  EditProfilePageState createState() => EditProfilePageState();
 }
 
-class _EditProfilePageState extends State<EditProfilePage> {
+class EditProfilePageState extends State<EditProfilePage> {
   File? _newImage;
   String? _currentImageData; // Made nullable to handle no image cases
   final ImagePicker _picker = ImagePicker();
@@ -38,7 +38,6 @@ class _EditProfilePageState extends State<EditProfilePage> {
 
   bool _isPasswordVisible = false;
   bool _isLoading = false;
-  bool _hasImageError = false; // Track image loading errors
 
   @override
   void initState() {
@@ -53,7 +52,6 @@ class _EditProfilePageState extends State<EditProfilePage> {
     _currentImageData = (widget.userImage != null && widget.userImage!.trim().isNotEmpty)
         ? widget.userImage!.trim()
         : null;
-    _hasImageError = false;
   }
 
   Future<void> _refreshProfileInBackground() async {
@@ -165,12 +163,10 @@ class _EditProfilePageState extends State<EditProfilePage> {
       
       // Set the image data (can be null)
       _currentImageData = (imageData != null && imageData.isNotEmpty) ? imageData : null;
-      _hasImageError = false; // Reset error state
       
     } catch (e) {
       debugPrint('Image loading error: $e');
       _currentImageData = null;
-      _hasImageError = false;
     }
   }
 
@@ -209,12 +205,11 @@ class _EditProfilePageState extends State<EditProfilePage> {
         }
         setState(() {
           _newImage = file;
-          _hasImageError = false; // Reset error state when new image is selected
         });
       }
     } catch (e) {
       debugPrint('Image picker error: $e');
-      _showErrorSnackbar('Failed to pick image');
+      _showErrorSnackbar(loc.profileFailedToPickImage);
     }
   }
 
@@ -222,7 +217,6 @@ class _EditProfilePageState extends State<EditProfilePage> {
     setState(() {
       _newImage = null;
       _currentImageData = null;
-      _hasImageError = false;
     });
     _showSuccessSnackbar(loc.profilePhotoRemoved);
   }
@@ -232,28 +226,28 @@ class _EditProfilePageState extends State<EditProfilePage> {
     try {
       final User? currentUser = FirebaseAuth.instance.currentUser;
       if (currentUser == null) {
-        _showErrorSnackbar('User not authenticated');
+        _showErrorSnackbar(loc.profileUserNotAuthenticated);
         return;
       }
 
       if (newPassword.length < 6) {
-        _showErrorSnackbar('Password should be at least 6 characters');
+        _showErrorSnackbar(loc.profilePasswordTooShort);
         return;
       }
 
       await currentUser.updatePassword(newPassword);
-      _showSuccessSnackbar('Password updated successfully!');
+      _showSuccessSnackbar(loc.profilePasswordUpdatedSuccessfully);
     } on FirebaseAuthException catch (e) {
-      String errorMessage = 'Failed to update password';
+      String errorMessage = loc.profilePasswordUpdateFailed;
       if (e.code == 'requires-recent-login') {
-        errorMessage = 'Please log in again to update your password';
+        errorMessage = loc.profilePleaseLoginAgain;
       } else if (e.code == 'weak-password') {
-        errorMessage = 'Password is too weak';
+        errorMessage = loc.profilePasswordTooWeak;
       }
       _showErrorSnackbar(errorMessage);
     } catch (e) {
       debugPrint('Password update error: $e');
-      _showErrorSnackbar('Failed to update password');
+      _showErrorSnackbar(loc.profilePasswordUpdateFailed);
     }
   }
 
@@ -297,7 +291,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
     try {
       final User? currentUser = FirebaseAuth.instance.currentUser;
       if (currentUser == null) {
-        _showErrorSnackbar('User not authenticated');
+        _showErrorSnackbar(loc.profileUserNotAuthenticated);
         return;
       }
 
@@ -399,7 +393,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
       
     } catch (e) {
       debugPrint('Save changes error: $e');
-      _showErrorSnackbar('Failed to save changes');
+      _showErrorSnackbar(loc.profileSaveChangesFailed);
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -514,40 +508,6 @@ class _EditProfilePageState extends State<EditProfilePage> {
     );
   }
 
-  ImageProvider? _getImageProvider() {
-    try {
-      // Priority: New image -> Current image data -> null
-      if (_newImage != null) {
-        return FileImage(_newImage!);
-      } 
-      
-      if (_currentImageData != null && _currentImageData!.isNotEmpty && !_hasImageError) {
-        if (_currentImageData!.startsWith('data:image')) {
-          // Handle Base64 images safely
-          try {
-            final base64String = _currentImageData!.split(',')[1];
-            final bytes = base64Decode(base64String);
-            return MemoryImage(bytes);
-          } catch (e) {
-            debugPrint('Base64 decode error: $e');
-            setState(() => _hasImageError = true);
-            return null;
-          }
-        } else if (_currentImageData!.startsWith('http')) {
-          // Handle network images (Google Sign-In profile pictures)
-          return NetworkImage(_currentImageData!);
-        } else if (_currentImageData!.startsWith('assets/')) {
-          // Handle asset images
-          return AssetImage(_currentImageData!);
-        }
-      }
-    } catch (e) {
-      debugPrint('Image provider error: $e');
-      setState(() => _hasImageError = true);
-    }
-    return null; // Safe return for no image
-  }
-
   Widget _buildFormFields(bool isDark) {
     return Column(
       children: [
@@ -575,7 +535,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
         Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: isDark ? Colors.grey[900]?.withOpacity(0.5) : Colors.blue[50],
+            color: isDark ? Colors.grey[900]?.withValues(alpha: 0.5) : Colors.blue[50],
             borderRadius: BorderRadius.circular(8),
             border: Border.all(
               color: isDark ? Colors.grey[700]! : Colors.blue[200]!,
@@ -690,7 +650,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
           backgroundColor: isDark ? Colors.blue[700] : Colors.blueAccent,
           foregroundColor: Colors.white,
           elevation: 8,
-          shadowColor: (isDark ? Colors.blue[700] : Colors.blueAccent)?.withOpacity(0.3),
+          shadowColor: (isDark ? Colors.blue[700] : Colors.blueAccent)?.withValues(alpha: 0.3),
         ),
         child: _isLoading
             ? const SizedBox(

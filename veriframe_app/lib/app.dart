@@ -49,7 +49,7 @@ class MyApp extends StatelessWidget {
         listenable: controller,
         builder: (context, _) => ProviderScope(
           child: MaterialApp(
-            title: 'VeriFrame',
+            title: 'VeriFrame SL',
           debugShowCheckedModeBanner: false,
           navigatorKey: navigatorKey,
           locale: controller.locale,

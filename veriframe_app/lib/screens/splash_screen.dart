@@ -46,7 +46,7 @@ class _SplashScreenState extends State<SplashScreen> {
             ),
             const SizedBox(height: 24),
             Text(
-              'VeriFrame',
+              'VeriFrame SL',
               style: TextStyle(
                 color: Colors.white.withValues(alpha: 0.9),
                 fontSize: 22,

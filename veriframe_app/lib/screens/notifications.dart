@@ -59,6 +59,44 @@ class _NotificationsPageState extends State<NotificationsPage> {
     await NotificationService.instance.deleteNotification(_uid, id);
   }
 
+  Future<void> _deleteAllNotifications() async {
+    if (_uid == null) return;
+    final loc = AppLocalizations.of(context)!;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) {
+        return AlertDialog(
+          title: Text(
+            loc.notificationsDeleteAllTitle,
+            style: const TextStyle(fontWeight: FontWeight.w700),
+          ),
+          content: Text(loc.notificationsDeleteAllMessage),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: Text(loc.verifyCancel),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              style: TextButton.styleFrom(foregroundColor: VFColors.red600),
+              child: Text(loc.notificationsDeleteAllConfirm),
+            ),
+          ],
+        );
+      },
+    );
+    if (confirmed != true) return;
+    try {
+      await NotificationService.instance.deleteAllNotifications(_uid);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to delete notifications: $e')),
+        );
+      }
+    }
+  }
+
   @override
   void dispose() {
     super.dispose();
@@ -105,6 +143,11 @@ class _NotificationsPageState extends State<NotificationsPage> {
             );
           },
         ),
+        IconButton(
+          icon: const Icon(Icons.delete_sweep_outlined),
+          tooltip: loc.notificationsDeleteAllTitle,
+          onPressed: _deleteAllNotifications,
+        ),
       ],
       body: _uid == null
           ? Center(
@@ -113,53 +156,51 @@ class _NotificationsPageState extends State<NotificationsPage> {
                 style: TextStyle(color: muted),
               ),
             )
-          : Expanded(
-              child: Stack(
-                children: [
-                  StreamBuilder<List<NotificationModel>>(
-                    stream: NotificationService.instance
-                        .getNotificationsStream(_uid),
-                    builder: (context, snapshot) {
-                      if (snapshot.connectionState ==
-                          ConnectionState.waiting) {
-                        return const Center(
-                          child: CircularProgressIndicator(),
-                        );
-                      }
-                      if (snapshot.hasError) {
-                        return Center(
-                          child: Text(
-                            loc.notificationsError(snapshot.error.toString()),
-                            style: TextStyle(color: text),
-                          ),
-                        );
-                      }
-                      final notifications = snapshot.data ?? [];
-                      if (notifications.isEmpty) {
-                        return _buildEmptyState(isDark, text, muted, loc);
-                      }
-
-                      return ListView.separated(
-                        itemCount: notifications.length,
-                        padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
-                        separatorBuilder: (_, _) =>
-                            const SizedBox(height: 10),
-                        itemBuilder: (context, index) {
-                          final notif = notifications[index];
-                          return _buildNotificationTile(
-                             notif,
-                             isDark,
-                             text,
-                             muted,
-                             accent,
-                             loc,
-                           );
-                        },
+          : Stack(
+              children: [
+                StreamBuilder<List<NotificationModel>>(
+                  stream: NotificationService.instance
+                      .getNotificationsStream(_uid),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState ==
+                        ConnectionState.waiting) {
+                      return const Center(
+                        child: CircularProgressIndicator(),
                       );
-                    },
-                  ),
-                ],
-              ),
+                    }
+                    if (snapshot.hasError) {
+                      return Center(
+                        child: Text(
+                          loc.notificationsError(snapshot.error.toString()),
+                          style: TextStyle(color: text),
+                        ),
+                      );
+                    }
+                    final notifications = snapshot.data ?? [];
+                    if (notifications.isEmpty) {
+                      return _buildEmptyState(isDark, text, muted, loc);
+                    }
+
+                    return ListView.separated(
+                      itemCount: notifications.length,
+                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+                      separatorBuilder: (_, __) =>
+                          const SizedBox(height: 10),
+                      itemBuilder: (context, index) {
+                        final notif = notifications[index];
+                        return _buildNotificationTile(
+                           notif,
+                           isDark,
+                           text,
+                           muted,
+                           accent,
+                           loc,
+                         );
+                      },
+                    );
+                  },
+                ),
+              ],
             ),
     );
   }
@@ -344,22 +385,20 @@ class _NotificationsPageState extends State<NotificationsPage> {
                       Row(
                         children: [
                           Expanded(
-                            child: Row(
+                            child: Wrap(
+                              spacing: 6,
+                              runSpacing: 4,
+                              crossAxisAlignment: WrapCrossAlignment.center,
                               children: [
-                                Flexible(
-                                  child: _NotificationChip(
-                                    label: isFake ? loc.verifyManipulatedLabel : loc.verifyAuthenticLabel,
-                                    color: statusColor,
-                                    bg: isDark ? statusBgDark : statusBg,
-                                  ),
+                                _NotificationChip(
+                                  label: isFake ? loc.verifyManipulatedLabel : loc.verifyAuthenticLabel,
+                                  color: statusColor,
+                                  bg: isDark ? statusBgDark : statusBg,
                                 ),
-                                const SizedBox(width: 8),
-                                Flexible(
-                                  child: _NotificationChip(
-                                    label: '$scorePct% score',
-                                    color: text,
-                                    bg: isDark ? VFColors.gray800 : VFColors.gray100,
-                                  ),
+                                _NotificationChip(
+                                  label: '$scorePct% score',
+                                  color: text,
+                                  bg: isDark ? VFColors.gray800 : VFColors.gray100,
                                 ),
                               ],
                             ),

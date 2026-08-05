@@ -1,10 +1,10 @@
-﻿import 'dart:io';
+import 'dart:io';
 
 void main() {
   final file = File(r'D:\VERI_FRAME\veriframe_app\lib\screens\home_page.dart');
   String content = file.readAsStringSync();
 
-  final startHome = content.indexOf('  Widget _buildHomeContent() {');
+  // startHome = content.indexOf('  Widget _buildHomeContent() {');
   // We want to replace from the start of _buildHomeContent up to the start of the SCAFFOLD section.
   // Wait, let's just find the start of SCAFFOLD section.
   final endScaffold = content.indexOf('  @override\n  Widget build(BuildContext context) {');

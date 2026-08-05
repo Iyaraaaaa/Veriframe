@@ -71,4 +71,28 @@ class ReportService {
     }
     return null;
   }
+
+  Future<void> deleteAllReports(String uid) async {
+    try {
+      const batchLimit = 500;
+      while (true) {
+        final snapshot = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(uid)
+            .collection('reports')
+            .limit(batchLimit)
+            .get();
+        if (snapshot.docs.isEmpty) break;
+        final batch = FirebaseFirestore.instance.batch();
+        for (final doc in snapshot.docs) {
+          batch.delete(doc.reference);
+        }
+        await batch.commit();
+        if (snapshot.docs.length < batchLimit) break;
+      }
+    } catch (e) {
+      debugPrint('[ReportService] Error deleting all reports: $e');
+      rethrow;
+    }
+  }
 }

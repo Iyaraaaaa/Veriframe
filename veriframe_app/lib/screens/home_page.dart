@@ -9,6 +9,7 @@ import 'package:veriframe_app/screens/about_us.dart';
 import 'package:veriframe_app/screens/delete_account.dart';
 import 'package:veriframe_app/screens/edit_profile.dart';
 import 'package:veriframe_app/screens/reports_page.dart';
+
 import 'package:veriframe_app/service/notification_service.dart';
 import 'package:veriframe_app/l10n/app_localizations.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -35,31 +36,79 @@ class _HomePageState extends State<HomePage> {
   String _userImage = '';
   String _userId = '';
 
-  final Map<String, Uint8List> _base64ImageCache = {};
+  // Stable decoded bytes – set once from cache synchronously so the drawer
+  // avatar never blinks. Only updated when the image truly changes.
+  Uint8List? _avatarBytes;
 
   @override
   void initState() {
     super.initState();
+    // ── Synchronous pre-fill from in-memory cache (no async, no blink) ──
+    _seedFromCache();
+    // ── Async loads (do NOT overwrite avatar unless data changed) ──
     _loadCachedUserData();
     _loadUserData();
     NotificationService.instance.init();
   }
 
+  /// Reads the in-memory [UserProfileCache] synchronously so that the very
+  /// first frame already has the correct avatar bytes – preventing any flicker
+  /// when the drawer is opened immediately after navigating to HomePage.
+  void _seedFromCache() {
+    final cache = UserProfileCache.instance;
+    if (cache.cachedImageBytes != null && cache.cachedImageBytes!.isNotEmpty) {
+      _avatarBytes = cache.cachedImageBytes;
+    }
+    if (cache.userName.isNotEmpty) _userName = cache.userName;
+    if (cache.userEmail.isNotEmpty) _userEmail = cache.userEmail;
+    if (cache.cachedImageUrl != null && cache.cachedImageUrl!.isNotEmpty) {
+      _userImage = cache.cachedImageUrl!;
+    }
+  }
+
   Future<void> _loadCachedUserData() async {
     final prefs = await SharedPreferences.getInstance();
-    if (mounted) {
-      setState(() {
-        _userId = prefs.getString('userId') ?? '';
-        _userName = prefs.getString('userName') ?? "User Name";
-        _userEmail = prefs.getString('userEmail') ?? "user@example.com";
-        _userImage = prefs.getString('userImage') ?? '';
-      });
+    final cache = UserProfileCache.instance;
 
-      // Pre-cache network profile images (e.g. Google photoURL) in both
-      // disk cache and memory so the sidebar drawer renders instantly.
-      if (_userImage.isNotEmpty && !_userImage.startsWith('data:image')) {
-        precacheImage(CachedNetworkImageProvider(_userImage), context);
-      }
+    if (!mounted) return;
+
+    final newName = cache.userName.isNotEmpty
+        ? cache.userName
+        : (prefs.getString('userName') ?? FirebaseAuth.instance.currentUser?.displayName ?? "User Name");
+    final newEmail = cache.userEmail.isNotEmpty
+        ? cache.userEmail
+        : (prefs.getString('userEmail') ?? FirebaseAuth.instance.currentUser?.email ?? "user@example.com");
+    final newId = prefs.getString('userId') ?? FirebaseAuth.instance.currentUser?.uid ?? '';
+
+    Uint8List? newBytes;
+    String newImage = '';
+    if (cache.cachedImageBytes != null && cache.cachedImageBytes!.isNotEmpty) {
+      newBytes = cache.cachedImageBytes;
+      newImage = 'data:image/jpeg;base64,${base64Encode(newBytes!)}';
+    } else if (cache.cachedImageUrl != null && cache.cachedImageUrl!.isNotEmpty) {
+      newImage = cache.cachedImageUrl!;
+    } else {
+      newImage = prefs.getString('userImage') ?? '';
+    }
+
+    // Only setState if something actually changed – avoids a redundant rebuild
+    // that would cause the avatar to flicker on first drawer open.
+    final avatarChanged = newBytes != null && newBytes != _avatarBytes;
+    final textChanged = newName != _userName || newEmail != _userEmail || newId != _userId;
+    if (avatarChanged || textChanged) {
+      setState(() {
+        _userId = newId;
+        _userName = newName;
+        _userEmail = newEmail;
+        _userImage = newImage;
+        if (newBytes != null) _avatarBytes = newBytes;
+      });
+    }
+
+    if (newImage.isNotEmpty && !newImage.startsWith('data:image')) {
+      try {
+        precacheImage(CachedNetworkImageProvider(newImage), context);
+      } catch (_) {}
     }
   }
 
@@ -112,9 +161,20 @@ class _HomePageState extends State<HomePage> {
         }
 
         final prefs = await SharedPreferences.getInstance();
-        await prefs.remove('userId');
-        await prefs.remove('userName');
-        await prefs.remove('userEmail');
+        await prefs.setString('userId', _userId);
+        await prefs.setString('userName', _userName);
+        await prefs.setString('userEmail', _userEmail);
+
+        // Decode the new image bytes once and compare with what's currently
+        // displayed. Only call setState if the image actually changed so the
+        // avatar never blinks due to a redundant Firestore round-trip.
+        Uint8List? newBytes;
+        if (_userImage.startsWith('data:image')) {
+          try {
+            newBytes = base64Decode(_userImage.split(',')[1]);
+          } catch (_) {}
+        }
+
         if (_userImage.isNotEmpty) {
           await prefs.setString('userImage', _userImage);
         } else {
@@ -123,23 +183,27 @@ class _HomePageState extends State<HomePage> {
         UserProfileCache.instance.updateCache(
           name: _userName,
           email: _userEmail,
-          bytes: _userImage.startsWith('data:image')
-              ? (() {
-                  try {
-                    return base64Decode(_userImage.split(',')[1]);
-                  } catch (_) {
-                    return null;
-                  }
-                })()
-              : null,
+          bytes: newBytes,
           url: !_userImage.startsWith('data:image') && _userImage.isNotEmpty
               ? _userImage
               : null,
         );
+
+        // Only rebuild if the decoded bytes actually differ (pointer or length).
+        final imageChanged = newBytes != null &&
+            (newBytes != _avatarBytes ||
+                _avatarBytes == null ||
+                newBytes.length != _avatarBytes!.length);
+        if (mounted && imageChanged) {
+          setState(() => _avatarBytes = newBytes);
+        }
       }
     } catch (e) {
       debugPrint('Error loading user data: $e');
     } finally {
+      // Only call setState for non-image state (name/email/userId) if needed.
+      // Avatar is handled above — don't call an extra setState here that would
+      // cause the drawer header to repaint and flicker the avatar.
       if (mounted) {
         setState(() {});
       }
@@ -151,19 +215,18 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _getProfileImage({double radius = 20}) {
+    // Prefer the stable decoded bytes held directly in state – no re-decode,
+    // no string round-trip, no flicker.
+    final bytes = _avatarBytes ?? UserProfileCache.instance.cachedImageBytes;
+
     return SafeAvatarWidget(
       radius: radius,
-      imageUrl: _userImage.isNotEmpty && !_userImage.startsWith('data:image') ? _userImage : null,
-      imageBytes: _userImage.startsWith('data:image')
-          ? () {
-              try {
-                final b64 = _userImage.split(',')[1];
-                return _base64ImageCache[b64] ?? base64Decode(b64);
-              } catch (_) {
-                return null;
-              }
-            }()
-          : UserProfileCache.instance.cachedImageBytes,
+      imageUrl: (bytes == null || bytes.isEmpty) &&
+              _userImage.isNotEmpty &&
+              !_userImage.startsWith('data:')
+          ? _userImage
+          : null,
+      imageBytes: bytes,
       fallbackName: _userName,
     );
   }
@@ -217,6 +280,7 @@ class _HomePageState extends State<HomePage> {
           _buildHeroBanner(loc),
           const SizedBox(height: 16),
           _buildStatsStrip(isDark, text, muted),
+
           const SizedBox(height: 32),
 
            // ── What is VeriFrame? ──

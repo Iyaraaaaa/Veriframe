@@ -31,6 +31,22 @@ class SafeAvatarWidget extends StatefulWidget {
 
 class _SafeAvatarWidgetState extends State<SafeAvatarWidget> {
   bool _hasError = false;
+  Uint8List? _decodedBytes;
+  String? _lastB64;
+
+  Uint8List? _getOrDecodeBytes(String dataUrl) {
+    try {
+      final b64 = dataUrl.contains(',') ? dataUrl.split(',')[1] : dataUrl;
+      if (_lastB64 == b64 && _decodedBytes != null) {
+        return _decodedBytes;
+      }
+      _lastB64 = b64;
+      _decodedBytes = base64Decode(b64);
+      return _decodedBytes;
+    } catch (_) {
+      return null;
+    }
+  }
 
   @override
   void didUpdateWidget(covariant SafeAvatarWidget oldWidget) {
@@ -46,6 +62,7 @@ class _SafeAvatarWidgetState extends State<SafeAvatarWidget> {
       fit: BoxFit.cover,
       width: widget.radius * 2,
       height: widget.radius * 2,
+      gaplessPlayback: true,
       errorBuilder: (_, __, ___) => _buildLetterFallback(),
     );
   }
@@ -83,6 +100,7 @@ class _SafeAvatarWidgetState extends State<SafeAvatarWidget> {
           fit: BoxFit.cover,
           width: widget.radius * 2,
           height: widget.radius * 2,
+          gaplessPlayback: true,
           errorBuilder: (_, __, ___) {
             WidgetsBinding.instance.addPostFrameCallback((_) {
               if (mounted) setState(() => _hasError = true);
@@ -96,19 +114,19 @@ class _SafeAvatarWidgetState extends State<SafeAvatarWidget> {
     final url = widget.imageUrl ?? UserProfileCache.instance.cachedImageUrl;
 
     if (url != null && url.startsWith('data:image')) {
-      try {
-        final b64 = url.split(',')[1];
-        final bytes = base64Decode(b64);
+      final decoded = _getOrDecodeBytes(url);
+      if (decoded != null && decoded.isNotEmpty) {
         return _buildContainer(
           child: Image.memory(
-            bytes,
+            decoded,
             fit: BoxFit.cover,
             width: widget.radius * 2,
             height: widget.radius * 2,
+            gaplessPlayback: true,
             errorBuilder: (_, __, ___) => _buildEmptyFallback(),
           ),
         );
-      } catch (_) {
+      } else {
         return _buildContainer(child: _buildEmptyFallback());
       }
     }
@@ -120,6 +138,9 @@ class _SafeAvatarWidgetState extends State<SafeAvatarWidget> {
           fit: BoxFit.cover,
           width: widget.radius * 2,
           height: widget.radius * 2,
+          fadeInDuration: Duration.zero,
+          fadeOutDuration: Duration.zero,
+          useOldImageOnUrlChange: true,
           placeholder: (_, __) => _buildEmptyFallback(),
           errorWidget: (_, __, ___) {
             WidgetsBinding.instance.addPostFrameCallback((_) {

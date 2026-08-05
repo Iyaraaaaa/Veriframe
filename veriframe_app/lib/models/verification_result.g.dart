@@ -34,6 +34,20 @@ _$VerificationResultImpl _$$VerificationResultImplFromJson(
   mediaPath: json['mediaPath'] as String?,
   pdfPath: json['pdfPath'] as String?,
   thumbnailBase64: json['thumbnailBase64'] as String?,
+  videoUrl: json['videoUrl'] as String?,
+  platform: json['platform'] as String?,
+  videoLength: json['videoLength'] as String?,
+  resolution: json['resolution'] as String?,
+  framesAnalysedCount: (json['framesAnalysedCount'] as num?)?.toInt(),
+  suspiciousFramesCount: (json['suspiciousFramesCount'] as num?)?.toInt(),
+  faceDetectionRate: (json['faceDetectionRate'] as num?)?.toDouble(),
+  processingTimeSec: (json['processingTimeSec'] as num?)?.toDouble(),
+  suspiciousFrames: (json['suspiciousFrames'] as List<dynamic>?)
+      ?.map((e) => e as Map<String, dynamic>)
+      .toList(),
+  timelineLogs: (json['timelineLogs'] as List<dynamic>?)
+      ?.map((e) => e as String)
+      .toList(),
 );
 
 Map<String, dynamic> _$$VerificationResultImplToJson(
@@ -60,4 +74,14 @@ Map<String, dynamic> _$$VerificationResultImplToJson(
   'mediaPath': instance.mediaPath,
   'pdfPath': instance.pdfPath,
   'thumbnailBase64': instance.thumbnailBase64,
+  'videoUrl': instance.videoUrl,
+  'platform': instance.platform,
+  'videoLength': instance.videoLength,
+  'resolution': instance.resolution,
+  'framesAnalysedCount': instance.framesAnalysedCount,
+  'suspiciousFramesCount': instance.suspiciousFramesCount,
+  'faceDetectionRate': instance.faceDetectionRate,
+  'processingTimeSec': instance.processingTimeSec,
+  'suspiciousFrames': instance.suspiciousFrames,
+  'timelineLogs': instance.timelineLogs,
 };

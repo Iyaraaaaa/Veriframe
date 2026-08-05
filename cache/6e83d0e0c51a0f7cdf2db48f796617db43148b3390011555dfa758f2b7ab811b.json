@@ -1,0 +1,39 @@
+{
+  "verificationId": "VRF-1785904432418",
+  "verifiedAt": "2026-08-05T04:33:52Z",
+  "mediaType": "video/mp4",
+  "source": "Local Upload",
+  "authenticityScore": 62.71,
+  "fakeProbability": 37.29,
+  "confidence": 71.17,
+  "metadataScore": 100.0,
+  "frameConsistency": 96.52,
+  "ocrConfidence": 82.66,
+  "trackingConfidence": 85.31,
+  "manipulationScore": 37.29,
+  "verdict": "MANIPULATED",
+  "riskLevel": "MEDIUM",
+  "detectedEvidence": [
+    "Biometric manipulation signatures identified in face region.",
+    "High manipulation score of 37.29% matches deepfake profiles."
+  ],
+  "forensicObservations": [
+    "Analyzed 6 biometric face frames.",
+    "Face box tracking continuity: 85.31%.",
+    "Frame color consistency: 96.52% continuity.",
+    "Processing time: 15.85s. Inference avg: 154.4ms/frame.",
+    "Video metadata verified: Container matches standard camera profiles.",
+    "OCR Scan active: Detected high-contrast overlay text (Confidence: 82.66%)."
+  ],
+  "reportHash": "6e83d0e0c51a0f7cdf2db48f796617db43148b3390011555dfa758f2b7ab811b",
+  "framesAnalyzed": 6,
+  "framesSkipped": 0,
+  "processingTimeSec": 15.85,
+  "averageScore": 0.3745,
+  "inferenceTimeMs": 154.39,
+  "is_fake": false,
+  "score": 0.3746,
+  "confidence_label": "Medium",
+  "_cached_at": 1785904432.4189792,
+  "_video_hash": "6e83d0e0c51a0f7cdf2db48f796617db43148b3390011555dfa758f2b7ab811b"
+}

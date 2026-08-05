@@ -1232,13 +1232,13 @@ class AppLocalizationsTa extends AppLocalizations {
       'VeriFrame deepfake கண்டறிதலை வெளிப்படையாகவும் அணுகக்கூடியதாகவும் மாற்றுவதற்கான ஆராய்ச்சித் திட்டமாகத் தொடங்கியது. இன்று அது சாதனத்திலேயே நீதித்துறை பகுப்பாய்வையும் விளக்கக்கூடிய AI-ஐயும் அனைவருக்கும் வழங்குகிறது.';
 
   @override
-  String get aboutValueOne => 'ஒவ்வொரு தீர்ப்பிலும் வெளிப்படைத்தன்மை';
+  String get aboutValueOne => 'திடமான நிலைநாட்டு நடை';
 
   @override
-  String get aboutValueTwo => 'தனியுரிமை முதன்மை, சாதனத்திலேயே பகுப்பாய்வு';
+  String get aboutValueTwo => 'நிறுவப்பட்ட AI டீப்ஃபேக் திறன்';
 
   @override
-  String get aboutValueThree => 'அனைவருக்கும் அணுகக்கூடிய பாதுகாப்பு';
+  String get aboutValueThree => 'பார்வையாளர் நடைமுறை தகவல்';
 
   @override
   String get aboutValuesLabel => 'எங்கள் மதிப்புகள்';
@@ -1529,7 +1529,7 @@ class AppLocalizationsTa extends AppLocalizations {
 
   @override
   String verifyAnalyzingFrame(Object current, Object total) {
-    return 'ஒவ்வொரு கட்டத்தையும் பகுப்பாய்வு செய்கிறது $current / $total...';
+    return 'கட்டம் $current / $total விளக்கவிருக்கிறது...';
   }
 
   @override
@@ -1766,6 +1766,16 @@ class AppLocalizationsTa extends AppLocalizations {
   String get notificationsDeleteConfirm => 'நீக்கு';
 
   @override
+  String get notificationsDeleteAllTitle => 'Delete all notifications?';
+
+  @override
+  String get notificationsDeleteAllMessage =>
+      'All notifications will be permanently deleted. This cannot be undone.';
+
+  @override
+  String get notificationsDeleteAllConfirm => 'Delete All';
+
+  @override
   String get notificationsNotLoggedIn => 'பயனர் உள்நுழைந்திருக்கவில்லை.';
 
   @override
@@ -1817,6 +1827,16 @@ class AppLocalizationsTa extends AppLocalizations {
 
   @override
   String get reportsDeleteTooltip => 'அறிக்கையை நீக்கு';
+
+  @override
+  String get reportsDeleteAllTitle => 'Delete all reports?';
+
+  @override
+  String get reportsDeleteAllMessage =>
+      'All reports will be permanently deleted. This cannot be undone.';
+
+  @override
+  String get reportsDeleteAllConfirm => 'Delete All';
 
   @override
   String get techStackTitle => 'தொழில்நுட்ப கட்டமைப்பு';
@@ -1926,7 +1946,7 @@ class AppLocalizationsTa extends AppLocalizations {
 
   @override
   String get reportPipelineSubtitle =>
-      'ஆழமான கற்றல் மற்றும் கட்டுமான சரிபார்ப்பு தotechnical checks';
+      'ஆழமான கற்றல் மற்றும் கட்டுமான சரிபார்ப்பு தரச்ச Eliot checks';
 
   @override
   String get reportFrameConsistency => 'ரேம் நிலைத்திறன்';
@@ -2041,7 +2061,7 @@ class AppLocalizationsTa extends AppLocalizations {
 
   @override
   String get mediaValidationDesc =>
-      'ஊடக தலையங்கங்கள், SHA-256 hash மற்றும் வடிவமைப்பு முழுமையை சரிபார்ப்பு...';
+      'ஊடக தலையங்கங்கள், SHA-256 ஹாஷ் மற்றும் வடிவமைப்பு முழுமையை சரிபார்ப்பு...';
 
   @override
   String get metadataInspectionLabel => 'மடங்கு தரவு ஆய்வு';
@@ -2139,4 +2159,322 @@ class AppLocalizationsTa extends AppLocalizations {
   @override
   String get generatingReportDesc =>
       'முழுமையான நிலைநாட்டு சரிபார்ப்பு அறிக்கையை தொகுக்கிறது...';
+
+  @override
+  String get verifyNoVideoSelected =>
+      'வீடியோ கோப்பு தேர்ந்தெடுக்கப்படவில்லை. முதலில் ஒரு வீடியோவைத் தேர்ந்தெடுக்கவும்.';
+
+  @override
+  String get verifyFrameExtractionFailed =>
+      'வீடியோவிலிருந்து ஏற்றவும் ஏற்றவும் கட்டங்களை எடுக்க முடியவில்லை. அது சிதைவு அல்லது ஆதரிக்கப்படாத கோடெக்கைப் பயன்படுத்தக்கூடியது.';
+
+  @override
+  String get verifyOfflineLinkVerification =>
+      'ஆఫ்லைன் இணைப்பு சரிபார்ப்பு இயக்கப்படுகிறது...';
+
+  @override
+  String get verifyExtractingFramesServer =>
+      'சேவையகத்தில் இருந்து கட்டங்களை நோக்கி நிறைவேற்றப்படுகிறது...';
+
+  @override
+  String get verifyDownloadingMediaStream => 'ஊடக ஓடையைப் பதிவிறக்குகிறது...';
+
+  @override
+  String get verifyExtractingFaceCrops =>
+      'முகம் வெட்டுகளை நோக்கி நிறைவேற்றப்படுகிறது...';
+
+  @override
+  String get verifyLocatingBiometricPoints =>
+      'உயிரியology புள்ளிகளை கண்டறிகிறது...';
+
+  @override
+  String get verifyRunningDeepLearningClassifiers =>
+      'ஆழமான கற்றல் வகைப்படுத்திகள் இயக்கப்படுகிறது...';
+
+  @override
+  String get verifyLinkAnalysisEmptyResults =>
+      'இணைப்பு பகுப்பாய்வு வெற்று முடிவுகளை தர்ந்தது.';
+
+  @override
+  String get verifyForensicServerFailed =>
+      'நிலைநாட்டு சேவையகம் இணைப்பைச் செயலாக்க முடியவில்லை.';
+
+  @override
+  String get verifyLiveCameraStream => 'நேரடி கேமரா ஓடை';
+
+  @override
+  String get verifyLiveStreamSession => 'நேரடி ஓடை அமர்வு';
+
+  @override
+  String get verifySavingToDatabase =>
+      'நிலைநாட்டு தரவுத்தளத்திற்கு சேமிக்கப்படுகிறது...';
+
+  @override
+  String get verifySendingNotification => 'அறிவிப்பு அனுப்பப்படுகிறது...';
+
+  @override
+  String verifyAnalysisCompleteNotification(
+    Object score,
+    Object type,
+    Object verdict,
+  ) {
+    return 'பகுப்பாய்வு முடிந்தது. தீர்மானம்: $verdict. $score% $type. அறிக்கையைப் பார்க்க கிளிக் செய்யவும்.';
+  }
+
+  @override
+  String get verifyCompletedStatus => 'முடிந்தது';
+
+  @override
+  String get verifyConfigureConnectionSettings =>
+      'இணைப்பு அமைப்புகளை உள்ளமைக்கவும்';
+
+  @override
+  String notificationsDeleteFailed(Object error) {
+    return 'அறிவிப்புகளை நீக்குவதில் தோல்வி: $error';
+  }
+
+  @override
+  String get profileFailedToPickImage =>
+      'படத்தைத் தேர்ந்தெடுத்தல் தோல்வியடைந்தது';
+
+  @override
+  String get profileUserNotAuthenticated => 'பயனர் அங்கீகரிக்கப்படவில்லை';
+
+  @override
+  String get profilePasswordTooShort =>
+      'கடவுச்சொல் குறைந்தது 6 எழுத்துகள் இருக்க வேண்டும்';
+
+  @override
+  String get profilePasswordUpdatedSuccessfully =>
+      'கடவுச்சொல் வெற்றிகரமாக புதுப்பிக்கப்பட்டது!';
+
+  @override
+  String get profilePleaseLoginAgain =>
+      'உங்கள் கணக்கைப் புதுப்பிக்க மீண்டும் உள்நுழையவும்';
+
+  @override
+  String get profilePasswordTooWeak => 'கடவுச்சொல் மிகவும் பலவீனமானது';
+
+  @override
+  String get profilePasswordUpdateFailed => 'கடவுச்சொல் புதுப்பிப்பில் தோல்வி';
+
+  @override
+  String get profileSaveChangesFailed =>
+      'மாற்றங்களைச் சேமித்தல் தோல்வியடைந்தது';
+
+  @override
+  String get searchHintExample => 'எ.கா., 945061685V';
+
+  @override
+  String get logoutConfirmTitle => 'வெளியேறுவதை உறுதிப்படுத்தவும்';
+
+  @override
+  String get logoutConfirmMessage =>
+      'நீங்கள் உறுதியாக வெளியேற விரும்புகிறீர்களா?';
+
+  @override
+  String get logoutCancel => 'ரத்துசெய்';
+
+  @override
+  String get logoutButton => 'வெளியேறு';
+
+  @override
+  String get escalateReportTitle => 'அறிக்கையை மேல்முறையீடு செய்யவும்';
+
+  @override
+  String get escalateReportSubtitle =>
+      'இந்த கண்டுபிடிப்பை ஒரு தேசிய அதிகாரத்திற்கு அனுப்பவும்';
+
+  @override
+  String get authoritySectionLabel => 'அதிகாரம்';
+
+  @override
+  String get sendViaLabel => 'அனுப்புவது';
+
+  @override
+  String get slThreatRadarTitle => 'SL தarer நிலைநாட்டு ரேடார்';
+
+  @override
+  String get slThreatRadarSubtitle =>
+      'இலங்கையில் பரவிய டீப்ஃபேக் மோஷம் மற்றும் குரல் நகல்களைக் கண்காணிக்கவும்.';
+
+  @override
+  String get slThreatRadarLiveSoon => 'நேரடி கண்காணிப்பு விரைவில் வரும்';
+
+  @override
+  String get loadingFinishingVerification =>
+      'சரிபார்ப்பை முடித்துகொண்டிருக்கிறது...';
+
+  @override
+  String loadingEstimatedTime(Object seconds) {
+    return 'மதிப்பிடப்பட்ட ~$seconds விநாடிகள் மீதமுள்ளது';
+  }
+
+  @override
+  String get cancelAnalysis => 'பகுப்பாய்வை ரத்துசெய்';
+
+  @override
+  String get errorAnalysisInterrupted => 'பகுப்பாய்வு குறுக்கிடப்பட்டது';
+
+  @override
+  String get errorOfflineTFLiteAvailable =>
+      'ஆஃப்லைன் TFLite பதிலைப் பயன்படுத்தலாம்';
+
+  @override
+  String get errorWhatHappened => 'என்ன நடந்தது';
+
+  @override
+  String get errorPossibleReason => 'சாத்தியமான காரணம்';
+
+  @override
+  String get errorRetryAnalysis => 'பகுப்பாய்வை மீண்டும் முயற்சிக்கவும்';
+
+  @override
+  String get errorContactSupport => 'ஆதரவைத் தொடர்பு கொள்ளவும்';
+
+  @override
+  String get errorOopsTitle => 'அச்சச்சோ! ஏதேனும் பிழை ஏற்பட்டது';
+
+  @override
+  String get errorTryAgain => 'மீண்டும் முயற்சிக்கவும்';
+
+  @override
+  String get emptyNoReports => 'சரிபார்ப்பு அறிக்கைகள் இல்லை';
+
+  @override
+  String get emptyNoNotifications => 'இன்னும் அறிவிப்புகள் இல்லை';
+
+  @override
+  String get emptyNoHistory => 'வரலாறு இல்லை';
+
+  @override
+  String get emptyNoSearches => 'தேடல்கள் இல்லை';
+
+  @override
+  String get emptyNoResults => 'விஶேஷ பகுப்பாய்வு முடிவுகள் இல்லை';
+
+  @override
+  String get emptyNoReportsSubtitle =>
+      'உங்கள் முதல் AI ஆழமான டீப்ஃபேக் நிலைநாட்டு அறிக்கையை உருவாக்க வீடியோ அல்லது பட இணைப்பைப் பதிவேற்றவும்.';
+
+  @override
+  String get emptyNoNotificationsSubtitle =>
+      'நீங்கள் எல்லாவற்றையும் பார்த்துவிட்டீர்கள்!\nபுதிய சரிபார்ப்பு முடிவுகள் இங்கே தோன்றும்.';
+
+  @override
+  String get emptyNoHistorySubtitle =>
+      'நிறைவேற்றப்பட்ட ஊடக பகுப்பாய்வு பதிவுகள் உங்கள் வரலாற்றில் பாதுகாக்கப்படும்.';
+
+  @override
+  String get emptyNoSearchesSubtitle =>
+      'பொருந்தக்கூடிய பதிவுகளைக் கண்டறிய உங்கள் தேடல் அளவுக்குறிகள் அல்லது முக்கிய வார்த்தைகளை மாற்றியமைக்கவும்.';
+
+  @override
+  String get emptyNoResultsSubtitle =>
+      'விரிவான ஆழமான டீப்ஃபேக் அளவீடுகள் மற்றும் ஆதாரங்களைக் காட்ட verification பணியை இயக்கவும்.';
+
+  @override
+  String get backTooltip => 'திரும்பு';
+
+  @override
+  String get changeLanguageTooltip => 'மொழியை மாற்றவும்';
+
+  @override
+  String get lightModeTooltip => 'ஒளி பயன்முறைக்கு மாறவும்';
+
+  @override
+  String get darkModeTooltip => 'இருண்ட பயன்முறைக்கு மாறவும்';
+
+  @override
+  String get notificationsTooltip => 'அறிவிப்புகள்';
+
+  @override
+  String get formTitle => 'ஊழியர் உறுதிமொழி படிவம்';
+
+  @override
+  String get selectOption => 'தேர்ந்தெடுக்கவும்';
+
+  @override
+  String get submitting => 'சமர்ப்பிக்கப்படுகிறது...';
+
+  @override
+  String get errorSaving =>
+      'தரவைச் சேமிப்பதில் பிழை. தயவுசெய்து மீண்டும் முயற்சிக்கவும்.';
+
+  @override
+  String get connectionError =>
+      'இணைப்பு பிழை. உங்கள் இணையத் தொடர்பைச் சரிபார்க்கவும்.';
+
+  @override
+  String get loginRequired =>
+      'இந்த படிவத்தைச் சமர்ப்பிக்க நீங்கள் உள்நுழைய வேண்டும்.';
+
+  @override
+  String get datesSectionHint =>
+      'எல்லா தேதிகளுக்கும் YYYY-MM-DD வடிவத்தைப் பயன்படுத்தவும்';
+
+  @override
+  String get editProfileTitle => 'சுயவிவரத்தைத் திருத்து';
+
+  @override
+  String get profileName => 'பெயர்';
+
+  @override
+  String get profileEmail => 'மின்னஞ்சல்';
+
+  @override
+  String get profileNewPassword => 'புதிய கடவுச்சொல்';
+
+  @override
+  String get profileConfirmPassword => 'கடவுச்சொல்லை உறுதிப்படுத்தவும்';
+
+  @override
+  String get profilePhoto => 'சுயவிவரப் படம்';
+
+  @override
+  String get profileChangePhoto => 'படத்தை மாற்று';
+
+  @override
+  String get profileRemovePhoto => 'படத்தை அகற்று';
+
+  @override
+  String get profilePasswordChange => 'கடவுச்சொல்லை மாற்று';
+
+  @override
+  String get profileCurrentPassword => 'தற்போதைய கடவுச்சொல்';
+
+  @override
+  String get profileSave => 'சேமி';
+
+  @override
+  String get profileCancel => 'ரத்துசெய்';
+
+  @override
+  String get profileUploading => 'பதிவேற்றுகிறது...';
+
+  @override
+  String get profileImageTooLarge =>
+      'படத்தின் அளவு 5MB க்கு குறைவாக இருக்க வேண்டும்';
+
+  @override
+  String get reportShareReport => 'அறிக்கையைப் பகிருங்கள்';
+
+  @override
+  String get reportShareVia => 'இதனால் பகிரவும்';
+
+  @override
+  String get reportShareLink => 'இணைப்பை நகலெடுக்கவும்';
+
+  @override
+  String get reportSharePdf => 'PDF ஐப் பகிருங்கள்';
+
+  @override
+  String get reportShareImage => 'படத்தைப் பகிருங்கள்';
+
+  @override
+  String get reportCopiedToClipboard =>
+      'அறிக்கை இணைப்பு கிளிப்போர்டுக்கு நகலெடுக்கப்பட்டது.';
+
+  @override
+  String get reportShareFailed => 'அறிக்கையைப் பகிரத் தோல்வி';
 }

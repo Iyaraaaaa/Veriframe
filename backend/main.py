@@ -13,7 +13,7 @@ import base64
 import logging
 import io
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from urllib.parse import urlparse
+from typing import Dict, Any, Optional
 import requests
 
 from config import config as app_config
@@ -738,6 +738,18 @@ def get_report(report_hash: str):
         raise HTTPException(status_code=404, detail="Report not found.")
     return report
 
+# ---- New v2 endpoints ----
+
+class DetectVideoRequest(BaseModel):
+    video_base64: Optional[str] = None
+    video_url: Optional[str] = None
+
+class DetectUrlRequest(BaseModel):
+    url: str
+
+class DetectStreamRequest(BaseModel):
+    stream_url: str
+
 # ---- Live stream endpoints (RTSP/RTMP/HLS) ----
 
 @app.post("/stream/start")
@@ -788,18 +800,7 @@ def stream_stop(session_id: str):
     worker.stop()
     return {"status": "stopped", "session_id": session_id}
 
-# ---- New v2 endpoints ----
-
-class DetectVideoRequest(BaseModel):
-    video_base64: Optional[str] = None
-    video_url: Optional[str] = None
-
-class DetectUrlRequest(BaseModel):
-    url: str
-
-class DetectStreamRequest(BaseModel):
-    stream_url: str
-
+# ---- Utility functions ----
 @app.post("/detect/video")
 async def detect_video(request: DetectVideoRequest):
     try:

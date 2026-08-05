@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:veriframe_app/service/notification_service.dart';
 import 'package:veriframe_app/service/user_profile_cache.dart';
 
 class UserService {
@@ -208,19 +209,87 @@ class UserService {
     }
 
     try {
-      // Delete Firebase Auth account first — if this requires re-auth,
-      // we fail fast before wiping any local or remote data.
-      await currentUser.delete();
+      // 1. Delete all subcollections in batches
+      const subcollections = [
+        'reports',
+        'notifications',
+        'history',
+        'activity',
+        'settings',
+        'videos',
+        'verifications',
+        'files',
+        'uploads',
+        'watch_history',
+        'uploaded_files',
+        'watchHistory',
+        'activityHistory',
+        'verificationData',
+      ];
+      const batchLimit = 500;
+      for (final sub in subcollections) {
+        while (true) {
+          final snapshot = await usersCollection
+              .doc(uid)
+              .collection(sub)
+              .limit(batchLimit)
+              .get();
+          if (snapshot.docs.isEmpty) break;
+          final batch = FirebaseFirestore.instance.batch();
+          for (final doc in snapshot.docs) {
+            batch.delete(doc.reference);
+          }
+          await batch.commit();
+          if (snapshot.docs.length < batchLimit) break;
+        }
+      }
 
-      // Delete from Firestore
+      // 2. Delete top-level documents matching user ID
+      const topLevelCollections = [
+        'reports',
+        'notifications',
+        'videos',
+        'verifications',
+        'contact',
+        'affirmations',
+      ];
+      for (final collName in topLevelCollections) {
+        for (final field in ['userId', 'uid', 'user_id', 'createdBy']) {
+          try {
+            final querySnap = await FirebaseFirestore.instance
+                .collection(collName)
+                .where(field, isEqualTo: uid)
+                .limit(batchLimit)
+                .get();
+            if (querySnap.docs.isNotEmpty) {
+              final batch = FirebaseFirestore.instance.batch();
+              for (final doc in querySnap.docs) {
+                batch.delete(doc.reference);
+              }
+              await batch.commit();
+            }
+          } catch (_) {}
+        }
+      }
+
+      // 3. Delete the top-level user document
       await usersCollection.doc(uid).delete();
 
-      // Clear SharedPreferences user data and saved credentials
-      await clearUserData();
-      await clearSavedCredentials();
+      // 4. Delete Firebase Auth account
+      await currentUser.delete();
 
-      // Clear in-memory profile cache
+      // 5. Sign out from Firebase Auth
+      await FirebaseAuth.instance.signOut();
+
+      // 6. Clear all SharedPreferences keys
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.clear();
+
+      // 7. Clear in-memory profile cache
       UserProfileCache.instance.clear();
+
+      // 8. Cancel all local (system-tray) notifications & clear app badge
+      await NotificationService.instance.cancelAllLocalNotifications();
     } catch (e) {
       print('Error deleting user: $e');
       rethrow;

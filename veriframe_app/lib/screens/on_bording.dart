@@ -26,20 +26,20 @@ class _OnBoardingScreenState extends State<OnBoardingScreen>
       "subtitle":
           "An AI system built to detect\ndeepfake videos automatically.",
       "badgeLabel": "Deepfake Detection",
-      "illustration": 2,
+      "illustration": 0,
     },
     {
       "headline": "Deepfake හඳුනා\nගන්න AI සමඟ",
       "subtitle":
           "AI පද්ධතියක් තුළින් deepfake වීඩියෝ\nස්වයංක්‍රීයව හඳුනා ගැනීම.",
       "badgeLabel": "VeriFrame AI",
-      "illustration": 0,
+      "illustration": 1,
     },
     {
       "headline": "நிகழ்நேர வீடியோ\nசரிபார்ப்பு",
       "subtitle": "AI மூலம் deepfake வீடியோக்களை\nதானாக கண்டறியும் அமைப்பு.",
       "badgeLabel": "Frame Analysis",
-      "illustration": 1,
+      "illustration": 2,
     },
   ];
 

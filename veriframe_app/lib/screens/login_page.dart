@@ -1,4 +1,4 @@
-﻿import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -148,12 +148,13 @@ class _LoginPageState extends State<LoginPage> {
       await _saveOrRemoveCredentials();
 
       _showSuccessSnackBar('Welcome back!');
+      try {
+        await UserService.getCurrentUserData();
+      } catch (e) {
+        debugPrint('Error caching user data: $e');
+      }
+      await UserProfileCache.instance.preload();
       if (mounted) {
-        try {
-          await UserService.getCurrentUserData();
-        } catch (e) {
-          debugPrint('Error caching user data: $e');
-        }
         Navigator.pushReplacementNamed(context, '/home');
       }
     } on FirebaseAuthException catch (e) {
@@ -211,11 +212,12 @@ class _LoginPageState extends State<LoginPage> {
       final User? user = userCredential.user;
 
       if (user != null) {
-        _saveGoogleUserLocally(user);
-        _saveGoogleUserToFirestore(user);
+        await _saveGoogleUserLocally(user);
+        await _saveGoogleUserToFirestore(user);
       }
 
       _showSuccessSnackBar('Welcome back!');
+      await UserProfileCache.instance.preload();
       if (mounted) {
         Navigator.pushReplacementNamed(context, '/home');
       }

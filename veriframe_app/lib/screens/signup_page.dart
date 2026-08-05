@@ -1,4 +1,4 @@
-﻿import 'dart:async';
+import 'dart:async';
 import 'dart:io';
 import 'dart:convert';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:veriframe_app/service/user_profile_cache.dart';
 
 class SignUpPage extends StatefulWidget {
   final bool isDarkMode;
@@ -252,6 +253,16 @@ class _SignUpPageState extends State<SignUpPage> {
       if (imageUrl.isNotEmpty) {
         await prefs.setString('userImage', imageUrl);
       }
+      if (profileImageBase64 != null) {
+        await prefs.setString('profileImageBase64', profileImageBase64);
+      }
+
+      UserProfileCache.instance.updateCache(
+        name: nameController.text.trim(),
+        email: emailController.text.trim(),
+        bytes: _profileImage != null ? await _profileImage!.readAsBytes() : null,
+        url: imageUrl.isNotEmpty ? imageUrl : null,
+      );
 
       _showSuccessSnackBar('Registration completed successfully!');
       

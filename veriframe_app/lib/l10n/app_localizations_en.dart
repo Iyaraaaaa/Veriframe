@@ -1209,13 +1209,13 @@ class AppLocalizationsEn extends AppLocalizations {
       'VeriFrame began as a research project to make deepfake detection transparent and accessible. Today it brings on-device forensic analysis and explainable AI to everyone.';
 
   @override
-  String get aboutValueOne => 'Transparency in every verdict';
+  String get aboutValueOne => 'Uncompromising Forensic Integrity';
 
   @override
-  String get aboutValueTwo => 'Privacy-first, on-device analysis';
+  String get aboutValueTwo => 'Calibrated AI Deepfake Rigor';
 
   @override
-  String get aboutValueThree => 'Accessible protection for everyone';
+  String get aboutValueThree => 'Transparent & Actionable Intelligence';
 
   @override
   String get aboutValuesLabel => 'OUR VALUES';
@@ -1730,6 +1730,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get notificationsDeleteConfirm => 'Delete';
 
   @override
+  String get notificationsDeleteAllTitle => 'Delete all notifications?';
+
+  @override
+  String get notificationsDeleteAllMessage =>
+      'All notifications will be permanently deleted. This cannot be undone.';
+
+  @override
+  String get notificationsDeleteAllConfirm => 'Delete All';
+
+  @override
   String get notificationsNotLoggedIn => 'User not logged in.';
 
   @override
@@ -1747,8 +1757,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get reportsHistoryTitle => 'Video history';
 
   @override
-  String get reportsHistorySubtitle =>
-      'Secure history of all completed media verification analyses.';
+  String get reportsHistorySubtitle => 'History of media Verification';
 
   @override
   String get reportsNotLoggedIn => 'User not logged in.';
@@ -1781,6 +1790,16 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get reportsDeleteTooltip => 'Delete report';
+
+  @override
+  String get reportsDeleteAllTitle => 'Delete all reports?';
+
+  @override
+  String get reportsDeleteAllMessage =>
+      'All reports will be permanently deleted. This cannot be undone.';
+
+  @override
+  String get reportsDeleteAllConfirm => 'Delete All';
 
   @override
   String get techStackTitle => 'Technology Stack';
@@ -2102,4 +2121,308 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get generatingReportDesc =>
       'Assembling complete forensic verification report...';
+
+  @override
+  String get verifyNoVideoSelected =>
+      'No video file selected. Please pick a video first.';
+
+  @override
+  String get verifyFrameExtractionFailed =>
+      'Could not extract any frames from the video. It may be corrupt or use an unsupported codec.';
+
+  @override
+  String get verifyOfflineLinkVerification =>
+      'Running offline link verification...';
+
+  @override
+  String get verifyExtractingFramesServer => 'Extracting frames on server...';
+
+  @override
+  String get verifyDownloadingMediaStream => 'Downloading media stream...';
+
+  @override
+  String get verifyExtractingFaceCrops => 'Extracting face crops...';
+
+  @override
+  String get verifyLocatingBiometricPoints => 'Locating biometric points...';
+
+  @override
+  String get verifyRunningDeepLearningClassifiers =>
+      'Running deep learning classifiers...';
+
+  @override
+  String get verifyLinkAnalysisEmptyResults =>
+      'Link analysis returned empty results.';
+
+  @override
+  String get verifyForensicServerFailed =>
+      'Forensic server failed to process link.';
+
+  @override
+  String get verifyLiveCameraStream => 'Live Camera Stream';
+
+  @override
+  String get verifyLiveStreamSession => 'Live Stream Session';
+
+  @override
+  String get verifySavingToDatabase => 'Saving to forensic database...';
+
+  @override
+  String get verifySendingNotification => 'Sending Notification...';
+
+  @override
+  String verifyAnalysisCompleteNotification(
+    Object score,
+    Object type,
+    Object verdict,
+  ) {
+    return 'Analysis complete. Verdict: $verdict. $score% $type. Tap to view report.';
+  }
+
+  @override
+  String get verifyCompletedStatus => 'Completed';
+
+  @override
+  String get verifyConfigureConnectionSettings =>
+      'Configure connection settings';
+
+  @override
+  String notificationsDeleteFailed(Object error) {
+    return 'Failed to delete notifications: $error';
+  }
+
+  @override
+  String get profileFailedToPickImage => 'Failed to pick image';
+
+  @override
+  String get profileUserNotAuthenticated => 'User not authenticated';
+
+  @override
+  String get profilePasswordTooShort =>
+      'Password should be at least 6 characters';
+
+  @override
+  String get profilePasswordUpdatedSuccessfully =>
+      'Password updated successfully!';
+
+  @override
+  String get profilePleaseLoginAgain =>
+      'Please log in again to update your account';
+
+  @override
+  String get profilePasswordTooWeak => 'Password is too weak';
+
+  @override
+  String get profilePasswordUpdateFailed => 'Failed to update password';
+
+  @override
+  String get profileSaveChangesFailed => 'Failed to save changes';
+
+  @override
+  String get searchHintExample => 'e.g., 945061685V';
+
+  @override
+  String get logoutConfirmTitle => 'Confirm Logout';
+
+  @override
+  String get logoutConfirmMessage => 'Are you sure you want to log out?';
+
+  @override
+  String get logoutCancel => 'Cancel';
+
+  @override
+  String get logoutButton => 'Logout';
+
+  @override
+  String get escalateReportTitle => 'Escalate Report';
+
+  @override
+  String get escalateReportSubtitle =>
+      'Forward this finding to a national authority';
+
+  @override
+  String get authoritySectionLabel => 'AUTHORITY';
+
+  @override
+  String get sendViaLabel => 'SEND VIA';
+
+  @override
+  String get slThreatRadarTitle => 'SL Threat Intelligence Radar';
+
+  @override
+  String get slThreatRadarSubtitle =>
+      'Track viral deepfake scams & voice clones circulating in Sri Lanka.';
+
+  @override
+  String get slThreatRadarLiveSoon => 'LIVE monitoring coming soon';
+
+  @override
+  String get loadingFinishingVerification => 'Finishing verification...';
+
+  @override
+  String loadingEstimatedTime(Object seconds) {
+    return 'Est. ~$seconds sec remaining';
+  }
+
+  @override
+  String get cancelAnalysis => 'Cancel Analysis';
+
+  @override
+  String get errorAnalysisInterrupted => 'Analysis Interrupted';
+
+  @override
+  String get errorOfflineTFLiteAvailable => 'Offline TFLite Fallback Available';
+
+  @override
+  String get errorWhatHappened => 'What happened';
+
+  @override
+  String get errorPossibleReason => 'Possible reason';
+
+  @override
+  String get errorRetryAnalysis => 'Retry Analysis';
+
+  @override
+  String get errorContactSupport => 'Contact Support';
+
+  @override
+  String get errorOopsTitle => 'Oops! Something went wrong';
+
+  @override
+  String get errorTryAgain => 'Try Again';
+
+  @override
+  String get emptyNoReports => 'No Verification Reports';
+
+  @override
+  String get emptyNoNotifications => 'No Notifications Yet';
+
+  @override
+  String get emptyNoHistory => 'No History Available';
+
+  @override
+  String get emptyNoSearches => 'No Searches Found';
+
+  @override
+  String get emptyNoResults => 'No Analysis Results';
+
+  @override
+  String get emptyNoReportsSubtitle =>
+      'Upload a video or image link to generate your first AI deepfake forensic report.';
+
+  @override
+  String get emptyNoNotificationsSubtitle =>
+      'You are all caught up! New forensic alerts will appear here.';
+
+  @override
+  String get emptyNoHistorySubtitle =>
+      'Completed media analysis records will be stored securely in your history.';
+
+  @override
+  String get emptyNoSearchesSubtitle =>
+      'Try adjusting your search criteria or keywords to find matching records.';
+
+  @override
+  String get emptyNoResultsSubtitle =>
+      'Run a verification task to display detailed deepfake metrics and evidence.';
+
+  @override
+  String get backTooltip => 'Back';
+
+  @override
+  String get changeLanguageTooltip => 'Change Language';
+
+  @override
+  String get lightModeTooltip => 'Switch to Light Mode';
+
+  @override
+  String get darkModeTooltip => 'Switch to Dark Mode';
+
+  @override
+  String get notificationsTooltip => 'Notifications';
+
+  @override
+  String get formTitle => 'Staff Affirmation Form';
+
+  @override
+  String get selectOption => 'Select';
+
+  @override
+  String get submitting => 'Submitting...';
+
+  @override
+  String get errorSaving => 'Error saving data. Please try again.';
+
+  @override
+  String get connectionError =>
+      'Connection error. Please check your internet connection.';
+
+  @override
+  String get loginRequired => 'You must be logged in to submit this form.';
+
+  @override
+  String get datesSectionHint => 'Use YYYY-MM-DD format for all dates';
+
+  @override
+  String get editProfileTitle => 'Edit Profile';
+
+  @override
+  String get profileName => 'Name';
+
+  @override
+  String get profileEmail => 'Email';
+
+  @override
+  String get profileNewPassword => 'New Password';
+
+  @override
+  String get profileConfirmPassword => 'Confirm Password';
+
+  @override
+  String get profilePhoto => 'Profile Photo';
+
+  @override
+  String get profileChangePhoto => 'Change Photo';
+
+  @override
+  String get profileRemovePhoto => 'Remove Photo';
+
+  @override
+  String get profilePasswordChange => 'Change Password';
+
+  @override
+  String get profileCurrentPassword => 'Current Password';
+
+  @override
+  String get profileSave => 'Save';
+
+  @override
+  String get profileCancel => 'Cancel';
+
+  @override
+  String get profileUploading => 'Uploading...';
+
+  @override
+  String get profileImageTooLarge => 'Image size should be less than 5MB';
+
+  @override
+  String get reportShareReport => 'Share Report';
+
+  @override
+  String get reportShareVia => 'Share via';
+
+  @override
+  String get reportShareLink => 'Copy Link';
+
+  @override
+  String get reportSharePdf => 'Share PDF';
+
+  @override
+  String get reportShareImage => 'Share Image';
+
+  @override
+  String get reportCopiedToClipboard => 'Report link copied to clipboard.';
+
+  @override
+  String get reportShareFailed => 'Failed to share report';
 }

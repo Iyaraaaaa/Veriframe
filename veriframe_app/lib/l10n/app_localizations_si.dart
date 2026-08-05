@@ -1221,13 +1221,13 @@ class AppLocalizationsSi extends AppLocalizations {
       'VeriFrame ආරම්භ වූයේ deepfake හඳුනාගැනීම විනිවිද පෙනෙන හා ප්‍රවේශ විය හැකි කිරීමට පර්යේෂණ ව්‍යාපෘතියක් ලෙසය. අද එය උපාංගයේම විධිවිචාරණ විශ්ලේෂණය සහ පැහැදිලි කළ හැකි AI සැමට ගෙන එයි.';
 
   @override
-  String get aboutValueOne => 'සෑම තීරණයකදීම විනිවිදභාවය';
+  String get aboutValueOne => 'අපගේ වටිනාකම්';
 
   @override
-  String get aboutValueTwo => 'පෞද්ගලිකත්වය මුල් කරගත්, උපාංගයේම විශ්ලේෂණය';
+  String get aboutValueTwo => 'අපගේ අරගලය';
 
   @override
-  String get aboutValueThree => 'සැමට ප්‍රවේශ විය හැකි ආරක්ෂාව';
+  String get aboutValueThree => 'අපගේ වගකීම';
 
   @override
   String get aboutValuesLabel => 'අපගේ වටිනාකම්';
@@ -1513,7 +1513,7 @@ class AppLocalizationsSi extends AppLocalizations {
 
   @override
   String verifyAnalyzingFrame(Object current, Object total) {
-    return 'රාමුව $current න් $total අන්දර් විශ්ලේෂණය කරමින්...';
+    return 'රාමුව $current න් $total අන්තර් විශ්ලේෂණය කරමින්...';
   }
 
   @override
@@ -1729,42 +1729,52 @@ class AppLocalizationsSi extends AppLocalizations {
 
   @override
   String get verifyBackendHelper =>
-      'අඩවි පාදන ලිපිනය සහිත කරන්න (භෞතික දුරකථනවලට LAN IP භාවිතා කරන්න)';
+      'Specify host base address (use LAN IP on physical phones)';
 
   @override
   String notificationsMarkAllRead(Object count) {
-    return 'සියල්ල කියවූ ලෙස ලක් කරන්න ($count)';
+    return 'Mark all read ($count)';
   }
 
   @override
-  String get notificationsDeleteTitle => 'දැනුම්දීමක් මකන්නද?';
+  String get notificationsDeleteTitle => 'Delete notification?';
 
   @override
-  String get notificationsDeleteMessage => 'මෙම දැනුම්දීම ස්ථීරව ඉවත් කරනු ඇත.';
+  String get notificationsDeleteMessage =>
+      'This notification will be permanently removed.';
 
   @override
-  String get notificationsDeleteConfirm => 'මකන්න';
+  String get notificationsDeleteConfirm => 'Delete';
 
   @override
-  String get notificationsNotLoggedIn => 'පරිශීලකයා ප්‍රවේශ වූ නැත.';
+  String get notificationsDeleteAllTitle => 'Delete all notifications?';
+
+  @override
+  String get notificationsDeleteAllMessage =>
+      'All notifications will be permanently deleted. This cannot be undone.';
+
+  @override
+  String get notificationsDeleteAllConfirm => 'Delete All';
+
+  @override
+  String get notificationsNotLoggedIn => 'User not logged in.';
 
   @override
   String notificationsError(Object error) {
-    return 'දෝෂය: $error';
+    return 'Error: $error';
   }
 
   @override
-  String get accountDeleted => 'ඔබගේ ගිණුම සාර්ථකව මකන ලදී.';
+  String get accountDeleted => 'Your account has been deleted successfully.';
 
   @override
-  String get reportsTitle => 'විකෘති වාර්තා';
+  String get reportsTitle => 'Forensic reports';
 
   @override
-  String get reportsHistoryTitle => 'වීඩියෝ ඉතිහාසය';
+  String get reportsHistoryTitle => 'Video history';
 
   @override
-  String get reportsHistorySubtitle =>
-      'සම්පූර්ණ මාධ්‍ය සත්‍යාපන විශ්ලේෂණ වල ආරක්ෂිත ඉතිහාසය.';
+  String get reportsHistorySubtitle => 'History of media Verification';
 
   @override
   String get reportsNotLoggedIn => 'පරිශීලකයා ප්‍රවේශ වූ නැත.';
@@ -1797,6 +1807,16 @@ class AppLocalizationsSi extends AppLocalizations {
 
   @override
   String get reportsDeleteTooltip => 'වාර්තාව මකන්න';
+
+  @override
+  String get reportsDeleteAllTitle => 'සියලු වාර්තා මකන්නද?';
+
+  @override
+  String get reportsDeleteAllMessage =>
+      'සියලු වාර්තා ස්ථීරව මකා දමනු ඇත. මෙය අවලංගු කළ නොහැකිය.';
+
+  @override
+  String get reportsDeleteAllConfirm => 'සියල්ල මකන්න';
 
   @override
   String get techStackTitle => 'තාක්ෂණික සැලසුම';
@@ -2068,7 +2088,7 @@ class AppLocalizationsSi extends AppLocalizations {
 
   @override
   String get artifactDetectionDesc =>
-      'මුහුණු සීමා බිංදු අවිකිරීම් සහ වර්ණානුකූල හැරුම් සොයා බලා බැසීම...';
+      'මුහුණු සීමා බිංදු අවිකිරීම් සහ වර්ණානුකූල හැරුම් සොයා බැසීම...';
 
   @override
   String get deepfakeAiModelLabel => 'ගැඹුරු බොරු AI ආකෘතිය';
@@ -2117,4 +2137,314 @@ class AppLocalizationsSi extends AppLocalizations {
   @override
   String get generatingReportDesc =>
       'සම්පූර්ණ විධිවිචාරණ සත්‍යාපන වාර්තාව සකසා බැසීම...';
+
+  @override
+  String get verifyNoVideoSelected =>
+      'වීඩියෝ ගොනුවක් තෝරාගෙන නැත. කරුණාකර වීඩියෝවක් තෝරන්න.';
+
+  @override
+  String get verifyFrameExtractionFailed =>
+      'වීඩියෝවෙන් රාමුවන් ලබාගත නොහැකි විය. එය හැරිහැකි හෝ අසහාය කොඩෙක් භාවිතා කරන්නැයි පෙනේ.';
+
+  @override
+  String get verifyOfflineLinkVerification =>
+      'අපස්ථික සබැඳි සත්‍යාපනය ක්‍රියාත්මක වෙමින්...';
+
+  @override
+  String get verifyExtractingFramesServer => 'සේවකයෙන් රාමුවන් ලබා ගනිමින්...';
+
+  @override
+  String get verifyDownloadingMediaStream => 'මාධ්‍ය ධාරාව බාගත කරමින්...';
+
+  @override
+  String get verifyExtractingFaceCrops => 'මුහුණු කප්පාදු ලබා ගනිමින්...';
+
+  @override
+  String get verifyLocatingBiometricPoints =>
+      'ජීව විද්‍යාත්මක ලක්ෂණ ස්ථානගත කරමින්...';
+
+  @override
+  String get verifyRunningDeepLearningClassifiers =>
+      'ගැඹුරු ඉගෙනුම් වර්ගකරණ ක්‍රියාත්මක කරමින්...';
+
+  @override
+  String get verifyLinkAnalysisEmptyResults =>
+      'සබැඳි විශ්ලේෂණය හිස් ප්‍රතිඵල ලබා දිව්යාවක් නැත.';
+
+  @override
+  String get verifyForensicServerFailed =>
+      'විධිවිචාරණ සේවකය සබැඳිව සැකසීමට අසමත් විය.';
+
+  @override
+  String get verifyLiveCameraStream => 'සජීවී කැමරා ධාරාව';
+
+  @override
+  String get verifyLiveStreamSession => 'සජීවී ප්‍රවාහ සැසිය';
+
+  @override
+  String get verifySavingToDatabase =>
+      'විධිවිචාරණ දත්තගබඩාවට සුරක්ෂිත කරමින්...';
+
+  @override
+  String get verifySendingNotification => 'දැනුම්දීම යවමින්...';
+
+  @override
+  String verifyAnalysisCompleteNotification(
+    Object score,
+    Object type,
+    Object verdict,
+  ) {
+    return 'විශ්ලේෂණය සම්පූර්ණයි. නිම්සය: $verdict. $score% $type. වාර්තාව බලන්න ඔබන්න.';
+  }
+
+  @override
+  String get verifyCompletedStatus => 'සම්පූර්ණයි';
+
+  @override
+  String get verifyConfigureConnectionSettings =>
+      'සම්බන්ධතා සැකසුම් වින්‍යාස කරන්න';
+
+  @override
+  String notificationsDeleteFailed(Object error) {
+    return 'දැනුම්දීම් මැකීමට අසමත් විය: $error';
+  }
+
+  @override
+  String get profileFailedToPickImage => 'පින්තූරය තෝරාගැනීමට අසමත් විය';
+
+  @override
+  String get profileUserNotAuthenticated => 'පරිශීලකයා සත්‍යාපිත නැත';
+
+  @override
+  String get profilePasswordTooShort => 'මුරපදය අවම අකුරු 6ක් විය යුතුය';
+
+  @override
+  String get profilePasswordUpdatedSuccessfully =>
+      'මුරපදය සාර්ථකව යාවත්කාලීන කරන ලදී!';
+
+  @override
+  String get profilePleaseLoginAgain =>
+      'ඔබගේ ගිණුම යාවත්කාලීන කිරීමට නැවත ප්‍රවේශ වන්න';
+
+  @override
+  String get profilePasswordTooWeak => 'මුරපදය බොහෝ දුර්වලයි';
+
+  @override
+  String get profilePasswordUpdateFailed =>
+      'මුරපදය යාවත්කාලීන කිරීමට අසමත් විය';
+
+  @override
+  String get profileSaveChangesFailed => 'වෙනස්කම් සුරැකීමට අසමත් විය';
+
+  @override
+  String get searchHintExample => 'උදා: 945061685V';
+
+  @override
+  String get logoutConfirmTitle => 'පිටවීම තහවුරු කරන්න';
+
+  @override
+  String get logoutConfirmMessage =>
+      'ඔබට විශ්වාසද අවශ්‍යද ඔබට පිටවීමට අවශ්‍යද?';
+
+  @override
+  String get logoutCancel => 'අවලංගු කරන්න';
+
+  @override
+  String get logoutButton => 'පිටවීම';
+
+  @override
+  String get escalateReportTitle => 'වාර්තාව ඉහළ නැංවීම';
+
+  @override
+  String get escalateReportSubtitle =>
+      'මෙම සොයාගැනීම ජාතික බලාත්මක ආයතනයක් වෙත යොමු කරන්න';
+
+  @override
+  String get authoritySectionLabel => 'බලාත්මක ආයතනය';
+
+  @override
+  String get sendViaLabel => 'යවන්නේ මගින්';
+
+  @override
+  String get slThreatRadarTitle => 'SL තර්ජන බුද්ධි මානදඩුව';
+
+  @override
+  String get slThreatRadarSubtitle =>
+      'ශ්‍රී ලංකාවේ පැතිරිඳින ගැඹුරු බොරු ම-work scams හා හඬ පිටපත් හඳුනාගන්න.';
+
+  @override
+  String get slThreatRadarLiveSoon => 'නේවාසික නිරීක්ෂණය මත්තෙන් පැමිණෙනු ඇත';
+
+  @override
+  String get loadingFinishingVerification => 'සත්‍යාපනය අවසානය කරමින්...';
+
+  @override
+  String loadingEstimatedTime(Object seconds) {
+    return 'අනුමානය ~$seconds තත්පරයන් ඉතිරි';
+  }
+
+  @override
+  String get cancelAnalysis => 'විශ්ලේෂණය අවලංගු කරන්න';
+
+  @override
+  String get errorAnalysisInterrupted => 'විශ්ලේෂණය බාධා විය';
+
+  @override
+  String get errorOfflineTFLiteAvailable => 'අපස්ථික TFLite විකල්පය ලබා ගත හැක';
+
+  @override
+  String get errorWhatHappened => 'කුමක් සිදු වියද';
+
+  @override
+  String get errorPossibleReason => 'සිදුවිය හැකි හේතුව';
+
+  @override
+  String get errorRetryAnalysis => 'විශ්ලේෂණය නැවත උත්සාහ කරන්න';
+
+  @override
+  String get errorContactSupport => 'සහාය සම්බන්ධ කරන්න';
+
+  @override
+  String get errorOopsTitle => 'අපොයි! දෝෂයක් සිදු විය';
+
+  @override
+  String get errorTryAgain => 'නැවත උත්සාහ කරන්න';
+
+  @override
+  String get emptyNoReports => 'වාර්තා කිසිවක් නැත';
+
+  @override
+  String get emptyNoNotifications => 'දැනුම්දීම් නැත';
+
+  @override
+  String get emptyNoHistory => 'ඉතිහාසය නැත';
+
+  @override
+  String get emptyNoSearches => 'සොයාගැනීම් නැත';
+
+  @override
+  String get emptyNoResults => 'ප්‍රතිඵල නැත';
+
+  @override
+  String get emptyNoReportsSubtitle =>
+      'ඔබේ පළමු AI ගැඹුරු බොරු විධිවිචාරණ වාර්තාව උත්පාදනය කිරීමට වීඩියෝවක් හෝ රූප සබැඳියක් උඩුගත කරන්න.';
+
+  @override
+  String get emptyNoNotificationsSubtitle =>
+      'ඔබ සියල්ල ලැබීම සිදු වී ඇත.\nනව සත්‍යාපන ප්‍රතිඵල මෙහි පෙනී යනු ඇත.';
+
+  @override
+  String get emptyNoHistorySubtitle =>
+      'සම්පූර්ණ කරන ලද මාධ්‍ය විශ්ලේෂණ වාර්තා ඔබගේ ඉතිහාසයේ ආරක්ෂිතව ගබඩා වේ.';
+
+  @override
+  String get emptyNoSearchesSubtitle =>
+      'ගැලපෙන වාර්තා සොයාගැනීමට ඔබගේ සොයාගැනීම් ක්‍රමය හෝ මූල පද යාවත්කාලීන කරන්න.';
+
+  @override
+  String get emptyNoResultsSubtitle =>
+      'විස්තරාත්මක ගැඹුරු බොරු අගයන් සහ සාක්ෂි ප්‍රදර්ශනය කිරීමට විශ්ලේෂණ කාර්යයක් ක්‍රියාත්මක කරන්න.';
+
+  @override
+  String get backTooltip => 'ආපසු';
+
+  @override
+  String get changeLanguageTooltip => 'භාෂාව වෙනස් කරන්න';
+
+  @override
+  String get lightModeTooltip => 'ආලෝක ප්‍රකාරයට මාරු වන්න';
+
+  @override
+  String get darkModeTooltip => 'අඳුරු ප්‍රකාරයට මාරු වන්න';
+
+  @override
+  String get notificationsTooltip => 'දැනුම්දීම්';
+
+  @override
+  String get formTitle => 'කාර්ය මණ්ඩලය තහවුරු කිරීමේ පෝරමය';
+
+  @override
+  String get selectOption => 'තෝරන්න';
+
+  @override
+  String get submitting => 'සමර්පණය කරමින්...';
+
+  @override
+  String get errorSaving => 'දත්ත සුරැකීමේ දෝෂය. කරුණාකර නැවත උත්සාහ කරන්න.';
+
+  @override
+  String get connectionError =>
+      'සම්බන්ධතාවේ දෝෂය. කරුණාකර ඔබගේ අන්තර්ජාල සම්බන්ධතාව පරීක්ෂා කරන්න.';
+
+  @override
+  String get loginRequired =>
+      'මෙම පෝරමය ඉදිරිපත් කිරීමට ඔබට ප්‍රවේශ වී ඇති බව අවශ්‍යය.';
+
+  @override
+  String get datesSectionHint =>
+      'සියලු දින සඳහා YYYY-MM-DD ආකෘතිය භාවිතා කරන්න';
+
+  @override
+  String get editProfileTitle => 'පැතිකඩ සංස්කරණය කරන්න';
+
+  @override
+  String get profileName => 'නම';
+
+  @override
+  String get profileEmail => 'විද්‍යුත් තැපැල';
+
+  @override
+  String get profileNewPassword => 'නව මුරපදය';
+
+  @override
+  String get profileConfirmPassword => 'මුරපදය තහවුරු කරන්න';
+
+  @override
+  String get profilePhoto => 'පැතිකඩ පින්තූරය';
+
+  @override
+  String get profileChangePhoto => 'පින්තූරය වෙනස් කරන්න';
+
+  @override
+  String get profileRemovePhoto => 'පින්තූරය ඉවත් කරන්න';
+
+  @override
+  String get profilePasswordChange => 'මුරපදය වෙනස් කරන්න';
+
+  @override
+  String get profileCurrentPassword => 'දැනට ඇති මුරපදය';
+
+  @override
+  String get profileSave => 'සුරකින්න';
+
+  @override
+  String get profileCancel => 'අවලංගු කරන්න';
+
+  @override
+  String get profileUploading => 'උඩුගත කරමින්...';
+
+  @override
+  String get profileImageTooLarge => 'පින්තූරයේ ප්‍රමාණය 5MB ට අඩු විය යුතුය';
+
+  @override
+  String get reportShareReport => 'වාර්තාව බෙදා ගන්න';
+
+  @override
+  String get reportShareVia => 'මගින් බෙදා ගන්න';
+
+  @override
+  String get reportShareLink => 'සබැඳිය පිටපත් කරන්න';
+
+  @override
+  String get reportSharePdf => 'PDF බෙදා ගන්න';
+
+  @override
+  String get reportShareImage => 'රූපය බෙදා ගන්න';
+
+  @override
+  String get reportCopiedToClipboard =>
+      'වාර්තා සබැඳිය ක්ලිප්බෝඩ්පත්‍රයට පිටපත් කරන ලදී.';
+
+  @override
+  String get reportShareFailed => 'වාර්තාව බෙදා ගැනීමට අසමත් විය';
 }
