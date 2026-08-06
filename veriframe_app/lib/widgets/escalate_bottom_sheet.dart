@@ -1,8 +1,10 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'package:flutter/services.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:veriframe_app/l10n/app_localizations.dart';
 import 'package:veriframe_app/models/verification_result.dart';
+import 'package:veriframe_app/service/pdf_service.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Theme-aware palette (mirrors the _Pal pattern from reports_page.dart)
@@ -35,7 +37,8 @@ class _EscalPal {
 // ─────────────────────────────────────────────────────────────────────────────
 
 /// A polished bottom-sheet widget for escalating a forensic report to a national
-/// authority. Opens wa.me / mailto: deep-links — no backend call required.
+/// authority. On Android, shares the pre-generated PDF directly to WhatsApp or Gmail
+/// via platform channels. On iOS, uses the system share sheet.
 ///
 /// Usage:
 /// ```dart
@@ -56,68 +59,86 @@ class EscalateBottomSheet extends StatefulWidget {
 }
 
 class _EscalateBottomSheetState extends State<EscalateBottomSheet> {
-  static const String _waNumber = '94784770935';
-  static const String _emailAddress = 'sithmiyara2001@gmail.com';
-
   static const Color _whatsappGreen = Color(0xFF25D366);
+  static const String _whatsappNumber = '94784770935';
+  static const String _emailAddress = 'sithmiyara2001@gmail.com';
+  static const String _whatsappPackage = 'com.whatsapp';
+  static const String _gmailPackage = 'com.google.android.gm';
+  static const String _methodChannel = 'com.veriframe_app/share_pdf';
 
   String? _selectedAuthority;
 
   _EscalPal get _pal =>
       _EscalPal(Theme.of(context).brightness == Brightness.dark);
 
-  // ── Helpers ──────────────────────────────────────────────────────────────
+  // ── Helpers ──────────────────────────────────────────────────────
 
-  /// Returns the most-specific source string available for the report.
-  String get _sourceDisplay {
+  /// Ensures the forensic report PDF exists and returns the file.
+  /// If the report already has a valid pdfPath, uses that file.
+  /// Otherwise generates a new PDF via PdfService.
+  Future<File?> _getPdfFile() async {
     final r = widget.report;
-    if (r.videoUrl != null && r.videoUrl!.trim().isNotEmpty) {
-      return r.videoUrl!.trim();
+    if (r.pdfPath != null && r.pdfPath!.isNotEmpty && File(r.pdfPath!).existsSync()) {
+      return File(r.pdfPath!);
     }
-    if (r.mediaPath != null && r.mediaPath!.isNotEmpty) {
-      if (r.mediaPath!.startsWith('stream-')) {
-        return 'Live camera session — ${r.mediaPath}';
-      }
-      return r.mediaPath!;
+    try {
+      final file = await PdfService.instance.generateReportPdf(result: r);
+      return file;
+    } catch (e) {
+      debugPrint('[EscalateBottomSheet] PDF generation failed: $e');
+      return null;
     }
-    return 'Live camera stream (no file)';
-  }
-
-  String _buildMessageBody(String authorityTitle) {
-    final formattedDate =
-        DateFormat('yyyy-MM-dd HH:mm:ss').format(widget.report.verifiedAt);
-    return '''[VERIFRAME FORENSIC REPORT ESCALATION]
-Authority: $authorityTitle
-Report ID: ${widget.report.verificationId}
-Media: ${widget.report.mediaName ?? 'Unnamed Media'}
-Source: $_sourceDisplay
-Verdict: ${widget.report.verdict.toUpperCase()}
-Confidence: ${widget.report.confidence.toStringAsFixed(1)}%
-Risk Level: ${widget.report.riskLevel}
-Verified Date: $formattedDate''';
   }
 
   Future<void> _launchWhatsApp(String authorityTitle) async {
-    final body = _buildMessageBody(authorityTitle);
-    final uri = Uri.parse(
-        'https://wa.me/$_waNumber?text=${Uri.encodeComponent(body)}');
+    final pdfFile = await _getPdfFile();
+    if (pdfFile == null) {
+      if (mounted) _showErrorSnackBar();
+      return;
+    }
     try {
-      final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
-      if (!launched && mounted) _showErrorSnackBar();
+      if (Platform.isAndroid) {
+        final channel = MethodChannel(_methodChannel);
+        await channel.invokeMethod('sharePdfToApp', {
+          'filePath': pdfFile.path,
+          'appPackage': _whatsappPackage,
+          'recipient': _whatsappNumber,
+          'subject': 'Forensic Report Escalation: $authorityTitle',
+        });
+      } else {
+        await Share.shareXFiles(
+          [XFile(pdfFile.path)],
+          text: 'VeriFrame Forensic Report — $authorityTitle [${widget.report.verificationId}]',
+          subject: 'Forensic Report Escalation: $authorityTitle',
+        );
+      }
     } catch (_) {
       if (mounted) _showErrorSnackBar();
     }
   }
 
   Future<void> _launchEmail(String authorityTitle) async {
-    final body = _buildMessageBody(authorityTitle);
-    final subject =
-        'Forensic Report Escalation: $authorityTitle [${widget.report.verificationId}]';
-    final uri = Uri.parse(
-        'mailto:$_emailAddress?subject=${Uri.encodeComponent(subject)}&body=${Uri.encodeComponent(body)}');
+    final pdfFile = await _getPdfFile();
+    if (pdfFile == null) {
+      if (mounted) _showErrorSnackBar();
+      return;
+    }
     try {
-      final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
-      if (!launched && mounted) _showErrorSnackBar();
+      if (Platform.isAndroid) {
+        final channel = MethodChannel(_methodChannel);
+        await channel.invokeMethod('sharePdfToApp', {
+          'filePath': pdfFile.path,
+          'appPackage': _gmailPackage,
+          'recipient': _emailAddress,
+          'subject': 'Forensic Report Escalation: $authorityTitle [${widget.report.verificationId}]',
+        });
+      } else {
+        await Share.shareXFiles(
+          [XFile(pdfFile.path)],
+          text: 'VeriFrame Forensic Report — $authorityTitle [${widget.report.verificationId}]',
+          subject: 'Forensic Report Escalation: $authorityTitle [${widget.report.verificationId}]',
+        );
+      }
     } catch (_) {
       if (mounted) _showErrorSnackBar();
     }
@@ -133,7 +154,7 @@ Verified Date: $formattedDate''';
     );
   }
 
-  // ── Build ─────────────────────────────────────────────────────────────────
+  // ── Build ─────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {

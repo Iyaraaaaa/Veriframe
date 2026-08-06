@@ -2447,4 +2447,43 @@ class AppLocalizationsSi extends AppLocalizations {
 
   @override
   String get reportShareFailed => 'වාර්තාව බෙදා ගැනීමට අසමත් විය';
+
+  @override
+  String get evidenceVideoTitle => 'Evidence Video';
+
+  @override
+  String get evidenceLoadingVideo => 'Loading evidence video...';
+
+  @override
+  String get evidenceBackToReport => 'Back to Report';
+
+  @override
+  String get evidenceVideoSource => 'Video Source';
+
+  @override
+  String get evidenceUrlCopied => 'Evidence URL copied to clipboard';
+
+  @override
+  String get reportActionsTitle => 'Report Actions';
+
+  @override
+  String get reportActionsSubtitle => 'View forensic report or evidence video';
+
+  @override
+  String get reportPdfNotGenerated => 'PDF report not yet generated';
+
+  @override
+  String get reportPlayEvidenceVideo => 'Play Evidence Video';
+
+  @override
+  String get reportVideoNotAvailable => 'Video evidence not available';
+
+  @override
+  String get reportOpenPdf => 'Open PDF Report';
+
+  @override
+  String get reportOpenVerifiedVideo => 'Open Verified Video';
+
+  @override
+  String get reportVideoLinkUnavailable => 'Video link unavailable.';
 }

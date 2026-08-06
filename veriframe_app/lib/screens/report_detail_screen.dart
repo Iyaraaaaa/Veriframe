@@ -1,9 +1,13 @@
 import 'dart:convert';
+import 'dart:io';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:open_filex/open_filex.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:veriframe_app/l10n/app_localizations.dart';
 import 'package:veriframe_app/models/verification_result.dart';
+import 'package:veriframe_app/screens/evidence_video_player_screen.dart';
 
 // ─────────────────────────────────────────────────────────────────────────
 // Local palette — restrained forensic-document styling.
@@ -117,6 +121,8 @@ class _ReportDetailPageState extends State<ReportDetailPage> {
             ),
             const SizedBox(height: 14),
             _PipelineCard(report: r, verdictColor: verdictColor),
+            const SizedBox(height: 14),
+            _ActionButtonsCard(report: r, verdictColor: verdictColor),
           ],
         ),
       ),
@@ -770,15 +776,192 @@ class _MetricLine extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 6),
-        Text(
-          explanation,
-          style: TextStyle(
-            fontSize: 10.5,
-            color: pal.textSubtle,
-            height: 1.4,
+         Text(
+           explanation,
+           style: TextStyle(
+             fontSize: 10.5,
+             color: pal.textSubtle,
+             height: 1.4,
+           ),
+         ),
+       ],
+     );
+   }
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// Action buttons — Open PDF + Play Evidence Video
+// ─────────────────────────────────────────────────────────────────────────
+
+class _ActionButtonsCard extends StatelessWidget {
+  const _ActionButtonsCard({required this.report, required this.verdictColor});
+
+  final VerificationResult report;
+  final Color verdictColor;
+
+  @override
+  Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context)!;
+    final r = report;
+    final pal = _Pal(Theme.of(context).brightness == Brightness.dark);
+    final bool hasLocalVideo =
+        r.mediaPath != null &&
+        r.mediaPath!.isNotEmpty &&
+        !r.mediaPath!.startsWith('stream-') &&
+        !r.mediaPath!.startsWith('http');
+
+    final bool hasPdf =
+        r.pdfPath != null && r.pdfPath!.isNotEmpty && File(r.pdfPath!).existsSync();
+
+    final bool hasPdfUrl = r.pdfUrl != null && r.pdfUrl!.trim().isNotEmpty;
+
+    final bool hasVideoUrl = r.videoUrl != null && r.videoUrl!.trim().isNotEmpty;
+
+    return _CardShell(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _CardHeader(
+            title: loc.reportActionsTitle,
+            subtitle: loc.reportActionsSubtitle,
           ),
-        ),
-      ],
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: (hasPdf || hasPdfUrl)
+                      ? () async {
+                          if (hasPdf) {
+                            final result = await OpenFilex.open(r.pdfPath!);
+                            if (result.type != ResultType.done &&
+                                context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    result.message.isNotEmpty
+                                        ? result.message
+                                        : 'Could not open PDF.',
+                                  ),
+                                  backgroundColor: Colors.red.shade400,
+                                  behavior: SnackBarBehavior.floating,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                ),
+                              );
+                            }
+                          } else if (hasPdfUrl) {
+                            final uri = Uri.parse(r.pdfUrl!.trim());
+                            if (await canLaunchUrl(uri)) {
+                              await launchUrl(uri,
+                                  mode: LaunchMode.externalApplication);
+                            }
+                          }
+                        }
+                      : null,
+                  icon: Icon(Icons.picture_as_pdf_outlined, size: 18),
+                  label: Text(loc.reportOpenPdf),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF2563EB),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+               Expanded(
+                 child: ElevatedButton.icon(
+                   onPressed: (hasLocalVideo || hasVideoUrl)
+                       ? () {
+                           Navigator.push(
+                             context,
+                             MaterialPageRoute(
+                               builder: (_) => EvidenceVideoPlayerScreen(
+                                   report: r),
+                             ),
+                           );
+                         }
+                       : null,
+                   icon: Icon(Icons.play_circle_outline_rounded, size: 18),
+                   label: Text(loc.reportPlayEvidenceVideo),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF2563EB),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: hasVideoUrl
+                      ? () async {
+                          final uri = Uri.parse(r.videoUrl!.trim());
+                          if (await canLaunchUrl(uri)) {
+                            await launchUrl(uri, mode: LaunchMode.externalApplication);
+                          }
+                        }
+                      : null,
+                  icon: Icon(Icons.open_in_new_rounded, size: 18),
+                  label: Text(hasVideoUrl ? loc.reportOpenVerifiedVideo : loc.reportVideoLinkUnavailable),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: hasVideoUrl ? const Color(0xFF2563EB) : const Color(0xFF6B7FA8),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          if (!hasPdf && !hasPdfUrl) ...[
+            const SizedBox(height: 8),
+             Text(
+              loc.reportPdfNotGenerated,
+             style: TextStyle(
+               fontSize: 11,
+               color: pal.textSubtle,
+               fontStyle: FontStyle.italic,
+             ),
+           ),
+          ],
+          if (!hasLocalVideo && !hasVideoUrl) ...[
+            const SizedBox(height: 8),
+            Text(
+              loc.reportVideoNotAvailable,
+              style: TextStyle(
+                fontSize: 11,
+                color: pal.textSubtle,
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+          ],
+          if (hasLocalVideo && !hasVideoUrl) ...[
+            const SizedBox(height: 8),
+            Text(
+              loc.reportVideoLinkUnavailable,
+              style: TextStyle(
+                fontSize: 11,
+                color: pal.textSubtle,
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+          ],
+        ],
+      ),
     );
   }
 }

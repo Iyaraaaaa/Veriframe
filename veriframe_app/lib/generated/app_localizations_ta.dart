@@ -331,6 +331,40 @@ class AppLocalizationsTa extends AppLocalizations {
   @override
   String get leadershipTeam =>
       'அமைச்சர்: டாக்டர் நலிந்த ஜயதிஸ்ஸா\nதுணை அமைச்சர்: டாக்டர் ஹன்சக விஜேமுனி\nசெயலாளர்: டாக்டர் அனில் ஜயசிங்கே\nஇயக்குநர் பொதுவான: டாக்டர் அசேல குணவர்தன';
+
+  @override
+  String get evidenceVideoTitle => 'Evidence Video';
+
+  @override
+  String get evidenceLoadingVideo => 'Loading evidence video...';
+
+  @override
+  String get evidenceBackToReport => 'Back to Report';
+
+  @override
+  String get evidenceVideoSource => 'Video Source';
+
+  @override
+  String get evidenceUrlCopied => 'Evidence URL copied to clipboard';
+
+  @override
+  String get reportActionsTitle => 'Report Actions';
+
+  @override
+  String get reportActionsSubtitle =>
+      'View forensic report or evidence video';
+
+  @override
+  String get reportPdfNotGenerated => 'PDF report not yet generated';
+
+  @override
+  String get reportPlayEvidenceVideo => 'Play Evidence Video';
+
+  @override
+  String get reportVideoNotAvailable => 'Video evidence not available';
+
+  @override
+  String get reportOpenPdf => 'Open PDF Report';
 }
 
 

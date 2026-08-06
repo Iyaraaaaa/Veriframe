@@ -4531,6 +4531,84 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Failed to share report'**
   String get reportShareFailed;
+
+  /// No description provided for @evidenceVideoTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Evidence Video'**
+  String get evidenceVideoTitle;
+
+  /// No description provided for @evidenceLoadingVideo.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading evidence video...'**
+  String get evidenceLoadingVideo;
+
+  /// No description provided for @evidenceBackToReport.
+  ///
+  /// In en, this message translates to:
+  /// **'Back to Report'**
+  String get evidenceBackToReport;
+
+  /// No description provided for @evidenceVideoSource.
+  ///
+  /// In en, this message translates to:
+  /// **'Video Source'**
+  String get evidenceVideoSource;
+
+  /// No description provided for @evidenceUrlCopied.
+  ///
+  /// In en, this message translates to:
+  /// **'Evidence URL copied to clipboard'**
+  String get evidenceUrlCopied;
+
+  /// No description provided for @reportActionsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Report Actions'**
+  String get reportActionsTitle;
+
+  /// No description provided for @reportActionsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'View forensic report or evidence video'**
+  String get reportActionsSubtitle;
+
+  /// No description provided for @reportPdfNotGenerated.
+  ///
+  /// In en, this message translates to:
+  /// **'PDF report not yet generated'**
+  String get reportPdfNotGenerated;
+
+  /// No description provided for @reportPlayEvidenceVideo.
+  ///
+  /// In en, this message translates to:
+  /// **'Play Evidence Video'**
+  String get reportPlayEvidenceVideo;
+
+  /// No description provided for @reportVideoNotAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Video evidence not available'**
+  String get reportVideoNotAvailable;
+
+  /// No description provided for @reportOpenPdf.
+  ///
+  /// In en, this message translates to:
+  /// **'Open PDF Report'**
+  String get reportOpenPdf;
+
+  /// No description provided for @reportOpenVerifiedVideo.
+  ///
+  /// In en, this message translates to:
+  /// **'Open Verified Video'**
+  String get reportOpenVerifiedVideo;
+
+  /// No description provided for @reportVideoLinkUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Video link unavailable.'**
+  String get reportVideoLinkUnavailable;
 }
 
 class _AppLocalizationsDelegate

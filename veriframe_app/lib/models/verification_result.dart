@@ -27,6 +27,8 @@ class VerificationResult with _$VerificationResult {
     String? mediaName,
     String? mediaPath,
     String? pdfPath,
+    String? pdfUrl,
+    String? videoStoragePath,
     String? thumbnailBase64,
     String? videoUrl,
     // Link verification forensic fields

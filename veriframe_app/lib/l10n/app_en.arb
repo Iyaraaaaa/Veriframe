@@ -872,7 +872,20 @@
   "finalDecisionLabel": "Final Decision",
   "finalDecisionDesc": "Synthesizing adaptive ensemble verdict...",
   "generatingReportLabel": "Generating Report",
-  "generatingReportDesc": "Assembling complete forensic verification report..."
+  "generatingReportDesc": "Assembling complete forensic verification report...",
+  "evidenceVideoTitle": "Evidence Video",
+  "evidenceLoadingVideo": "Loading evidence video...",
+  "evidenceBackToReport": "Back to Report",
+  "evidenceVideoSource": "Video Source",
+  "evidenceUrlCopied": "Evidence URL copied to clipboard",
+  "reportActionsTitle": "Report Actions",
+  "reportActionsSubtitle": "View forensic report or evidence video",
+  "reportPdfNotGenerated": "PDF report not yet generated",
+  "reportPlayEvidenceVideo": "Play Evidence Video",
+  "reportVideoNotAvailable": "Video evidence not available",
+  "reportOpenPdf": "Open PDF Report",
+  "reportOpenVerifiedVideo": "Open Verified Video",
+  "reportVideoLinkUnavailable": "Video link unavailable."
  }
 
 

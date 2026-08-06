@@ -42,6 +42,8 @@ mixin _$VerificationResult {
   String? get mediaName => throw _privateConstructorUsedError;
   String? get mediaPath => throw _privateConstructorUsedError;
   String? get pdfPath => throw _privateConstructorUsedError;
+  String? get pdfUrl => throw _privateConstructorUsedError;
+  String? get videoStoragePath => throw _privateConstructorUsedError;
   String? get thumbnailBase64 => throw _privateConstructorUsedError;
   String? get videoUrl =>
       throw _privateConstructorUsedError; // Link verification forensic fields
@@ -94,6 +96,8 @@ abstract class $VerificationResultCopyWith<$Res> {
     String? mediaName,
     String? mediaPath,
     String? pdfPath,
+    String? pdfUrl,
+    String? videoStoragePath,
     String? thumbnailBase64,
     String? videoUrl,
     String? platform,
@@ -143,6 +147,8 @@ class _$VerificationResultCopyWithImpl<$Res, $Val extends VerificationResult>
     Object? mediaName = freezed,
     Object? mediaPath = freezed,
     Object? pdfPath = freezed,
+    Object? pdfUrl = freezed,
+    Object? videoStoragePath = freezed,
     Object? thumbnailBase64 = freezed,
     Object? videoUrl = freezed,
     Object? platform = freezed,
@@ -237,6 +243,14 @@ class _$VerificationResultCopyWithImpl<$Res, $Val extends VerificationResult>
                 ? _value.pdfPath
                 : pdfPath // ignore: cast_nullable_to_non_nullable
                       as String?,
+            pdfUrl: freezed == pdfUrl
+                ? _value.pdfUrl
+                : pdfUrl // ignore: cast_nullable_to_non_nullable
+                      as String?,
+            videoStoragePath: freezed == videoStoragePath
+                ? _value.videoStoragePath
+                : videoStoragePath // ignore: cast_nullable_to_non_nullable
+                      as String?,
             thumbnailBase64: freezed == thumbnailBase64
                 ? _value.thumbnailBase64
                 : thumbnailBase64 // ignore: cast_nullable_to_non_nullable
@@ -317,6 +331,8 @@ abstract class _$$VerificationResultImplCopyWith<$Res>
     String? mediaName,
     String? mediaPath,
     String? pdfPath,
+    String? pdfUrl,
+    String? videoStoragePath,
     String? thumbnailBase64,
     String? videoUrl,
     String? platform,
@@ -365,6 +381,8 @@ class __$$VerificationResultImplCopyWithImpl<$Res>
     Object? mediaName = freezed,
     Object? mediaPath = freezed,
     Object? pdfPath = freezed,
+    Object? pdfUrl = freezed,
+    Object? videoStoragePath = freezed,
     Object? thumbnailBase64 = freezed,
     Object? videoUrl = freezed,
     Object? platform = freezed,
@@ -459,6 +477,14 @@ class __$$VerificationResultImplCopyWithImpl<$Res>
             ? _value.pdfPath
             : pdfPath // ignore: cast_nullable_to_non_nullable
                   as String?,
+        pdfUrl: freezed == pdfUrl
+            ? _value.pdfUrl
+            : pdfUrl // ignore: cast_nullable_to_non_nullable
+                  as String?,
+        videoStoragePath: freezed == videoStoragePath
+            ? _value.videoStoragePath
+            : videoStoragePath // ignore: cast_nullable_to_non_nullable
+                  as String?,
         thumbnailBase64: freezed == thumbnailBase64
             ? _value.thumbnailBase64
             : thumbnailBase64 // ignore: cast_nullable_to_non_nullable
@@ -532,6 +558,8 @@ class _$VerificationResultImpl implements _VerificationResult {
     this.mediaName,
     this.mediaPath,
     this.pdfPath,
+    this.pdfUrl,
+    this.videoStoragePath,
     this.thumbnailBase64,
     this.videoUrl,
     this.platform,
@@ -607,6 +635,10 @@ class _$VerificationResultImpl implements _VerificationResult {
   @override
   final String? pdfPath;
   @override
+  final String? pdfUrl;
+  @override
+  final String? videoStoragePath;
+  @override
   final String? thumbnailBase64;
   @override
   final String? videoUrl;
@@ -648,7 +680,7 @@ class _$VerificationResultImpl implements _VerificationResult {
 
   @override
   String toString() {
-    return 'VerificationResult(verificationId: $verificationId, verifiedAt: $verifiedAt, mediaType: $mediaType, source: $source, authenticityScore: $authenticityScore, fakeProbability: $fakeProbability, confidence: $confidence, metadataScore: $metadataScore, frameConsistency: $frameConsistency, ocrConfidence: $ocrConfidence, trackingConfidence: $trackingConfidence, manipulationScore: $manipulationScore, verdict: $verdict, riskLevel: $riskLevel, detectedEvidence: $detectedEvidence, forensicObservations: $forensicObservations, reportHash: $reportHash, mediaName: $mediaName, mediaPath: $mediaPath, pdfPath: $pdfPath, thumbnailBase64: $thumbnailBase64, videoUrl: $videoUrl, platform: $platform, videoLength: $videoLength, resolution: $resolution, framesAnalysedCount: $framesAnalysedCount, suspiciousFramesCount: $suspiciousFramesCount, faceDetectionRate: $faceDetectionRate, processingTimeSec: $processingTimeSec, suspiciousFrames: $suspiciousFrames, timelineLogs: $timelineLogs)';
+    return 'VerificationResult(verificationId: $verificationId, verifiedAt: $verifiedAt, mediaType: $mediaType, source: $source, authenticityScore: $authenticityScore, fakeProbability: $fakeProbability, confidence: $confidence, metadataScore: $metadataScore, frameConsistency: $frameConsistency, ocrConfidence: $ocrConfidence, trackingConfidence: $trackingConfidence, manipulationScore: $manipulationScore, verdict: $verdict, riskLevel: $riskLevel, detectedEvidence: $detectedEvidence, forensicObservations: $forensicObservations, reportHash: $reportHash, mediaName: $mediaName, mediaPath: $mediaPath, pdfPath: $pdfPath, pdfUrl: $pdfUrl, videoStoragePath: $videoStoragePath, thumbnailBase64: $thumbnailBase64, videoUrl: $videoUrl, platform: $platform, videoLength: $videoLength, resolution: $resolution, framesAnalysedCount: $framesAnalysedCount, suspiciousFramesCount: $suspiciousFramesCount, faceDetectionRate: $faceDetectionRate, processingTimeSec: $processingTimeSec, suspiciousFrames: $suspiciousFrames, timelineLogs: $timelineLogs)';
   }
 
   @override
@@ -697,6 +729,9 @@ class _$VerificationResultImpl implements _VerificationResult {
             (identical(other.mediaPath, mediaPath) ||
                 other.mediaPath == mediaPath) &&
             (identical(other.pdfPath, pdfPath) || other.pdfPath == pdfPath) &&
+            (identical(other.pdfUrl, pdfUrl) || other.pdfUrl == pdfUrl) &&
+            (identical(other.videoStoragePath, videoStoragePath) ||
+                other.videoStoragePath == videoStoragePath) &&
             (identical(other.thumbnailBase64, thumbnailBase64) ||
                 other.thumbnailBase64 == thumbnailBase64) &&
             (identical(other.videoUrl, videoUrl) ||
@@ -749,6 +784,8 @@ class _$VerificationResultImpl implements _VerificationResult {
     mediaName,
     mediaPath,
     pdfPath,
+    pdfUrl,
+    videoStoragePath,
     thumbnailBase64,
     videoUrl,
     platform,
@@ -801,6 +838,8 @@ abstract class _VerificationResult implements VerificationResult {
     final String? mediaName,
     final String? mediaPath,
     final String? pdfPath,
+    final String? pdfUrl,
+    final String? videoStoragePath,
     final String? thumbnailBase64,
     final String? videoUrl,
     final String? platform,
@@ -857,6 +896,10 @@ abstract class _VerificationResult implements VerificationResult {
   String? get mediaPath;
   @override
   String? get pdfPath;
+  @override
+  String? get pdfUrl;
+  @override
+  String? get videoStoragePath;
   @override
   String? get thumbnailBase64;
   @override
