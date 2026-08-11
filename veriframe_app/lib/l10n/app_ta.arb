@@ -750,5 +750,6 @@
     "reportVideoNotAvailable":  "Video evidence not available",
   "reportOpenPdf": "Open PDF Report",
   "reportOpenVerifiedVideo": "Open Verified Video",
-  "reportVideoLinkUnavailable": "Video link unavailable."
- }
+  "reportVideoLinkUnavailable":  "Video link unavailable.",
+  "reportActionsUnavailable":  "No actions available for this report"
+  }

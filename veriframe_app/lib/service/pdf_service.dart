@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:math' as math;
 import 'package:flutter/foundation.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
@@ -81,68 +82,12 @@ class PdfService {
                             mutedInk,
                             isBold: true,
                           ),
-                          // Source block — always show something, never omit
-                          () {
-                            final url = result.videoUrl?.trim();
-                            final mp = result.mediaPath;
-                            final String label;
-                            final bool isLink;
-                            if (url != null && url.isNotEmpty) {
-                              label = url;
-                              isLink = true;
-                            } else if (mp != null && mp.isNotEmpty && mp.startsWith('stream-')) {
-                              label = 'Live camera session — $mp';
-                              isLink = false;
-                            } else if (mp != null && mp.isNotEmpty) {
-                              label = 'Local file: $mp';
-                              isLink = false;
-                            } else {
-                              label = 'Live camera stream (no file)';
-                              isLink = false;
-                            }
-                            return pw.Padding(
-                              padding: const pw.EdgeInsets.only(bottom: 6),
-                              child: pw.Column(
-                                crossAxisAlignment: pw.CrossAxisAlignment.start,
-                                children: [
-                                  pw.Text(
-                                    'Source',
-                                    style: pw.TextStyle(
-                                      fontSize: 7.5,
-                                      color: mutedInk,
-                                    ),
-                                  ),
-                                  pw.SizedBox(height: 1),
-                                  if (isLink)
-                                    pw.UrlLink(
-                                      destination: label,
-                                      child: pw.Text(
-                                        label,
-                                        style: pw.TextStyle(
-                                          fontSize: 8.5,
-                                          color: PdfColor.fromHex('#1E88E5'),
-                                          decoration: pw.TextDecoration.underline,
-                                        ),
-                                      ),
-                                    )
-                                  else
-                                    pw.Text(
-                                      label,
-                                      style: pw.TextStyle(
-                                        fontSize: 8.5,
-                                        color: inkText,
-                                      ),
-                                    ),
-                                ],
-                              ),
-                            );
-                          }(),
-                          _buildDetailLine(
-                            'Verified at',
-                            formattedDate,
-                            inkText,
-                            mutedInk,
-                          ),
+                           _buildDetailLine(
+                             'Verified at',
+                             formattedDate,
+                             inkText,
+                             mutedInk,
+                           ),
                         ],
                       ),
                     ),
@@ -209,6 +154,30 @@ class PdfService {
                   ],
                 ),
                 pw.SizedBox(height: 26),
+
+                // --- Verified video link ---
+                pw.Row(
+                  mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                  children: [
+                    pw.Text(
+                      'VERIFIED VIDEO LINK',
+                      style: pw.TextStyle(
+                        fontSize: 10.5,
+                        fontWeight: pw.FontWeight.bold,
+                        color: inkText,
+                      ),
+                    ),
+                  ],
+                ),
+                pw.SizedBox(height: 4),
+                pw.Divider(thickness: 0.75, color: hairline),
+                pw.SizedBox(height: 8),
+                _buildVideoLinkSection(
+                  result,
+                  inkText,
+                  hairline,
+                ),
+                pw.SizedBox(height: 18),
 
                 // --- Analysis index ---
                 pw.Row(
@@ -293,54 +262,58 @@ class PdfService {
 
                 pw.Spacer(),
 
-                // --- Approval stamp ---
-                pw.Row(
-                  mainAxisAlignment: pw.MainAxisAlignment.end,
-                  children: [
-                    pw.Transform.rotate(
-                      angle: -0.12,
-                      child: pw.Container(
-                        padding: const pw.EdgeInsets.all(6),
-                        decoration: pw.BoxDecoration(
-                          border: pw.Border.all(color: stampRed, width: 1.5),
-                        ),
-                        child: pw.Container(
-                          padding: const pw.EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 7,
-                          ),
-                          decoration: pw.BoxDecoration(
-                            border: pw.Border.all(color: stampRed, width: 0.75),
-                          ),
-                          child: pw.Column(
-                            crossAxisAlignment: pw.CrossAxisAlignment.center,
-                            children: [
-                              pw.Text(
-                                isAuthentic ? 'APPROVED' : 'FLAGGED',
-                                style: pw.TextStyle(
-                                  font: pw.Font.timesBold(),
-                                  fontSize: 13,
-                                  color: stampRed,
-                                  letterSpacing: 1,
-                                ),
-                              ),
-                              pw.SizedBox(height: 3),
-                              pw.Text(
-                                'A. VOSS \u00b7 INSPECTOR',
-                                style: pw.TextStyle(
-                                  fontSize: 6.5,
-                                  fontWeight: pw.FontWeight.bold,
-                                  letterSpacing: 0.6,
-                                  color: stampRed,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+                 // --- Approval stamp ---
+                 pw.Row(
+                   mainAxisAlignment: pw.MainAxisAlignment.end,
+                   children: [
+                     pw.Transform.rotate(
+                       angle: -0.12,
+                       child: pw.Container(
+                         padding: const pw.EdgeInsets.all(6),
+                         decoration: pw.BoxDecoration(
+                           border: pw.Border.all(color: stampRed, width: 1.5),
+                         ),
+                         child: pw.Container(
+                           padding: const pw.EdgeInsets.symmetric(
+                             horizontal: 22,
+                             vertical: 10,
+                           ),
+                           decoration: pw.BoxDecoration(
+                             border: pw.Border.all(color: stampRed, width: 0.75),
+                           ),
+                           child: pw.Column(
+                             crossAxisAlignment: pw.CrossAxisAlignment.center,
+                             children: [
+                               pw.Text(
+                                 isAuthentic ? 'APPROVED' : 'FLAGGED',
+                                 style: pw.TextStyle(
+                                   font: pw.Font.timesBold(),
+                                   fontSize: 15,
+                                   color: stampRed,
+                                   letterSpacing: 2,
+                                 ),
+                               ),
+                               pw.Container(
+                                 height: 1,
+                                 color: stampRed,
+                                 margin: const pw.EdgeInsets.symmetric(vertical: 3),
+                               ),
+                               pw.Text(
+                                 'A. VOSS \u00b7 INSPECTOR',
+                                 style: pw.TextStyle(
+                                   fontSize: 6.5,
+                                   fontWeight: pw.FontWeight.bold,
+                                   letterSpacing: 0.6,
+                                   color: stampRed,
+                                 ),
+                               ),
+                             ],
+                           ),
+                         ),
+                       ),
+                     ),
+                   ],
+                 ),
                 pw.SizedBox(height: 16),
 
                 // --- Footer ---
@@ -429,36 +402,135 @@ class PdfService {
     );
   }
 
+  pw.Widget _buildVideoLinkSection(
+    VerificationResult result,
+    PdfColor inkText,
+    PdfColor hairline,
+  ) {
+    final videoUrl = result.videoUrl?.trim();
+    final mp = result.mediaPath;
+    final linkBlue = PdfColor.fromHex('#1E88E5');
+
+    if (videoUrl != null && videoUrl.isNotEmpty && Uri.tryParse(videoUrl)?.hasScheme == true) {
+      return pw.Row(
+        crossAxisAlignment: pw.CrossAxisAlignment.center,
+        children: [
+          pw.BarcodeWidget(
+            barcode: pw.Barcode.qrCode(),
+            data: videoUrl,
+            width: 52,
+            height: 52,
+          ),
+          pw.SizedBox(width: 12),
+          pw.Expanded(
+            child: pw.Column(
+              crossAxisAlignment: pw.CrossAxisAlignment.start,
+              children: [
+                pw.UrlLink(
+                  destination: videoUrl,
+                  child: pw.Text(
+                    videoUrl,
+                    style: pw.TextStyle(
+                      color: linkBlue,
+                      decoration: pw.TextDecoration.underline,
+                    ),
+                  ),
+                ),
+                pw.SizedBox(height: 3),
+                pw.Text(
+                  'Scan or tap to open the evidence video',
+                  style: pw.TextStyle(fontSize: 8, color: inkText),
+                ),
+              ],
+            ),
+          ),
+        ],
+      );
+    } else if (mp != null && mp.isNotEmpty && mp.startsWith('stream-')) {
+      return pw.Text(
+        'Live camera session',
+        style: pw.TextStyle(fontSize: 9.5, color: inkText),
+      );
+    } else if (mp != null && mp.isNotEmpty) {
+      return pw.Text(
+        'Local file only — no shareable link available',
+        style: pw.TextStyle(fontSize: 9.5, color: inkText),
+      );
+    } else {
+      return pw.Text(
+        'No video evidence available.',
+        style: pw.TextStyle(fontSize: 9.5, color: inkText),
+      );
+    }
+  }
+
   pw.Widget _buildConfidenceRing(
     double value,
     PdfColor ringColor,
     PdfColor textColor,
     PdfColor mutedColor,
   ) {
+    final progress = value.clamp(0, 100) / 100;
+    const ringSize = 78.0;
+    final trackColor = PdfColor.fromHex('#DDDAD3');
+
     return pw.Container(
-      width: 78,
-      height: 78,
-      decoration: pw.BoxDecoration(
-        shape: pw.BoxShape.circle,
-        border: pw.Border.all(color: ringColor, width: 1.5),
-      ),
-      child: pw.Center(
-        child: pw.Column(
-          mainAxisSize: pw.MainAxisSize.min,
-          children: [
-            pw.Text(
-              value.toStringAsFixed(1),
-              style: pw.TextStyle(
-                fontWeight: pw.FontWeight.bold,
-                fontSize: 17,
-                color: textColor,
+      width: ringSize,
+      height: ringSize,
+      child: pw.CustomPaint(
+        size: PdfPoint(ringSize, ringSize),
+        painter: (canvas, size) {
+          final cx = size.x / 2;
+          final cy = size.y / 2;
+          final radius = size.x / 2 - 3;
+          const startAngle = math.pi / 2;
+          const sweepAngle = 2 * math.pi;
+          const steps = 60;
+
+          canvas.setStrokeColor(trackColor);
+          canvas.setLineWidth(3);
+          canvas.drawEllipse(cx, cy, radius, radius);
+          canvas.strokePath();
+
+          if (progress > 0.001) {
+            final endAngle = startAngle - sweepAngle * progress;
+            canvas.setStrokeColor(ringColor);
+            canvas.setLineWidth(3);
+            canvas.setLineCap(PdfLineCap.round);
+            canvas.moveTo(
+              cx + radius * math.cos(startAngle),
+              cy + radius * math.sin(startAngle),
+            );
+
+            for (int i = 1; i <= steps; i++) {
+              final t = i / steps;
+              final angle = startAngle + (endAngle - startAngle) * t;
+              canvas.lineTo(
+                cx + radius * math.cos(angle),
+                cy + radius * math.sin(angle),
+              );
+            }
+            canvas.strokePath();
+          }
+        },
+        child: pw.Center(
+          child: pw.Column(
+            mainAxisSize: pw.MainAxisSize.min,
+            children: [
+              pw.Text(
+                value.toStringAsFixed(1),
+                style: pw.TextStyle(
+                  fontWeight: pw.FontWeight.bold,
+                  fontSize: 17,
+                  color: textColor,
+                ),
               ),
-            ),
-            pw.Text(
-              'confidence',
-              style: pw.TextStyle(fontSize: 6.5, color: mutedColor),
-            ),
-          ],
+              pw.Text(
+                'conclusion score',
+                style: pw.TextStyle(fontSize: 6.5, color: mutedColor),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -479,6 +551,7 @@ class PdfService {
     final valueColor = value >= 85
         ? greenColor
         : (value >= 60 ? amberColor : redColor);
+    final clampedValue = value.clamp(0, 100);
 
     return pw.Column(
       children: [
@@ -495,7 +568,7 @@ class PdfService {
                 ),
               ),
               pw.Expanded(
-                flex: 3,
+                flex: 4,
                 child: pw.Text(
                   label,
                   style: pw.TextStyle(
@@ -506,11 +579,32 @@ class PdfService {
                 ),
               ),
               pw.Expanded(
-                flex: 3,
-                child: pw.Text(
-                  descriptor,
-                  textAlign: pw.TextAlign.center,
-                  style: pw.TextStyle(fontSize: 8, color: mutedInk),
+                flex: 4,
+                child: pw.LayoutBuilder(
+                  builder: (context, constraints) {
+                    final fillWidth =
+                        (constraints as pw.BoxConstraints).maxWidth * (clampedValue / 100);
+                    return pw.Stack(
+                      children: [
+                        pw.Container(
+                          width: double.infinity,
+                          height: 6,
+                          decoration: pw.BoxDecoration(
+                            color: PdfColor.fromHex('#EFEDE6'),
+                            borderRadius: pw.BorderRadius.circular(3),
+                          ),
+                        ),
+                        pw.Container(
+                          width: fillWidth,
+                          height: 6,
+                          decoration: pw.BoxDecoration(
+                            color: valueColor,
+                            borderRadius: pw.BorderRadius.circular(3),
+                          ),
+                        ),
+                      ],
+                    );
+                  },
                 ),
               ),
               pw.SizedBox(

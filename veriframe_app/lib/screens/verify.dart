@@ -1496,7 +1496,6 @@ class _VerifyPageState extends ConsumerState<VerifyPage> with TickerProviderStat
   Widget _buildVideoLinkCard(AppColors colors, AppLocalizations loc) {
     return Column(
       children: [
-        const LinkSupportedPlatformsHeader(),
         Container(
           padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(

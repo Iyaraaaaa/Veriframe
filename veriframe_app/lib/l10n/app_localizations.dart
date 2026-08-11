@@ -4609,6 +4609,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Video link unavailable.'**
   String get reportVideoLinkUnavailable;
+
+  /// No description provided for @reportActionsUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'No actions available for this report'**
+  String get reportActionsUnavailable;
 }
 
 class _AppLocalizationsDelegate

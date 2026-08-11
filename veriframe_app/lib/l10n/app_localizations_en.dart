@@ -2464,4 +2464,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get reportVideoLinkUnavailable => 'Video link unavailable.';
+
+  @override
+  String get reportActionsUnavailable => 'No actions available for this report';
 }

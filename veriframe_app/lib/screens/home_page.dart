@@ -898,20 +898,22 @@ class _HomePageState extends State<HomePage> {
 
           const SizedBox(height: 4),
 
-          _buildDrawerItem(
-            Icons.delete_forever_outlined,
-            loc.deleteAccount,
-            VFColors.red600,
-            const SizedBox(),
-            isDanger: true,
-            onTap: () {
-              Navigator.pop(context);
-              showDialog(
-                context: context,
-                builder: (_) => const DeleteAccountDialog(),
-              );
-            },
-          ),
+           _buildDrawerItem(
+             Icons.delete_forever_outlined,
+             loc.deleteAccount,
+             VFColors.red600,
+             const SizedBox(),
+             isDanger: true,
+             onTap: () {
+               Navigator.pop(context);
+               showModalBottomSheet(
+                 context: context,
+                 isScrollControlled: true,
+                 backgroundColor: Colors.transparent,
+                 builder: (_) => const DeleteAccountDialog(),
+               );
+             },
+           ),
         ],
       ),
     );
