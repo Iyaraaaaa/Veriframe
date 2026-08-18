@@ -21,6 +21,8 @@ class PdfService {
     final DateFormat formatter = DateFormat('yyyy-MM-dd HH:mm:ss');
     final String formattedDate = formatter.format(result.verifiedAt);
     final bool isAuthentic = result.verdict.toUpperCase() == 'AUTHENTIC';
+    final double conclusionScore =
+        isAuthentic ? result.authenticityScore : result.fakeProbability;
 
     // Palette (matches the "paper" analysis-index page style)
     final paperBg = PdfColor.fromHex('#FAF9F6');
@@ -146,7 +148,7 @@ class PdfService {
                       ],
                     ),
                     _buildConfidenceRing(
-                      result.confidence,
+                      conclusionScore,
                       statusColor,
                       inkText,
                       mutedInk,
