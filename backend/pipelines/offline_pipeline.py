@@ -44,9 +44,9 @@ class OfflinePipeline:
         if not scores:
             raise ValueError("On-device verification failed: Could not extract quality frames from video.")
 
-        avg_score = float(np.mean(scores))
-        authenticity_score = round(avg_score * 100.0, 2)
-        fake_probability = round((1.0 - avg_score) * 100.0, 2)
+        avg_fake_prob = float(np.mean(scores))
+        fake_probability = round(avg_fake_prob * 100.0, 2)
+        authenticity_score = round((1.0 - avg_fake_prob) * 100.0, 2)
 
         if len(scores) > 1:
             variance = float(np.var(scores))
@@ -54,14 +54,22 @@ class OfflinePipeline:
         else:
             frame_consistency = 100.0
 
-        prediction_confidence = avg_score if avg_score >= 0.5 else (1.0 - avg_score)
+        prediction_certainty = avg_fake_prob if avg_fake_prob >= 0.5 else (1.0 - avg_fake_prob)
         fused_confidence = round(
-            (prediction_confidence * 0.7 + (frame_consistency / 100.0) * 0.15 + 0.9 * 0.15) * 100.0,
+            (prediction_certainty * 0.7 + (frame_consistency / 100.0) * 0.15 + 0.9 * 0.15) * 100.0,
             2,
         )
 
-        verdict = "AUTHENTIC" if authenticity_score >= 50.0 else "MANIPULATED"
-        risk_level = "LOW" if authenticity_score >= 75.0 else ("MEDIUM" if authenticity_score >= 50.0 else "HIGH")
+        if fake_probability > 70.0:
+            verdict = "MANIPULATED"
+            risk_level = "HIGH"
+        elif fake_probability < 30.0:
+            verdict = "AUTHENTIC"
+            risk_level = "LOW"
+        else:
+            verdict = "INCONCLUSIVE"
+            risk_level = "MEDIUM"
+
         processing_time = time.time() - start_time
 
         logger.info(f"[OfflinePipeline] Completed in {processing_time:.2f}s. Verdict: {verdict}")

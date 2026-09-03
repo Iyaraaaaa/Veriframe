@@ -24,6 +24,8 @@ from filters.quality_filter import QualityFilter, FaceQualityConfig
 from calibration.temporal_filter import TemporalFilter
 from calibration.confidence_calibration import ConfidenceCalibrator
 from pipelines.video_pipeline import VideoPipeline
+from pipelines.link_pipeline import LinkPipeline
+from pipelines.link_verification_v2 import LinkVerificationV2
 from pipelines.stream_pipeline import StreamPipeline
 from pipelines.offline_pipeline import OfflinePipeline
 from preprocessing.preprocessor import FramePreprocessor
@@ -92,6 +94,18 @@ video_pipeline = VideoPipeline(
     frame_sampler=frame_sampler,
     quality_filter=quality_filter,
     temporal_filter=temporal_filter,
+    calibrator=calibrator,
+    preprocessor=preprocessor,
+)
+
+link_pipeline = LinkPipeline(
+    interpreter=interpreter,
+    input_details=input_details,
+    output_details=output_details,
+    face_detector=face_detector,
+    frame_sampler=frame_sampler,
+    quality_filter=quality_filter,
+    temporal_filter=TemporalFilter(window_size=app_config.TEMPORAL_WINDOW_SIZE),
     calibrator=calibrator,
     preprocessor=preprocessor,
 )
@@ -268,25 +282,17 @@ def run_inference(face_img):
 # ---- Background Tasks ----
 
 def download_and_verify_task(job_id: str, url: str):
-    jobs_db[job_id] = {"status": "downloading", "progress": 0.2, "result": None}
-    video_path = None
+    jobs_db[job_id] = {"status": "downloading", "progress": 0.05, "result": None}
     try:
+        # Patch link_pipeline to emit status updates into jobs_db
+        def _on_status(status: str, progress: float):
+            jobs_db[job_id]["status"] = status
+            jobs_db[job_id]["progress"] = progress
+
         jobs_db[job_id]["status"] = "downloading"
-        video_path = download_video_from_url(url, timeout=app_config.URL_DOWNLOAD_TIMEOUT)
-
-        video_hash = get_file_hash(video_path)
-        cached = cache.get(video_hash)
-        if cached:
-            jobs_db[job_id]["status"] = "completed"
-            jobs_db[job_id]["progress"] = 1.0
-            jobs_db[job_id]["result"] = cached
-            jobs_db[job_id]["cached"] = True
-            return
-
-        jobs_db[job_id]["status"] = "extracting"
-        jobs_db[job_id]["progress"] = 0.5
-
-        result = run_full_pipeline(video_path, source="Video Link")
+        jobs_db[job_id]["progress"] = 0.1
+        result = link_pipeline.process(url, source="Video Link", status_cb=_on_status)
+        cache.set(url, result)
 
         jobs_db[job_id]["status"] = "completed"
         jobs_db[job_id]["progress"] = 1.0
@@ -295,186 +301,14 @@ def download_and_verify_task(job_id: str, url: str):
         jobs_db[job_id]["status"] = "failed"
         jobs_db[job_id]["error"] = str(e)
         logger.error(f"[download_and_verify_task] job_id={job_id} failed: {e}")
-    finally:
-        if video_path and os.path.exists(video_path):
-            try:
-                os.remove(video_path)
-            except Exception:
-                pass
 
 # ---- Forensic Pipeline ----
 
 def run_full_pipeline(video_path: str, source: str = "Local Upload") -> dict:
-    start_time = time.time()
-    video_hash = get_file_hash(video_path)
-    metadata = get_video_metadata(video_path)
-    frame_indices = frame_sampler.sample(video_path)
-
-    logger.info(f"[Pipeline] Extracted {len(frame_indices)} frames from {video_path}")
-
-    if not frame_indices:
-        raise HTTPException(status_code=400, detail="Biometric analysis failed: No suitable frames extracted from video.")
-
-    cap = cv2.VideoCapture(video_path)
-    all_faces = []
-    all_boxes = []
-    all_detection_details = []
-    frames_skipped = 0
-
-    for idx in frame_indices:
-        cap.set(cv2.CAP_PROP_POS_FRAMES, idx)
-        ret, frame = cap.read()
-        if not ret:
-            frames_skipped += 1
-            continue
-
-        detections = face_detector.detect(frame)
-        if not detections:
-            frames_skipped += 1
-            continue
-
-        best_det = max(detections, key=lambda d: d.quality_score)
-        is_good, details = quality_filter.is_quality_face(best_det.face_crop, frame.shape)
-        if is_good:
-            try:
-                face_resized = cv2.resize(best_det.face_crop, INPUT_SIZE)
-            except Exception:
-                frames_skipped += 1
-                continue
-            all_faces.append(face_resized)
-            all_boxes.append(best_det.box)
-            all_detection_details.append(details)
-        else:
-            frames_skipped += 1
-    cap.release()
-
-    logger.info(f"[Pipeline] Frames skipped: {frames_skipped}, Quality faces: {len(all_faces)}")
-
-    if len(all_faces) == 0:
-        raise HTTPException(status_code=400, detail="Biometric analysis failed: No face features detected in the video stream.")
-
-    scores = []
-    inference_times = []
-    for face in all_faces:
-        t0 = time.time()
-        try:
-            processed = preprocessor.preprocess_face(face)
-            score = run_inference(processed)
-        except Exception:
-            score = 0.5
-        inference_times.append(time.time() - t0)
-        scores.append(score)
-
-    avg_inference_ms = float(np.mean(inference_times)) * 1000 if inference_times else 0.0
-
-    quality_weights = [d.get("quality_score", 1.0) for d in all_detection_details]
-    weighted_scores = [s * w for s, w in zip(scores, quality_weights)]
-    avg_score = sum(weighted_scores) / sum(quality_weights) if sum(quality_weights) > 0 else float(np.mean(scores))
-
-    for score in scores:
-        temporal_filter.update(score)
-
-    temporal_agg = temporal_filter.get_aggregate()
-    calibrated_score = calibrator.calibrate(avg_score)
-
-    authenticity_score = round(calibrated_score * 100.0, 2)
-    fake_probability = round((1.0 - calibrated_score) * 100.0, 2)
-
-    frame_consistency = calculate_frame_consistency(all_faces)
-    tracking_confidence = calculate_tracking_confidence(all_boxes)
-    ocr_confidence = calculate_ocr_confidence(video_path)
-    metadata_score = calculate_metadata_score(video_path)
-
-    prediction_confidence = calibrated_score if calibrated_score >= 0.5 else (1.0 - calibrated_score)
-    fused_confidence = round(
-        (prediction_confidence * 0.7 +
-         (frame_consistency / 100.0) * 0.15 +
-         (tracking_confidence / 100.0) * 0.15) * 100.0,
-        2
-    )
-
-    if calibrated_score >= 0.8:
-        verdict = "FAKE"
-    elif calibrated_score >= 0.6:
-        verdict = "LIKELY_FAKE"
-    elif calibrated_score >= 0.4:
-        verdict = "UNCERTAIN"
-    elif calibrated_score >= 0.2:
-        verdict = "LIKELY_REAL"
-    else:
-        verdict = "REAL"
-
-    if verdict == "REAL":
-        legacy_verdict = "AUTHENTIC"
-    elif verdict == "LIKELY_REAL":
-        legacy_verdict = "AUTHENTIC"
-    elif verdict == "UNCERTAIN":
-        legacy_verdict = "MANIPULATED" if authenticity_score < 50.0 else "AUTHENTIC"
-    else:
-        legacy_verdict = "MANIPULATED"
-
-    risk_level = "LOW" if authenticity_score >= 75.0 else ("MEDIUM" if authenticity_score >= 50.0 else "HIGH")
-
-    detected_evidence = []
-    forensic_observations = [
-        f"Analyzed {len(all_faces)} biometric face frames.",
-        f"Face box tracking continuity: {tracking_confidence}%.",
-        f"Frame color consistency: {frame_consistency}% continuity.",
-        f"Processing time: {round(time.time() - start_time, 2)}s. Inference avg: {round(avg_inference_ms, 1)}ms/frame.",
-    ]
-
-    if legacy_verdict == "AUTHENTIC":
-        detected_evidence.append("No facial manipulation signatures detected.")
-        detected_evidence.append(f"Liveness visual metrics match authentic biometric structures (Authenticity: {authenticity_score}%).")
-    else:
-        detected_evidence.append("Biometric manipulation signatures identified in face region.")
-        detected_evidence.append(f"High manipulation score of {fake_probability}% matches deepfake profiles.")
-
-    if metadata_score < 100.0:
-        detected_evidence.append(f"Metadata anomalies detected (Metadata Score: {metadata_score}%).")
-    else:
-        forensic_observations.append("Video metadata verified: Container matches standard camera profiles.")
-
-    if frame_consistency < 70.0:
-        detected_evidence.append(f"Anomalous visual shifts detected between frames (Consistency: {frame_consistency}%).")
-
-    if ocr_confidence > 0.0:
-        forensic_observations.append(f"OCR Scan active: Detected high-contrast overlay text (Confidence: {ocr_confidence}%).")
-    else:
-        forensic_observations.append("OCR Scan active: No text overlays detected in media stream.")
-
-    verification_id = f"VRF-{int(time.time() * 1000)}"
-
-    result = {
-        "verificationId": verification_id,
-        "verifiedAt": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-        "mediaType": "video/mp4",
-        "source": source,
-        "authenticityScore": authenticity_score,
-        "fakeProbability": fake_probability,
-        "confidence": fused_confidence,
-        "metadataScore": metadata_score,
-        "frameConsistency": frame_consistency,
-        "ocrConfidence": ocr_confidence,
-        "trackingConfidence": tracking_confidence,
-        "manipulationScore": fake_probability,
-        "verdict": legacy_verdict,
-        "riskLevel": risk_level,
-        "detectedEvidence": detected_evidence,
-        "forensicObservations": forensic_observations,
-        "reportHash": video_hash,
-        "framesAnalyzed": len(all_faces),
-        "framesSkipped": frames_skipped,
-        "processingTimeSec": round(time.time() - start_time, 2),
-        "averageScore": round(float(np.mean(scores)), 4) if scores else 0.0,
-        "inferenceTimeMs": round(avg_inference_ms, 2),
-        "is_fake": authenticity_score < 50.0,
-        "score": round(avg_score, 4),
-        "confidence_label": "High" if fused_confidence >= 80.0 else ("Medium" if fused_confidence >= 60.0 else "Low"),
-    }
-
-    cache.set(video_hash, result)
-    return result
+    try:
+        return video_pipeline.process(video_path, source=source)
+    except ValueError as ve:
+        raise HTTPException(status_code=400, detail=str(ve))
 
 # ---- API Routing ----
 
@@ -573,69 +407,10 @@ def get_analysis(id: str):
         session = streams_db[id]
         if len(session["scores"]) == 0:
             return {"status": "failed", "error": "No biometric frames analyzed in the active stream session."}
-
-        avg_score = float(np.mean(session["scores"]))
-        authenticity_score = round(avg_score * 100.0, 2)
-        fake_probability = round((1.0 - avg_score) * 100.0, 2)
-
-        correlations = []
-        for i in range(len(session.get("hists", [])) - 1):
-            corr = cv2.compareHist(session["hists"][i], session["hists"][i+1], cv2.HISTCMP_CORREL)
-            correlations.append(corr)
-        frame_consistency = round(float(np.mean(correlations)) * 100.0, 2) if correlations else 100.0
-
-        tracking_confidence = calculate_tracking_confidence(session.get("boxes", []))
-        metadata_score = 100.0
-
-        prediction_confidence = avg_score if avg_score >= 0.5 else (1.0 - avg_score)
-        fused_confidence = round(
-            (prediction_confidence * 0.7 +
-             (frame_consistency / 100.0) * 0.15 +
-             (tracking_confidence / 100.0) * 0.15) * 100.0,
-            2
-        )
-
-        verdict = "AUTHENTIC" if authenticity_score >= 50.0 else "MANIPULATED"
-        risk_level = "LOW" if authenticity_score >= 75.0 else ("MEDIUM" if authenticity_score >= 50.0 else "HIGH")
-
-        detected_evidence = []
-        forensic_observations = [
-            f"Analyzed {len(session['scores'])} biometric stream frames.",
-            f"Face tracking continuity: {tracking_confidence}%.",
-            f"Inter-frame visual variance consistency: {frame_consistency}%."
-        ]
-
-        if verdict == "AUTHENTIC":
-            detected_evidence.append("No active manipulation signatures detected in biometric stream.")
-        else:
-            detected_evidence.append("Biometric manipulation signatures identified in face region of stream.")
-            detected_evidence.append(f"Stream manipulation rating: {fake_probability}%.")
-
-        verification_id = f"VRF-{int(time.time() * 1000)}"
-
-        return {
-            "status": "completed",
-            "progress": 1.0,
-            "result": {
-                "verificationId": verification_id,
-                "verifiedAt": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-                "mediaType": "live/stream",
-                "source": "Live Stream",
-                "authenticityScore": authenticity_score,
-                "fakeProbability": fake_probability,
-                "confidence": fused_confidence,
-                "metadataScore": metadata_score,
-                "frameConsistency": frame_consistency,
-                "ocrConfidence": 0.0,
-                "trackingConfidence": tracking_confidence,
-                "manipulationScore": fake_probability,
-                "verdict": verdict,
-                "riskLevel": risk_level,
-                "detectedEvidence": detected_evidence,
-                "forensicObservations": forensic_observations,
-                "reportHash": hashlib.sha256(f"{id}-{time.time()}".encode()).hexdigest()
-            }
-        }
+        try:
+            return stream_pipeline.get_session_summary(session)
+        except ValueError as ve:
+            return {"status": "failed", "error": str(ve)}
 
     raise HTTPException(status_code=404, detail="Job/Session ID not found.")
 
@@ -654,65 +429,11 @@ def report_create(request: dict):
         session = streams_db[session_id]
         if len(session["scores"]) == 0:
             raise HTTPException(status_code=400, detail="Biometric stream analysis failed: No frames with faces detected.")
-
-        avg_score = float(np.mean(session["scores"]))
-        authenticity_score = round(avg_score * 100.0, 2)
-        fake_probability = round((1.0 - avg_score) * 100.0, 2)
-
-        correlations = []
-        for i in range(len(session.get("hists", [])) - 1):
-            corr = cv2.compareHist(session["hists"][i], session["hists"][i+1], cv2.HISTCMP_CORREL)
-            correlations.append(corr)
-        frame_consistency = round(float(np.mean(correlations)) * 100.0, 2) if correlations else 100.0
-
-        tracking_confidence = calculate_tracking_confidence(session.get("boxes", []))
-        metadata_score = 100.0
-
-        prediction_confidence = avg_score if avg_score >= 0.5 else (1.0 - avg_score)
-        fused_confidence = round(
-            (prediction_confidence * 0.7 +
-             (frame_consistency / 100.0) * 0.15 +
-             (tracking_confidence / 100.0) * 0.15) * 100.0,
-            2
-        )
-
-        verdict = "AUTHENTIC" if authenticity_score >= 50.0 else "MANIPULATED"
-        risk_level = "LOW" if authenticity_score >= 75.0 else ("MEDIUM" if authenticity_score >= 50.0 else "HIGH")
-
-        detected_evidence = []
-        forensic_observations = [
-            f"Analyzed {len(session['scores'])} biometric stream frames.",
-            f"Face tracking continuity: {tracking_confidence}%.",
-            f"Inter-frame visual variance consistency: {frame_consistency}%."
-        ]
-
-        if verdict == "AUTHENTIC":
-            detected_evidence.append("No active manipulation signatures detected in biometric stream.")
-        else:
-            detected_evidence.append("Biometric manipulation signatures identified in face region of stream.")
-            detected_evidence.append(f"Stream manipulation rating: {fake_probability}%.")
-
-        verification_id = f"VRF-{int(time.time() * 1000)}"
-
-        return {
-            "verificationId": verification_id,
-            "verifiedAt": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-            "mediaType": "live/stream",
-            "source": "Live Stream",
-            "authenticityScore": authenticity_score,
-            "fakeProbability": fake_probability,
-            "confidence": fused_confidence,
-            "metadataScore": metadata_score,
-            "frameConsistency": frame_consistency,
-            "ocrConfidence": 0.0,
-            "trackingConfidence": tracking_confidence,
-            "manipulationScore": fake_probability,
-            "verdict": verdict,
-            "riskLevel": risk_level,
-            "detectedEvidence": detected_evidence,
-            "forensicObservations": forensic_observations,
-            "reportHash": hashlib.sha256(f"{session_id}-{time.time()}".encode()).hexdigest()
-        }
+        try:
+            summary = stream_pipeline.get_session_summary(session)
+            return summary["result"]
+        except ValueError as ve:
+            raise HTTPException(status_code=400, detail=str(ve))
 
     raise HTTPException(status_code=400, detail="Invalid request parameters. Provide session_id or job_id.")
 
@@ -817,24 +538,17 @@ async def detect_video(request: DetectVideoRequest):
                 video_path = tmp.name
 
             try:
-                result = run_full_pipeline(video_path, source="Base64 Upload")
+                result = video_pipeline.process(video_path, source="Base64 Upload")
+                cache.set(video_hash, result)
                 return JSONResponse(content={"cached": False, "result": result})
             finally:
                 if os.path.exists(video_path):
                     os.remove(video_path)
 
         elif request.video_url:
-            cached = cache.get(request.video_url)
-            if cached:
-                return JSONResponse(content={"cached": True, "result": cached})
-
-            video_path = download_video_from_url(request.video_url)
-            try:
-                result = run_full_pipeline(video_path, source="URL Upload")
-                return JSONResponse(content={"cached": False, "result": result})
-            finally:
-                if os.path.exists(video_path):
-                    os.remove(video_path)
+            result = link_pipeline.process(request.video_url, source="URL Upload")
+            cache.set(request.video_url, result)
+            return JSONResponse(content={"cached": False, "result": result})
         else:
             raise HTTPException(status_code=400, detail="Provide video_base64 or video_url")
     except HTTPException:

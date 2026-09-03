@@ -27,12 +27,9 @@ class FramePreprocessor:
         return cv2.LUT(image, table)
 
     def normalize(self, image: np.ndarray) -> np.ndarray:
-        image = image.astype(np.float32)
-        mean = np.array([123.675, 116.28, 103.53], dtype=np.float32)
-        std = np.array([58.395, 57.12, 57.375], dtype=np.float32)
-        image = image - mean
-        image = image / std
-        return image
+        if len(image.shape) == 3 and image.shape[2] == 3:
+            image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        return image.astype(np.float32)
 
     def align_face(self, face_crop: np.ndarray, landmarks: Optional[Tuple] = None) -> np.ndarray:
         if landmarks is None:

@@ -345,20 +345,45 @@ class LinkProcessingTimelineLog extends StatelessWidget {
 class LinkCircularConfidenceGauge extends StatelessWidget {
   final String verdict;
   final double confidenceScore;
+  final String? reason;
 
   const LinkCircularConfidenceGauge({
     super.key,
     required this.verdict,
     required this.confidenceScore,
+    this.reason,
   });
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final isReal = verdict.toUpperCase() == 'AUTHENTIC';
-    final accentColor = isReal ? const Color(0xFF00E896) : const Color(0xFFFF3B5C);
     final text = isDark ? const Color(0xFFE8F0FF) : const Color(0xFF0F172A);
     final muted = isDark ? const Color(0xFF6B7FA8) : const Color(0xFF64748B);
+
+    final vUpper = verdict.toUpperCase();
+    final bool isUnverified = vUpper == 'UNVERIFIED';
+    final bool isInconclusive = vUpper == 'INCONCLUSIVE';
+    final bool isAuthentic = vUpper == 'AUTHENTIC';
+
+    final Color accentColor = isAuthentic
+        ? const Color(0xFF00E896)
+        : (isInconclusive
+            ? const Color(0xFFF59E0B)
+            : (isUnverified ? const Color(0xFF94A3B8) : const Color(0xFFFF3B5C)));
+
+    final String displayScore = isUnverified
+        ? 'N/A'
+        : '${confidenceScore.toStringAsFixed(1)}%';
+
+    final String subtitleText = (reason != null && reason!.trim().isNotEmpty)
+        ? reason!
+        : (isAuthentic
+            ? 'High spatial & temporal biometric integrity verified.'
+            : (isInconclusive
+                ? 'Borderline visual evidence; model probability is uncertain.'
+                : (isUnverified
+                    ? 'AI model inference unavailable or video payload not analysed.'
+                    : 'Facial boundary anomalies & synthesis detected.')));
 
     return Column(
       children: [
@@ -369,7 +394,7 @@ class LinkCircularConfidenceGauge extends StatelessWidget {
               width: 150,
               height: 150,
               child: CircularProgressIndicator(
-                value: (confidenceScore / 100.0).clamp(0.0, 1.0),
+                value: isUnverified ? 0.0 : (confidenceScore / 100.0).clamp(0.0, 1.0),
                 strokeWidth: 10,
                 backgroundColor: isDark ? const Color(0xFF162035) : const Color(0xFFE2E8F0),
                 valueColor: AlwaysStoppedAnimation<Color>(accentColor),
@@ -379,12 +404,12 @@ class LinkCircularConfidenceGauge extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  '${confidenceScore.toStringAsFixed(1)}%',
-                  style: TextStyle(color: text, fontSize: 28, fontWeight: FontWeight.w900),
+                  displayScore,
+                  style: TextStyle(color: text, fontSize: isUnverified ? 24 : 28, fontWeight: FontWeight.w900),
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  isReal ? 'AUTHENTIC' : 'MANIPULATED',
+                  vUpper,
                   style: TextStyle(
                     color: accentColor,
                     fontSize: 11,
@@ -398,9 +423,7 @@ class LinkCircularConfidenceGauge extends StatelessWidget {
         ),
         const SizedBox(height: 12),
         Text(
-          isReal
-              ? 'High spatial & temporal biometric integrity verified.'
-              : 'Facial boundary anomalies & synthesis detected.',
+          subtitleText,
           textAlign: TextAlign.center,
           style: TextStyle(color: muted, fontSize: 12),
         ),
@@ -423,18 +446,22 @@ class LinkForensicDashboard extends StatelessWidget {
     final text = isDark ? const Color(0xFFE8F0FF) : const Color(0xFF0F172A);
     final muted = isDark ? const Color(0xFF6B7FA8) : const Color(0xFF64748B);
 
-    final overallConfidence = result.confidence;
-    final authenticityScore = result.authenticityScore;
-    final manipulationScore = result.manipulationScore;
-    final framesAnalysed = result.framesAnalysedCount ?? 64;
-    final suspiciousFrames = result.suspiciousFramesCount ?? (result.verdict == 'AUTHENTIC' ? 0 : 3);
-    final faceDetection = result.faceDetectionRate ?? 100.0;
-    final processingTime = result.processingTimeSec ?? 8.4;
+    final isUnverified = result.verdict.toUpperCase() == 'UNVERIFIED';
+
+    final overallConfidence = isUnverified ? 'N/A' : '${result.confidence.toStringAsFixed(1)}%';
+    final authenticityScore = isUnverified ? 'N/A' : '${result.authenticityScore.toStringAsFixed(1)}%';
+    final manipulationScore = isUnverified ? 'N/A' : '${result.manipulationScore.toStringAsFixed(1)}%';
+    final framesAnalysed = result.framesAnalysedCount ?? 0;
+    final suspiciousFrames = isUnverified
+        ? 0
+        : (result.suspiciousFramesCount ?? (result.verdict == 'AUTHENTIC' ? 0 : 3));
+    final faceDetection = result.faceDetectionRate ?? 0.0;
+    final processingTime = result.processingTimeSec ?? 0.0;
 
     final metrics = [
-      {'label': 'Overall Confidence', 'val': '${overallConfidence.toStringAsFixed(1)}%', 'icon': Icons.speed_rounded, 'color': const Color(0xFF00C8FF)},
-      {'label': 'Authenticity Score', 'val': '${authenticityScore.toStringAsFixed(1)}%', 'icon': Icons.verified_user_rounded, 'color': const Color(0xFF00E896)},
-      {'label': 'Manipulation Score', 'val': '${manipulationScore.toStringAsFixed(1)}%', 'icon': Icons.report_problem_rounded, 'color': const Color(0xFFFF3B5C)},
+      {'label': 'Overall Confidence', 'val': overallConfidence, 'icon': Icons.speed_rounded, 'color': const Color(0xFF00C8FF)},
+      {'label': 'Authenticity Score', 'val': authenticityScore, 'icon': Icons.verified_user_rounded, 'color': const Color(0xFF00E896)},
+      {'label': 'Manipulation Score', 'val': manipulationScore, 'icon': Icons.report_problem_rounded, 'color': const Color(0xFFFF3B5C)},
       {'label': 'Frames Analysed', 'val': '$framesAnalysed', 'icon': Icons.movie_rounded, 'color': const Color(0xFF8B5CF6)},
       {'label': 'Suspicious Frames', 'val': '$suspiciousFrames', 'icon': Icons.warning_amber_rounded, 'color': const Color(0xFFF59E0B)},
       {'label': 'Face Detection', 'val': '${faceDetection.toStringAsFixed(0)}%', 'icon': Icons.face_rounded, 'color': const Color(0xFF10B981)},
@@ -738,7 +765,7 @@ class LinkDownloadErrorCard extends StatelessWidget {
             ),
             child: Text(
               errorMessage.isNotEmpty
-                  ? errorMessage
+                  ? errorMessage.replaceAll('Exception: ', '').trim()
                   : 'This video link cannot be downloaded due to platform access rules or private stream restrictions.',
               style: TextStyle(color: text, fontSize: 12, height: 1.4),
             ),

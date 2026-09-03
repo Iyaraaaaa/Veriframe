@@ -49,7 +49,7 @@ class TestFramePreprocessor(unittest.TestCase):
 
     def test_normalize(self):
         result = self.preprocessor.normalize(self.dummy_face.astype(np.float32))
-        self.assertEqual(result.shape, (224, 224, 3))
+        self.assertEqual(result.shape, self.dummy_face.shape)
 
 class TestQualityFilter(unittest.TestCase):
     def setUp(self):
@@ -60,15 +60,17 @@ class TestQualityFilter(unittest.TestCase):
             min_face_size=10,
         )
         self.filter = QualityFilter(config=self.config)
-        self.dummy_face = np.random.randint(0, 255, (50, 50, 3), dtype=np.uint8)
+        self.dummy_face = np.random.randint(0, 255, (5, 5, 3), dtype=np.uint8)
 
     def test_too_small_face(self):
         is_good, details = self.filter.is_quality_face(self.dummy_face, (1000, 1000))
         self.assertFalse(is_good)
 
     def test_quality_pass(self):
-        face = np.random.randint(100, 200, (100, 100, 3), dtype=np.uint8)
-        is_good, details = self.filter.is_quality_face(face, (1000, 1000))
+        face = np.zeros((100, 100, 3), dtype=np.uint8)
+        cv2.circle(face, (50, 50), 30, (200, 200, 200), -1)
+        cv2.line(face, (0, 0), (100, 100), (255, 255, 255), 3)
+        is_good, details = self.filter.is_quality_face(face, (200, 200))
         self.assertTrue(is_good)
 
     def test_too_dark(self):

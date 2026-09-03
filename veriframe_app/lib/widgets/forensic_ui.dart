@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:veriframe_app/utils/theme.dart';
 
 /// Premium, enterprise-grade UI primitives for the forensic report screens.
@@ -28,18 +28,25 @@ _SeverityStyle _severityStyle(String level, bool isDark) {
       VFColors.emerald600.withValues(alpha:0.16),
       l,
     );
-  } else if (l == 'MEDIUM' || l == 'WARNING' || l == 'ELEVATED') {
+  } else if (l == 'MEDIUM' || l == 'WARNING' || l == 'ELEVATED' || l == 'INCONCLUSIVE') {
     s = _SeverityStyle(
       VFColors.amber600,
       VFColors.amber50,
       VFColors.amber600.withValues(alpha:0.16),
       l,
     );
-  } else if (l == 'HIGH' || l == 'CRITICAL' || l == 'SEVERE') {
+  } else if (l == 'HIGH' || l == 'CRITICAL' || l == 'SEVERE' || l == 'MANIPULATED') {
     s = _SeverityStyle(
       VFColors.red600,
       VFColors.red50,
       VFColors.red600.withValues(alpha:0.16),
+      l,
+    );
+  } else if (l == 'UNVERIFIED' || l == 'UNKNOWN') {
+    s = _SeverityStyle(
+      const Color(0xFF64748B),
+      const Color(0xFFF1F5F9),
+      const Color(0xFF64748B).withValues(alpha:0.16),
       l,
     );
   } else {

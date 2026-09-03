@@ -25,6 +25,8 @@ class _Pal {
 
   static const authentic = Color(0xFF1F7A54);
   static const manipulated = Color(0xFFC1483F);
+  static const warning = Color(0xFFF59E0B);
+  static const slate = Color(0xFF94A3B8);
   Color get manipulatedBg => isDark ? const Color(0x33C1483F) : const Color(0xFFFBEDEC);
   Color get data => isDark ? const Color(0xFF64B5F6) : const Color(0xFF35608F);
   Color get dataBg => isDark ? const Color(0x3364B5F6) : const Color(0xFFEAF1F8);
@@ -479,14 +481,26 @@ class _ReportCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context)!;
-    final isReal = report.verdict.toUpperCase() == 'AUTHENTIC';
+    final vUpper = report.verdict.toUpperCase();
+    final isReal = vUpper == 'AUTHENTIC';
+    final isInconclusive = vUpper == 'INCONCLUSIVE';
+    final isUnverified = vUpper == 'UNVERIFIED';
+
     final isManipulatedOrHighRisk = !isReal ||
         report.riskLevel.toUpperCase() == 'HIGH' ||
         report.riskLevel.toUpperCase() == 'CRITICAL';
-    final statusColor = isReal ? _Pal.authentic : _Pal.manipulated;
-    final displayScore = isReal
-        ? report.authenticityScore
-        : report.fakeProbability;
+
+    final statusColor = isReal
+        ? _Pal.authentic
+        : (isInconclusive
+            ? _Pal.warning
+            : (isUnverified ? _Pal.slate : _Pal.manipulated));
+    final displayScore = isUnverified
+        ? 0.0
+        : (isReal ? report.authenticityScore : report.fakeProbability);
+    final displayScoreStr = isUnverified
+        ? 'N/A'
+        : '${displayScore.toStringAsFixed(1)}%';
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -564,7 +578,7 @@ class _ReportCard extends StatelessWidget {
                           ),
                           const SizedBox(width: 7),
                           Text(
-                            '${displayScore.toStringAsFixed(1)}%',
+                            displayScoreStr,
                             style: TextStyle(
                               fontSize: 11,
                               fontWeight: FontWeight.w700,

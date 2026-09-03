@@ -89,10 +89,15 @@ class _EvidenceVideoPlayerScreenState extends State<EvidenceVideoPlayerScreen> {
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context)!;
     final r = widget.report;
-    final isReal = r.verdict.toUpperCase() == 'AUTHENTIC';
+    final vUpper = r.verdict.toUpperCase();
+    final isReal = vUpper == 'AUTHENTIC';
+    final isInconclusive = vUpper == 'INCONCLUSIVE';
+    final isUnverified = vUpper == 'UNVERIFIED';
     final accentColor = isReal
         ? const Color(0xFF00E896)
-        : const Color(0xFFFF3B5C);
+        : (isInconclusive
+            ? const Color(0xFFF59E0B)
+            : (isUnverified ? const Color(0xFF94A3B8) : const Color(0xFFFF3B5C)));
 
     final hasCloudUrl =
         r.videoUrl != null && r.videoUrl!.trim().isNotEmpty;
@@ -201,7 +206,9 @@ class _EvidenceVideoPlayerScreenState extends State<EvidenceVideoPlayerScreen> {
                                 ),
                                 Spacer(),
                                 Text(
-                                  '${r.verdict} • ${(isReal ? r.authenticityScore : r.fakeProbability).toStringAsFixed(1)}%',
+                                  isUnverified
+                                      ? '${r.verdict} • N/A'
+                                      : '${r.verdict} • ${(isReal ? r.authenticityScore : r.fakeProbability).toStringAsFixed(1)}%',
                                   style: TextStyle(
                                     color: accentColor,
                                     fontWeight: FontWeight.bold,

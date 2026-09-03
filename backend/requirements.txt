@@ -6,8 +6,8 @@ python-multipart
 mediapipe
 opencv-python-headless
 scikit-learn
-insightface
 requests
 reportlab
 pydantic-settings
 python-dotenv
+yt-dlp

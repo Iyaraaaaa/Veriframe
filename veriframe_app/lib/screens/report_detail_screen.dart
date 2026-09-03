@@ -73,16 +73,27 @@ class _ReportDetailPageState extends State<ReportDetailPage> {
   Widget build(BuildContext context) {
      final r = widget.report;
      final loc = AppLocalizations.of(context)!;
-     final isReal = r.verdict.toUpperCase() == 'AUTHENTIC';
+     final vUpper = r.verdict.toUpperCase();
+     final isReal = vUpper == 'AUTHENTIC';
+     final isInconclusive = vUpper == 'INCONCLUSIVE';
+     final isUnverified = vUpper == 'UNVERIFIED';
      final pal = _pal;
 
-    final verdictColor = isReal ? pal.authentic : pal.manipulated;
-    final verdictBg = isReal ? pal.authenticBg : pal.manipulatedBg;
+    final verdictColor = isReal
+        ? pal.authentic
+        : (isInconclusive
+            ? pal.risk
+            : (isUnverified ? const Color(0xFF64748B) : pal.manipulated));
+    final verdictBg = isReal
+        ? pal.authenticBg
+        : (isInconclusive
+            ? pal.risk.withValues(alpha: 0.12)
+            : (isUnverified ? const Color(0xFFF1F5F9) : pal.manipulatedBg));
     final riskColor = r.riskLevel.toUpperCase() == 'LOW'
         ? pal.authentic
         : (r.riskLevel.toUpperCase() == 'MEDIUM'
               ? pal.risk
-              : pal.manipulated);
+              : (r.riskLevel.toUpperCase() == 'UNKNOWN' ? const Color(0xFF64748B) : pal.manipulated));
 
     return Scaffold(
       backgroundColor: pal.bg,
@@ -436,8 +447,18 @@ class _ConfidenceCard extends StatelessWidget {
     final pal = _Pal(Theme.of(context).brightness == Brightness.dark);
     final loc = AppLocalizations.of(context)!;
     final r = report;
-    final isReal = r.verdict.toUpperCase() == 'AUTHENTIC';
-    final displayScore = isReal ? r.authenticityScore : r.fakeProbability;
+    final vUpper = r.verdict.toUpperCase();
+    final isReal = vUpper == 'AUTHENTIC';
+    final isInconclusive = vUpper == 'INCONCLUSIVE';
+    final isUnverified = vUpper == 'UNVERIFIED';
+    final displayScore = isUnverified
+        ? 0.0
+        : (isReal ? r.authenticityScore : r.fakeProbability);
+    final captionText = isReal
+        ? loc.verifyAuthenticLabel
+        : (isInconclusive
+            ? 'INCONCLUSIVE'
+            : (isUnverified ? 'UNVERIFIED' : loc.verifyManipulatedLabel));
     return _CardShell(
       child: Column(
         children: [
@@ -455,7 +476,7 @@ class _ConfidenceCard extends StatelessWidget {
           _CircularGauge(
             value: displayScore,
             color: verdictColor,
-            caption: isReal ? loc.verifyAuthenticLabel : loc.verifyManipulatedLabel,
+            caption: captionText,
           ),
           const SizedBox(height: 22),
           Container(height: 1, color: pal.border),

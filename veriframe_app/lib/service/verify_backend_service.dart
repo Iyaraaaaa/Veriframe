@@ -4,10 +4,10 @@ import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// Custom exception types for descriptive error handling
 class VerifyException implements Exception {
   final String message;
   VerifyException(this.message);
+
   @override
   String toString() => message;
 }
@@ -67,12 +67,31 @@ class VerifyBackendService {
   static const String _kBackendKey = 'backend_base_url';
   final http.Client _client = http.Client();
 
+  static const Map<String, String> _tunnelHeaders = {
+    'Bypass-Tunnel-Remainder': 'true',
+    'bypass-tunnel-reminder': 'true',
+    'User-Agent': 'VeriframeApp/2.0',
+  };
+
+  Map<String, String> _headers([Map<String, String>? extra]) {
+    final headers = Map<String, String>.from(_tunnelHeaders);
+    if (extra != null) {
+      headers.addAll(extra);
+    }
+    return headers;
+  }
+
   /// Retrieve the base URL, with auto-detection for Android Emulator
   Future<String> getBaseUrl() async {
     final prefs = await SharedPreferences.getInstance();
     final saved = prefs.getString(_kBackendKey);
     if (saved != null && saved.isNotEmpty) {
       return saved.replaceAll(RegExp(r'/$'), '');
+    }
+
+    const activeTunnelUrl = 'https://slimy-eels-carry.loca.lt';
+    if (await isBackendAvailable(activeTunnelUrl)) {
+      return activeTunnelUrl;
     }
 
     if (Platform.isAndroid) {
@@ -84,7 +103,7 @@ class VerifyBackendService {
       }
     }
 
-    return '';
+    return activeTunnelUrl;
   }
 
   /// Save base URL configured by user
@@ -99,7 +118,7 @@ class VerifyBackendService {
     if (baseUrl.isEmpty) return false;
     try {
       final uri = Uri.parse(baseUrl);
-      final response = await _client.get(uri).timeout(const Duration(seconds: 2));
+      final response = await _client.get(uri, headers: _headers()).timeout(const Duration(seconds: 4));
       return response.statusCode == 200 || response.statusCode == 404;
     } catch (_) {
       return false;
@@ -121,10 +140,11 @@ class VerifyBackendService {
         onProgress: onUploadProgress,
       );
 
+      request.headers.addAll(_tunnelHeaders);
       request.files.add(await http.MultipartFile.fromPath('file', file.path));
 
       final streamedResponse = await request.send().timeout(
-        const Duration(seconds: 90),
+        const Duration(seconds: 120),
         onTimeout: () => throw TimeoutException('Upload timed out.'),
       );
 
@@ -160,9 +180,9 @@ class VerifyBackendService {
     try {
       final response = await _client.post(
         uri,
-        headers: {'Content-Type': 'application/json'},
+        headers: _headers({'Content-Type': 'application/json'}),
         body: jsonEncode({'url': url}),
-      ).timeout(const Duration(seconds: 20));
+      ).timeout(const Duration(seconds: 25));
 
       if (response.statusCode != 200) {
         throw ServerException(_parseErrorDetail(response.body, response.statusCode));
@@ -189,9 +209,9 @@ class VerifyBackendService {
     try {
       final response = await _client.post(
         uri,
-        headers: {'Content-Type': 'application/json'},
+        headers: _headers({'Content-Type': 'application/json'}),
         body: jsonEncode({'stream_url': streamUrl}),
-      ).timeout(const Duration(seconds: 20));
+      ).timeout(const Duration(seconds: 25));
 
       if (response.statusCode != 200) {
         throw ServerException(_parseErrorDetail(response.body, response.statusCode));
@@ -222,6 +242,7 @@ class VerifyBackendService {
     try {
       final response = await _client.post(
         uri,
+        headers: _headers(),
         body: {
           'frame_base64': frameBase64,
           'session_id': sessionId,
@@ -241,24 +262,28 @@ class VerifyBackendService {
     }
   }
 
-  /// GET /analysis/{id} - polls job status
+  /// GET /analysis/{id} - polls job status with robust retries
   Future<Map<String, dynamic>> getAnalysis(String baseUrl, String id) async {
     final uri = Uri.parse('$baseUrl/analysis/$id');
     
-    try {
-      final response = await _client.get(uri).timeout(const Duration(seconds: 10));
-
-      if (response.statusCode != 200) {
-        throw ServerException(_parseErrorDetail(response.body, response.statusCode));
+    for (int attempt = 0; attempt < 3; attempt++) {
+      try {
+        final response = await _client.get(uri, headers: _headers()).timeout(const Duration(seconds: 15));
+        if (response.statusCode == 200) {
+          final text = response.body.trim();
+          if (text.startsWith('{')) {
+            final data = jsonDecode(text);
+            if (data is Map) {
+              return Map<String, dynamic>.from(data);
+            }
+          }
+        }
+      } catch (_) {}
+      if (attempt < 2) {
+        await Future.delayed(Duration(milliseconds: 500 * (attempt + 1)));
       }
-
-      final data = jsonDecode(response.body);
-      return Map<String, dynamic>.from(data);
-    } on SocketException catch (_) {
-      throw BackendOfflineException('Backend server offline.');
-    } on TimeoutException catch (_) {
-      throw ConnectionTimeoutException('Status poll timed out.');
     }
+    throw ServerException('Failed to retrieve analysis status for job $id.');
   }
 
   /// POST /report/create - creates forensic report
@@ -272,7 +297,7 @@ class VerifyBackendService {
     try {
       final response = await _client.post(
         uri,
-        headers: {'Content-Type': 'application/json'},
+        headers: _headers({'Content-Type': 'application/json'}),
         body: jsonEncode({
           'session_id': sessionId,
           'job_id': jobId,
@@ -299,7 +324,7 @@ class VerifyBackendService {
     try {
       final response = await _client.post(
         uri,
-        headers: {'Content-Type': 'application/json'},
+        headers: _headers({'Content-Type': 'application/json'}),
         body: jsonEncode({
           'report_id': reportId,
           'target': target,
@@ -327,6 +352,6 @@ class VerifyBackendService {
         return data['detail'].toString();
       }
     } catch (_) {}
-    return 'Server error (Status $statusCode)';
+    return 'Server error (HTTP $statusCode).';
   }
 }

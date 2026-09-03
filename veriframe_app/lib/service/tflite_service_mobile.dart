@@ -80,11 +80,11 @@ class TFLiteServiceMobile implements TFLiteService {
           width,
           (x) {
             final pixel = resized.getPixel(x, y);
-            // Model expects raw pixel values in 0-255 range and BGR channel order
+            // Model expects raw pixel values in 0-255 range and RGB channel order
             return [
-              pixel.b.toDouble(),
-              pixel.g.toDouble(),
               pixel.r.toDouble(),
+              pixel.g.toDouble(),
+              pixel.b.toDouble(),
             ];
           },
         ),
@@ -108,12 +108,12 @@ class TFLiteServiceMobile implements TFLiteService {
 
     if (isSigmoid) {
       final sigmoidScore = outputBuffer[0][0];
-      // Alphabetical order from training: fake=0 (low score), real=1 (high score)
+      // Model training class order: real=0 (low score), fake=1 (high score)
       if (sigmoidScore >= 0.5) {
-        label = "real";
+        label = "fake";
         confidence = sigmoidScore;
       } else {
-        label = "fake";
+        label = "real";
         confidence = 1.0 - sigmoidScore;
       }
       rawValues = [sigmoidScore];

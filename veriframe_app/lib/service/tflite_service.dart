@@ -17,6 +17,9 @@ class InferenceResult {
     required this.rawOutput,
     required this.inferenceMs,
   });
+
+  double get fakeProbability =>
+      rawOutput.isNotEmpty ? rawOutput.first : (label.toLowerCase() == 'fake' ? confidence : 1.0 - confidence);
 }
 
 abstract class TFLiteService {
