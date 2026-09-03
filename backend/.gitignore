@@ -8,9 +8,10 @@ htmlcov/
 dist/
 build/
 logs/
-cache/
 *.db
 *.sqlite
+!cache/*.py
+!cache/__init__.py
 .env
 .venv/
 venv/

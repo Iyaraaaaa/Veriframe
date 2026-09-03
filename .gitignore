@@ -55,7 +55,9 @@ __pycache__/
 # =========================
 *.log
 *.db
-cache/
+/cache/
+!backend/cache/
+!backend/cache/**
 pip*.txt
 py*.txt
 ver_*.txt
