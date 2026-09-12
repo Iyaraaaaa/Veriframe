@@ -173,8 +173,12 @@ class StreamPipeline:
             }
 
         if has_faces:
-            # Use median instead of mean — more robust against single bad frames
-            avg_fake_prob = float(np.median(session["scores"]))
+            # Use median for face scores — robust against bad frame outliers
+            avg_face_prob = float(np.median(session["scores"]))
+            # Blend scene forensics (computed per-frame but previously ignored in face-track mode)
+            # Match the 70% face + 30% scene fusion used by video_pipeline and link_verification_v2
+            avg_scene_prob = float(np.mean(session["scene_scores"])) if session["scene_scores"] else avg_face_prob
+            avg_fake_prob = float(np.clip(0.70 * avg_face_prob + 0.30 * avg_scene_prob, 0.0, 1.0))
             correlations = []
             for i in range(len(session["hists"]) - 1):
                 corr = cv2.compareHist(session["hists"][i], session["hists"][i+1], cv2.HISTCMP_CORREL)

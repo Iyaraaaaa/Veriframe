@@ -8,7 +8,7 @@ logger = logging.getLogger("veriframe.preprocessing")
 class FramePreprocessor:
     def __init__(self, target_size: Tuple[int, int] = (224, 224)):
         self.target_size = target_size
-        self.clip_limit = 2.0
+        self.clip_limit = 1.5   # Reduced: 2.0 over-enhances dark faces, creating artificial edges
         self.tile_grid_size = (8, 8)
         self.gamma = 1.2
 

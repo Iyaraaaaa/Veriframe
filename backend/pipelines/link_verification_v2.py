@@ -372,11 +372,16 @@ class LinkVerificationV2:
     def extract_frames(self, video_path: str, duration: float, total_frames: int) -> List[int]:
         """
         Stage 5: Adaptive Frame Sampling.
-        Samples throughout the timeline based on duration:
-        - short (< 10s): 8-16 frames
-        - medium (10-60s): 16-32 frames
-        - long (> 60s): 32-64 frames
+        Uses AdaptiveFrameSampler (scene-change + motion peak aware) instead of uniform linspace,
+        ensuring the most informative frames are captured across the video timeline.
         """
+        # Use the scene-aware AdaptiveFrameSampler instead of uniform linspace
+        # This captures scene transitions and motion peaks — most informative for deepfake detection
+        sampled = self.frame_sampler.sample(video_path)
+        if sampled:
+            return sampled
+
+        # Fallback to linspace if sampler fails (e.g. very short video)
         if duration < 10.0:
             target_count = 16
         elif duration <= 60.0:
@@ -496,7 +501,9 @@ class LinkVerificationV2:
         - 0.30 <= prob <= 0.70 -> INCONCLUSIVE / UNCERTAIN
         - prob > 0.70 -> FAKE / LIKELY_FAKE
         """
-        if valid_face_count < 2 or (0.30 <= aggregated_prob <= 0.70):
+        # Require at least 1 valid face (not 2) — single-face videos are common in short clips
+        # A video with 1 clear fake face scoring 0.95 should NOT return UNCERTAIN
+        if valid_face_count < 1 or (0.30 <= aggregated_prob <= 0.70):
             return "INCONCLUSIVE", "UNCERTAIN", "MEDIUM"
 
         if aggregated_prob > 0.70:
