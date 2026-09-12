@@ -8,7 +8,7 @@ class Config:
     MAX_FRAMES: int = 40
     TARGET_FRAMES: int = 100
     MIN_FACE_SIZE: int = 20
-    BLUR_VAR_THRESHOLD: float = 15.0
+    BLUR_VAR_THRESHOLD: float = 60.0        # Relaxed for compressed/downloaded videos
     BRIGHTNESS_MIN: float = 10.0
     BRIGHTNESS_MAX: float = 245.0
     FACE_SIZE_RATIO_MIN: float = 0.02
@@ -18,7 +18,7 @@ class Config:
     TEMPORAL_WINDOW_SIZE: int = 15
     STREAM_WINDOW_SIZE: int = 30
     STREAM_INFERENCE_INTERVAL_MS: int = 400
-    CONFIDENCE_CALIBRATION_TEMP: float = 1.0
+    CONFIDENCE_CALIBRATION_TEMP: float = 1.5  # Softens overconfident predictions
     DUPLICATE_FRAME_THRESHOLD: float = 0.92
     SCENE_CHANGE_THRESHOLD: float = 0.3
     MOTION_PEAK_THRESHOLD: float = 15.0

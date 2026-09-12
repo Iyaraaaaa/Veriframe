@@ -173,7 +173,8 @@ class StreamPipeline:
             }
 
         if has_faces:
-            avg_fake_prob = float(np.mean(session["scores"]))
+            # Use median instead of mean — more robust against single bad frames
+            avg_fake_prob = float(np.median(session["scores"]))
             correlations = []
             for i in range(len(session["hists"]) - 1):
                 corr = cv2.compareHist(session["hists"][i], session["hists"][i+1], cv2.HISTCMP_CORREL)

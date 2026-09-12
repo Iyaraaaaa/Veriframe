@@ -6,7 +6,7 @@ from utils.image import compute_face_quality_score, compute_blur_variance, compu
 
 @dataclass
 class FaceQualityConfig:
-    blur_variance_threshold: float = 100.0
+    blur_variance_threshold: float = 60.0   # Relaxed for compressed/downloaded video
     brightness_min: float = 30.0
     brightness_max: float = 220.0
     face_size_ratio_min: float = 0.05

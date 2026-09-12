@@ -171,14 +171,15 @@ class VideoPipeline:
         )
 
         # 3-State Verdict & Risk Mapping
-        if fake_probability > 65.0:
+        # Thresholds widened to 30/70 for a broader UNCERTAIN zone — reduces false positives & negatives
+        if fake_probability > 70.0:
             legacy_verdict = "MANIPULATED"
             verdict = "FAKE" if fake_probability >= 85.0 else "LIKELY_FAKE"
             risk_level = "HIGH"
             detectedEvidenceMsg = "Synthetic generative manipulation signatures identified in video."
             if not detected_evidence:
                 detected_evidence.append(detectedEvidenceMsg)
-        elif fake_probability < 35.0:
+        elif fake_probability < 30.0:
             legacy_verdict = "AUTHENTIC"
             verdict = "REAL" if fake_probability <= 15.0 else "LIKELY_REAL"
             risk_level = "LOW"

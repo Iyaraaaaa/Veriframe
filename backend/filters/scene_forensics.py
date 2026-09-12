@@ -178,8 +178,9 @@ class SceneForensicsAnalyzer:
         avg_noise = float(np.mean(noise_scores)) if noise_scores else 0.5
         avg_motion = float(np.mean(motion_scores)) if motion_scores else 0.5
 
-        # Weighted combination: 40% Spectral FFT + 35% Motion Flow + 25% Sensor Noise
-        aggregated_fake_prob = float(np.clip(0.40 * avg_freq + 0.35 * avg_motion + 0.25 * avg_noise, 0.0, 1.0))
+        # Weighted combination: 50% Spectral FFT + 35% Motion Flow + 15% Sensor Noise
+        # FFT is the most reliable AI signal; Noise has high false-positive on compressed video
+        aggregated_fake_prob = float(np.clip(0.50 * avg_freq + 0.35 * avg_motion + 0.15 * avg_noise, 0.0, 1.0))
 
         observations = [
             f"Full-Scene Forensic Analysis evaluated {len(frames)} keyframes across spectral and temporal domains.",

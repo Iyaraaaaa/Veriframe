@@ -47,6 +47,16 @@ class AdaptiveFrameSampler:
         for i in range(interval, n, interval):
             candidates.add(min(i, n - 1))
 
+        # Guarantee at least 15 candidates for short videos
+        # to ensure reliable inference regardless of video length
+        MIN_GUARANTEED = 15
+        if len(candidates) < MIN_GUARANTEED and n >= MIN_GUARANTEED:
+            extra_step = max(1, n // MIN_GUARANTEED)
+            for i in range(0, n, extra_step):
+                candidates.add(min(i, n - 1))
+                if len(candidates) >= MIN_GUARANTEED:
+                    break
+
         return sorted(list(candidates))
 
     def _score_frames(self, cap, candidates: List[int]) -> List[Tuple[int, float, float]]:
