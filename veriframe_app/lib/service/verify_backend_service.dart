@@ -89,7 +89,7 @@ class VerifyBackendService {
       return saved.replaceAll(RegExp(r'/$'), '');
     }
 
-    const activeTunnelUrl = 'https://slimy-eels-carry.loca.lt';
+    const activeTunnelUrl = 'https://veriframe-backend-x3fn.onrender.com';
     if (await isBackendAvailable(activeTunnelUrl)) {
       return activeTunnelUrl;
     }
