@@ -95,7 +95,11 @@ class ImagePipeline:
         ]
 
         # 1. Local Face Biometrics
-        detections = self.face_detector.detect(img)
+        try:
+            detections = self.face_detector.detect(img)
+        except Exception as e:
+            logger.warning(f"[ImagePipeline] Face detection error: {e}")
+            detections = []
         face_fake_probs: List[float] = []
         face_detector_used = (
             detections[0].detector if detections else (

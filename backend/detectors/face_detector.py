@@ -83,8 +83,10 @@ class FaceDetector:
         try:
             haar_path = cv2.data.haarcascades + "haarcascade_frontalface_default.xml"
             if os.path.exists(haar_path):
-                self._haar_cascade = cv2.CascadeClassifier(haar_path)
-                loaded_detectors.append("Haar")
+                cascade = cv2.CascadeClassifier(haar_path)
+                if not cascade.empty():
+                    self._haar_cascade = cascade
+                    loaded_detectors.append("Haar")
         except Exception as e:
             logger.debug(f"[FaceDetector] Haar init failed: {e}")
 
@@ -271,26 +273,35 @@ class FaceDetector:
         return results
 
     def _detect_haar(self, frame: np.ndarray) -> List[FaceDetectionResult]:
-        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-        if self._haar_cascade is None:
-            haar_path = cv2.data.haarcascades + "haarcascade_frontalface_default.xml"
-            self._haar_cascade = cv2.CascadeClassifier(haar_path)
-        detected = self._haar_cascade.detectMultiScale(gray, 1.1, 5)
-        results = []
-        if detected is None or len(detected) == 0:
+        try:
+            gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+            if self._haar_cascade is None:
+                haar_path = cv2.data.haarcascades + "haarcascade_frontalface_default.xml"
+                if os.path.exists(haar_path):
+                    cascade = cv2.CascadeClassifier(haar_path)
+                    if not cascade.empty():
+                        self._haar_cascade = cascade
+            if self._haar_cascade is None or self._haar_cascade.empty():
+                return []
+            detected = self._haar_cascade.detectMultiScale(gray, 1.1, 5)
+            results = []
+            if detected is None or len(detected) == 0:
+                return results
+            for (x, y, w, h) in detected:
+                face_crop = frame[y:y+h, x:x+w]
+                if face_crop.size == 0:
+                    continue
+                quality_score = compute_face_quality_score(face_crop)[0]
+                results.append(FaceDetectionResult(
+                    face_crop=face_crop,
+                    box=(x, y, w, h),
+                    quality_score=quality_score,
+                    detector="haar",
+                ))
             return results
-        for (x, y, w, h) in detected:
-            face_crop = frame[y:y+h, x:x+w]
-            if face_crop.size == 0:
-                continue
-            quality_score = compute_face_quality_score(face_crop)[0]
-            results.append(FaceDetectionResult(
-                face_crop=face_crop,
-                box=(x, y, w, h),
-                quality_score=quality_score,
-                detector="haar",
-            ))
-        return results
+        except Exception as e:
+            logger.debug(f"[FaceDetector] Haar detection error: {e}")
+            return []
 
     def close(self):
         if self.retinaface is not None:

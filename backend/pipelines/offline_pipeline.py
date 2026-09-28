@@ -96,8 +96,15 @@ class OfflinePipeline:
 
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         haar_path = cv2.data.haarcascades + "haarcascade_frontalface_default.xml"
+        if not os.path.exists(haar_path):
+            return None, None
         face_cascade = cv2.CascadeClassifier(haar_path)
-        detected = face_cascade.detectMultiScale(gray, 1.1, 5)
+        if face_cascade.empty():
+            return None, None
+        try:
+            detected = face_cascade.detectMultiScale(gray, 1.1, 5)
+        except Exception:
+            return None, None
         if detected is None or len(detected) == 0:
             return None, None
 
