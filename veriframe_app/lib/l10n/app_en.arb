@@ -711,6 +711,8 @@
   "escalateReportSubtitle": "Forward this finding to a national authority",
   "authoritySectionLabel": "AUTHORITY",
   "sendViaLabel": "SEND VIA",
+  "escalateAttachPdf": "Attach PDF to the report",
+  "escalateSendFailed": "Couldn't open WhatsApp or email. Check the app is installed.",
   "slThreatRadarTitle": "SL Threat Intelligence Radar",
   "slThreatRadarSubtitle": "Track viral deepfake scams & voice clones circulating in Sri Lanka.",
   "slThreatRadarLiveSoon": "LIVE monitoring coming soon",

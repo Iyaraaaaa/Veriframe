@@ -48,9 +48,9 @@ class AffirmationService {
     try {
       // Delete the affirmation data using its document ID
       await _firestore.collection('affirmations').doc(docId).delete();
-      print("Affirmation Data Deleted Successfully");
+      debugPrint("Affirmation Data Deleted Successfully");
     } catch (e) {
-      print("Error deleting affirmation data: $e");
+      debugPrint("Error deleting affirmation data: $e");
       throw e; // Rethrow error to be handled by the calling function
     }
   }

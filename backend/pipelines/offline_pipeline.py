@@ -7,6 +7,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from utils.video import get_video_metadata
 from utils.image import resize_face, pad_to_square, compute_face_quality_score
+from utils.transparency import THRESHOLDS_OFFLINE
 
 logger = logging.getLogger("veriframe.pipelines.offline")
 
@@ -60,10 +61,10 @@ class OfflinePipeline:
             2,
         )
 
-        if fake_probability > 70.0:
+        if fake_probability > THRESHOLDS_OFFLINE["manipulated_above_pct"]:
             verdict = "MANIPULATED"
             risk_level = "HIGH"
-        elif fake_probability < 30.0:
+        elif fake_probability < THRESHOLDS_OFFLINE["authentic_below_pct"]:
             verdict = "AUTHENTIC"
             risk_level = "LOW"
         else:

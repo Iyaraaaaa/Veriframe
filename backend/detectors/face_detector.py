@@ -35,46 +35,62 @@ class FaceDetector:
         self._init_detectors()
 
     def _init_detectors(self):
-        if app_config.ENABLE_RETINAFACE:
+        loaded_detectors = []
+
+        if getattr(app_config, "ENABLE_RETINAFACE", True):
             try:
                 from insightface.app import FaceAnalysis
-                self.retinaface = FaceAnalysis(name="buffalo_l", providers=['CPU'])
+                self.retinaface = FaceAnalysis(name="buffalo_l", providers=['CPUExecutionProvider'])
                 self.retinaface.prepare(ctx_id=0, det_size=(640, 640))
-                logger.info("[FaceDetector] RetinaFace (insightface) initialized")
+                loaded_detectors.append("RetinaFace")
             except Exception as e:
-                logger.warning(f"[FaceDetector] RetinaFace init failed: {e}")
+                logger.debug(f"[FaceDetector] RetinaFace init failed: {e}")
                 self.retinaface = None
 
-        if app_config.ENABLE_SCRFD:
+        if getattr(app_config, "ENABLE_SCRFD", False):
             try:
-                from insightface.scrfd import SCRFD
                 scrfd_path = os.path.join(os.path.dirname(__file__), "..", "models", "scrfd_2.5g.onnx")
                 if os.path.exists(scrfd_path):
+                    from insightface.scrfd import SCRFD
                     self.scrfd = SCRFD(scrfd_path)
-                    logger.info("[FaceDetector] SCRFD initialized")
-                else:
-                    logger.info("[FaceDetector] SCRFD model not found, skipping")
+                    loaded_detectors.append("SCRFD")
             except Exception as e:
-                logger.warning(f"[FaceDetector] SCRFD init failed: {e}")
+                logger.debug(f"[FaceDetector] SCRFD init failed: {e}")
                 self.scrfd = None
 
-        try:
-            import torch
-            from facenet_pytorch import MTCNN
-            torch.set_grad_enabled(False)
-            device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-            self.mtcnn = MTCNN(margin=0, keep_all=False, select_largest=True, device=device)
-            logger.info(f"[FaceDetector] MTCNN initialized on {device}")
-        except Exception as e:
-            logger.warning(f"[FaceDetector] MTCNN init failed: {e}")
+        if getattr(app_config, "ENABLE_MTCNN", True):
+            try:
+                import torch
+                from facenet_pytorch import MTCNN
+                torch.set_grad_enabled(False)
+                device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+                self.mtcnn = MTCNN(margin=0, keep_all=False, select_largest=True, device=device)
+                loaded_detectors.append("MTCNN")
+            except Exception as e:
+                logger.debug(f"[FaceDetector] MTCNN init failed: {e}")
+                self.mtcnn = None
+
+        if getattr(app_config, "ENABLE_MEDIAPIPE", True):
+            try:
+                import mediapipe as mp
+                mp_face = mp.solutions.face_detection
+                self.mediapipe_detector = mp_face.FaceDetection(model_selection=1, min_detection_confidence=0.5)
+                loaded_detectors.append("MediaPipe")
+            except Exception as e:
+                logger.debug(f"[FaceDetector] MediaPipe init failed: {e}")
+                self.mediapipe_detector = None
 
         try:
-            import mediapipe as mp
-            mp_face = mp.solutions.face_detection
-            self.mediapipe_detector = mp_face.FaceDetection(model_selection=1, min_detection_confidence=0.5)
-            logger.info("[FaceDetector] MediaPipe Face Detection initialized")
+            haar_path = cv2.data.haarcascades + "haarcascade_frontalface_default.xml"
+            if os.path.exists(haar_path):
+                self._haar_cascade = cv2.CascadeClassifier(haar_path)
+                loaded_detectors.append("Haar")
         except Exception as e:
-            logger.warning(f"[FaceDetector] MediaPipe init failed: {e}")
+            logger.debug(f"[FaceDetector] Haar init failed: {e}")
+
+        self.loaded_detectors = loaded_detectors
+        logger.info(f"[FaceDetector] Detectors loaded: {' / '.join(loaded_detectors) if loaded_detectors else 'None'}")
+
 
     def detect(self, frame: np.ndarray) -> List[FaceDetectionResult]:
         results = []

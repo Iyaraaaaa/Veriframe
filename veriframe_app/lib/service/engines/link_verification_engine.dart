@@ -11,7 +11,6 @@
 // and falls back to a deterministic synthetic pipeline if download or inference fails.
 
 import 'dart:convert';
-import 'dart:math';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:crypto/crypto.dart';
@@ -20,6 +19,7 @@ import 'package:veriframe_app/models/verification_result.dart';
 import 'package:veriframe_app/service/download_manager.dart';
 import 'package:veriframe_app/service/ytdlp_service.dart';
 import 'package:veriframe_app/service/engines/video_verification_engine.dart';
+import 'package:veriframe_app/service/verify_backend_service.dart';
 
 typedef ProgressCallback = void Function(int step, double progress, String message);
 
@@ -85,7 +85,52 @@ class LinkVerificationEngine {
     }
 
     try {
-      // Stage 0: Validating URL
+      // Stage 0: Check if VeriFrame Backend Server is available
+      final service = VerifyBackendService.instance;
+      final baseUrl = await service.getBaseUrl();
+      final isOnline = await service.isBackendAvailable(baseUrl);
+
+      if (isOnline) {
+        onProgress?.call(0, 0.05, '🔗 Connected to forensic server. Submitting link...');
+        addLog('Connected to forensic server ($baseUrl)');
+
+        try {
+          final jobId = await service.verifyLink(baseUrl, trimmedUrl);
+          addLog('Forensic verification job initiated (ID: $jobId)');
+
+          int polls = 0;
+          while (polls < 90) {
+            await Future.delayed(const Duration(seconds: 2));
+            polls++;
+            final res = await service.getAnalysis(baseUrl, jobId);
+            final status = res['status']?.toString().toLowerCase();
+
+            if (status == 'downloading') {
+              onProgress?.call(2, 0.30, '⬇ Server downloading media payload...');
+            } else if (status == 'extracting') {
+              onProgress?.call(3, 0.50, '🎞 Server extracting keyframes...');
+            } else if (status == 'detecting') {
+              onProgress?.call(4, 0.65, '🙂 Server locating facial boundaries...');
+            } else if (status == 'inferencing') {
+              onProgress?.call(5, 0.80, '🧠 Server running deep learning neural models...');
+            } else if (status == 'completed' || status == 'stopped') {
+              final rawResult = res['result'] as Map<String, dynamic>?;
+              if (rawResult != null && rawResult.isNotEmpty) {
+                onProgress?.call(7, 1.0, '✅ Forensic verification completed');
+                return VerificationResult.fromJson(rawResult);
+              }
+            } else if (status == 'failed') {
+              final err = res['error'] ?? res['result']?['reason'] ?? 'Analysis failed on forensic server';
+              throw PlatformNotSupportedException(err.toString());
+            }
+          }
+        } catch (serverErr) {
+          debugPrint('[LinkVerificationEngine] Server pipeline error, attempting on-device: $serverErr');
+          if (serverErr is PlatformNotSupportedException) rethrow;
+        }
+      }
+
+      // Stage 0: Validating URL locally
       onProgress?.call(0, 0.05, '🔗 Validating URL structure & permissions...');
       addLog('URL validated');
       await Future.delayed(const Duration(milliseconds: 200));
@@ -141,7 +186,7 @@ class LinkVerificationEngine {
           verificationId: 'VRF-LNK-${DateTime.now().millisecondsSinceEpoch}',
           verifiedAt: DateTime.now(),
           mediaType: 'application/x-url',
-          source: 'On-Device URL Security Analysis ($detectedPlatform)',
+          source: 'URL Security Analysis ($detectedPlatform)',
           authenticityScore: 0.0,
           fakeProbability: 0.0,
           confidence: 0.0,
@@ -153,14 +198,14 @@ class LinkVerificationEngine {
           verdict: 'UNVERIFIED',
           riskLevel: 'UNKNOWN',
           detectedEvidence: [
-            'Video payload could not be downloaded from platform $detectedPlatform.',
-            'Biometric deepfake visual analysis was skipped because no video stream was extracted.',
+            'Direct media stream could not be extracted from $detectedPlatform on device.',
+            'Connect to the VeriFrame backend server or upload the video file directly for analysis.',
           ],
           forensicObservations: [
             'URL Security Analysis completed for platform: $detectedPlatform',
             'Cryptographic link canonical hash: ${urlHash.substring(0, 16)}...',
             'Host domain security status: ${isTrusted ? "Verified Trusted Media Host" : "Standard Network Host"}',
-            'Download Status: Payload unextractable. Provide a direct video link or upload file directly.',
+            'Stream extraction requires VeriFrame server or direct video upload.',
           ],
           reportHash: urlHash,
           mediaName: trimmedUrl.length > 60 ? '${trimmedUrl.substring(0, 57)}...' : trimmedUrl,
@@ -180,16 +225,16 @@ class LinkVerificationEngine {
 
       // Stage 3: Extracting Frames
       onProgress?.call(3, 0.50, '🎞 Extracting frames from downloaded video...');
-      addLog('Frames extracted (64 keyframes)');
+      addLog('Keyframes extracted from stream');
       await Future.delayed(const Duration(milliseconds: 300));
 
       // Stage 4: Detecting Faces
       onProgress?.call(4, 0.65, '🙂 Detecting facial boundary landmarks...');
-      addLog('Faces detected (100% landmark coverage)');
+      addLog('Facial boundary scan completed');
       await Future.delayed(const Duration(milliseconds: 300));
 
       // Stage 5: Running AI Analysis
-      onProgress?.call(5, 0.80, '🧠 Running TFLite deepfake AI analysis...');
+      onProgress?.call(5, 0.80, '🧠 Running deepfake AI neural analysis...');
       addLog('AI inference started');
 
       // Process downloaded temp file through VideoVerificationEngine
@@ -204,7 +249,7 @@ class LinkVerificationEngine {
         await _cleanupTempFile(tempFilePath);
 
         // Stage 6: Aggregating Results
-        onProgress?.call(6, 0.90, '📊 Aggregating forensic metrics & temporal scores...');
+        onProgress?.call(6, 0.90, '📊 Aggregating forensic metrics...');
         addLog('Results aggregated');
         await Future.delayed(const Duration(milliseconds: 200));
 
@@ -217,23 +262,10 @@ class LinkVerificationEngine {
         onProgress?.call(8, 1.00, '✅ Verification Complete');
 
         final elapsedSec = DateTime.now().difference(startTime).inMilliseconds / 1000.0;
-        final isManipulated = result.verdict.toUpperCase() == 'MANIPULATED';
-
-        final rawCount = result.framesAnalysedCount;
-        final totalFrames = (rawCount != null && rawCount > 0) ? rawCount : 8;
-        final suspiciousFrameList = <Map<String, dynamic>>[];
-        if (isManipulated) {
-          final fakeProb = result.fakeProbability > 0 ? result.fakeProbability : 85.0;
-          final step = max(1, (totalFrames / 3).floor());
-          for (int i = 1; i <= min(3, totalFrames); i++) {
-            final fNo = i * step;
-            suspiciousFrameList.add({
-              'frameNo': fNo,
-              'faceConfidence': (90.0 + (i % 5)).clamp(80.0, 99.0),
-              'fakeProbability': (fakeProb - (i % 3) * 2).clamp(10.0, 99.0),
-            });
-          }
-        }
+        final totalFrames = result.framesAnalysedCount ?? 0;
+        final suspiciousFrameList = (result.suspiciousFrames != null && result.suspiciousFrames!.isNotEmpty)
+            ? result.suspiciousFrames!
+            : <Map<String, dynamic>>[];
 
         return result.copyWith(
           videoUrl: trimmedUrl,
@@ -243,7 +275,7 @@ class LinkVerificationEngine {
           platform: detectedPlatform,
           framesAnalysedCount: totalFrames,
           suspiciousFramesCount: suspiciousFrameList.length,
-          faceDetectionRate: result.trackingConfidence > 0 ? result.trackingConfidence : 100.0,
+          faceDetectionRate: result.faceDetectionRate ?? (result.trackingConfidence > 0 ? result.trackingConfidence : 0.0),
           processingTimeSec: elapsedSec > 0 ? elapsedSec : result.processingTimeSec,
           suspiciousFrames: suspiciousFrameList,
           timelineLogs: timelineLogs,

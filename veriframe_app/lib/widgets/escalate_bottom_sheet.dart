@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:veriframe_app/l10n/app_localizations.dart';
 import 'package:veriframe_app/models/verification_result.dart';
 import 'package:veriframe_app/service/pdf_service.dart';
@@ -60,9 +61,16 @@ class EscalateBottomSheet extends StatefulWidget {
 
 class _EscalateBottomSheetState extends State<EscalateBottomSheet> {
   static const Color _whatsappGreen = Color(0xFF25D366);
+
+  /// Authority WhatsApp contact in international format (no +, no spaces).
   static const String _whatsappNumber = '94784770935';
+
+  /// Human-readable form of [_whatsappNumber] shown in the UI.
+  static const String _whatsappDisplay = '078 477 0935';
+
+  /// Authority email that receives the forensic PDF.
   static const String _emailAddress = 'sithmiyara2001@gmail.com';
-  static const String _whatsappPackage = 'com.whatsapp';
+
   static const String _gmailPackage = 'com.google.android.gm';
   static const String _methodChannel = 'com.veriframe_app/share_pdf';
 
@@ -90,64 +98,135 @@ class _EscalateBottomSheetState extends State<EscalateBottomSheet> {
     }
   }
 
-  Future<void> _launchWhatsApp(String authorityTitle) async {
-    final pdfFile = await _getPdfFile();
-    if (pdfFile == null) {
-      if (mounted) _showErrorSnackBar();
-      return;
+  /// Plain-text summary sent alongside the report so the authority gets the
+  /// essential finding even when the PDF cannot be attached (WhatsApp deep
+  /// links do not carry attachments).
+  String _buildReportText(String authorityTitle) {
+    final r = widget.report;
+    final lines = <String>[
+      'VeriFrame — ${AppLocalizations.of(context)!.escalateReportTitle}',
+      'Authority: $authorityTitle',
+      'Report ID: ${r.verificationId}',
+      'Media: ${r.mediaName ?? r.source}',
+      'Type: ${r.mediaType}',
+      'Verdict: ${r.verdict}',
+      'Risk: ${r.riskLevel}',
+      'Authenticity: ${r.authenticityScore.toStringAsFixed(1)}%',
+      'Deepfake probability: ${r.fakeProbability.toStringAsFixed(1)}%',
+      'Confidence: ${(r.confidence * 100).toStringAsFixed(1)}%',
+      'Report hash: ${r.reportHash}',
+      'Analysed: ${r.verifiedAt.toIso8601String()}',
+    ];
+    if (r.detectedEvidence.isNotEmpty) {
+      lines.add('Evidence: ${r.detectedEvidence.join(', ')}');
     }
-    try {
-      if (Platform.isAndroid) {
-        final channel = MethodChannel(_methodChannel);
-        await channel.invokeMethod('sharePdfToApp', {
-          'filePath': pdfFile.path,
-          'appPackage': _whatsappPackage,
-          'recipient': _whatsappNumber,
-          'subject': 'Forensic Report Escalation: $authorityTitle',
-        });
-      } else {
-        await Share.shareXFiles(
-          [XFile(pdfFile.path)],
-          text: 'VeriFrame Forensic Report — $authorityTitle [${widget.report.verificationId}]',
-          subject: 'Forensic Report Escalation: $authorityTitle',
+    return lines.join('\n');
+  }
+
+  String _emailSubject(String authorityTitle) {
+    final r = widget.report;
+    return 'Forensic Report Escalation: $authorityTitle [${r.verificationId}]';
+  }
+
+  /// Opens a WhatsApp chat with [_whatsappNumber] and a pre-filled message.
+  /// ACTION_SEND cannot address a specific contact, so the official wa.me
+  /// deep link is used — it is the only way to guarantee the report lands in
+  /// the authority's chat instead of a contact picker.
+  Future<void> _launchWhatsApp(String authorityTitle) async {
+    final message = _buildReportText(authorityTitle);
+    final waUri = Uri.https('wa.me', '/$_whatsappNumber', {'text': message});
+
+    if (Platform.isAndroid) {
+      try {
+        await const MethodChannel(_methodChannel).invokeMethod<bool>(
+          'openWhatsAppChat',
+          {'phone': _whatsappNumber, 'message': message},
         );
+        return;
+      } catch (e) {
+        debugPrint('[EscalateBottomSheet] WhatsApp channel failed: $e');
+        // Fall through to the wa.me link (browser / WhatsApp Business).
       }
-    } catch (_) {
+    }
+
+    try {
+      final opened = await launchUrl(
+        waUri,
+        mode: LaunchMode.externalApplication,
+      );
+      if (!opened) throw Exception('launchUrl returned false');
+    } catch (e) {
+      debugPrint('[EscalateBottomSheet] wa.me fallback failed: $e');
       if (mounted) _showErrorSnackBar();
     }
   }
 
+  /// Sends the generated PDF to the authority email. Falls back to a
+  /// mailto: compose link when Gmail is unavailable.
   Future<void> _launchEmail(String authorityTitle) async {
+    final body = _buildReportText(authorityTitle);
+    final subject = _emailSubject(authorityTitle);
+    final pdfFile = await _getPdfFile();
+
+    if (Platform.isAndroid && pdfFile != null) {
+      try {
+        await const MethodChannel(_methodChannel).invokeMethod<bool>(
+          'sharePdfToApp',
+          {
+            'filePath': pdfFile.path,
+            'appPackage': _gmailPackage,
+            'recipient': _emailAddress,
+            'subject': subject,
+            'body': body,
+          },
+        );
+        return;
+      } catch (e) {
+        debugPrint('[EscalateBottomSheet] Gmail share failed: $e');
+        // Fall through to the mailto: compose link.
+      }
+    }
+
+    try {
+      final opened = await launchUrl(
+        Uri(
+          scheme: 'mailto',
+          path: _emailAddress,
+          queryParameters: {'subject': subject, 'body': body},
+        ),
+        mode: LaunchMode.externalApplication,
+      );
+      if (!opened) throw Exception('launchUrl returned false');
+    } catch (e) {
+      debugPrint('[EscalateBottomSheet] mailto fallback failed: $e');
+      if (mounted) _showErrorSnackBar();
+    }
+  }
+
+  /// Shares the PDF through the system sheet so the user can attach it to the
+  /// authority chat (or any other channel) themselves.
+  Future<void> _attachPdf(String authorityTitle) async {
     final pdfFile = await _getPdfFile();
     if (pdfFile == null) {
       if (mounted) _showErrorSnackBar();
       return;
     }
     try {
-      if (Platform.isAndroid) {
-        final channel = MethodChannel(_methodChannel);
-        await channel.invokeMethod('sharePdfToApp', {
-          'filePath': pdfFile.path,
-          'appPackage': _gmailPackage,
-          'recipient': _emailAddress,
-          'subject': 'Forensic Report Escalation: $authorityTitle [${widget.report.verificationId}]',
-        });
-      } else {
-        await Share.shareXFiles(
-          [XFile(pdfFile.path)],
-          text: 'VeriFrame Forensic Report — $authorityTitle [${widget.report.verificationId}]',
-          subject: 'Forensic Report Escalation: $authorityTitle [${widget.report.verificationId}]',
-        );
-      }
+      await Share.shareXFiles(
+        [XFile(pdfFile.path)],
+        text: _buildReportText(authorityTitle),
+        subject: _emailSubject(authorityTitle),
+      );
     } catch (_) {
       if (mounted) _showErrorSnackBar();
     }
   }
 
   void _showErrorSnackBar() {
+    final loc = AppLocalizations.of(context)!;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: const Text("Couldn't open the app. Is it installed?"),
+        content: Text(loc.escalateSendFailed),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       ),
@@ -294,108 +373,131 @@ class _EscalateBottomSheetState extends State<EscalateBottomSheet> {
                         ),
                         const SizedBox(height: 10),
                         Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            // WhatsApp button
+                            // WhatsApp → 078 477 0935
                             Expanded(
-                              child: Material(
-                                color: Colors.transparent,
-                                child: InkWell(
-                                  borderRadius: BorderRadius.circular(12),
-                                  onTap: () {
-                                    final title = _selectedAuthority == 'cert'
-                                        ? loc.verifyCertCc
-                                        : loc.verifySriLankaPolice;
-                                    _launchWhatsApp(title);
-                                  },
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(
-                                        vertical: 14),
-                                    decoration: BoxDecoration(
-                                      color: _whatsappGreen.withValues(
-                                          alpha: 0.12),
-                                      borderRadius: BorderRadius.circular(12),
-                                      border: Border.all(
-                                        color: _whatsappGreen.withValues(
-                                            alpha: 0.4),
-                                      ),
-                                    ),
-                                    child: Column(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        const Icon(
-                                          Icons.chat_rounded,
-                                          color: _whatsappGreen,
-                                          size: 22,
-                                        ),
-                                        const SizedBox(height: 6),
-                                        const Text(
-                                          'WhatsApp',
-                                          style: TextStyle(
-                                            fontSize: 13,
-                                            fontWeight: FontWeight.w700,
-                                            color: _whatsappGreen,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
+                              child: _buildSendButton(
+                                label: 'WhatsApp',
+                                destination: _whatsappDisplay,
+                                icon: Icons.chat_rounded,
+                                color: _whatsappGreen,
+                                onTap: () => _launchWhatsApp(_authorityTitle(loc)),
                               ),
                             ),
                             const SizedBox(width: 12),
 
-                            // Email button
+                            // Gmail → sithmiyara2001@gmail.com
                             Expanded(
-                              child: Material(
-                                color: Colors.transparent,
-                                child: InkWell(
-                                  borderRadius: BorderRadius.circular(12),
-                                  onTap: () {
-                                    final title = _selectedAuthority == 'cert'
-                                        ? loc.verifyCertCc
-                                        : loc.verifySriLankaPolice;
-                                    _launchEmail(title);
-                                  },
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(
-                                        vertical: 14),
-                                    decoration: BoxDecoration(
-                                      color: accentBg,
-                                      borderRadius: BorderRadius.circular(12),
-                                      border: Border.all(
-                                        color: accentColor.withValues(
-                                            alpha: 0.4),
-                                      ),
-                                    ),
-                                    child: Column(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Icon(
-                                          Icons.mail_rounded,
-                                          color: accentColor,
-                                          size: 22,
-                                        ),
-                                        const SizedBox(height: 6),
-                                        Text(
-                                          'Email',
-                                          style: TextStyle(
-                                            fontSize: 13,
-                                            fontWeight: FontWeight.w700,
-                                            color: accentColor,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
+                              child: _buildSendButton(
+                                label: 'Email',
+                                destination: _emailAddress,
+                                icon: Icons.mail_rounded,
+                                color: accentColor,
+                                onTap: () => _launchEmail(_authorityTitle(loc)),
                               ),
                             ),
                           ],
                         ),
+                        const SizedBox(height: 10),
+                        _buildAttachButton(loc),
                       ],
                     ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  String _authorityTitle(AppLocalizations loc) =>
+      _selectedAuthority == 'cert' ? loc.verifyCertCc : loc.verifySriLankaPolice;
+
+  Widget _buildSendButton({
+    required String label,
+    required String destination,
+    required IconData icon,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    final pal = _pal;
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.12),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: color.withValues(alpha: 0.4)),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, color: color, size: 22),
+              const SizedBox(height: 6),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  color: color,
+                ),
+              ),
+              const SizedBox(height: 3),
+              Text(
+                destination,
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 9.5,
+                  height: 1.25,
+                  color: pal.textSubtle,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Secondary action: hand the generated PDF to the system share sheet so it
+  /// can be attached to the authority chat (WhatsApp deep links cannot carry
+  /// file attachments).
+  Widget _buildAttachButton(AppLocalizations loc) {
+    final pal = _pal;
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: () => _attachPdf(_authorityTitle(loc)),
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          decoration: BoxDecoration(
+            color: pal.surfaceMuted,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: pal.border),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.attach_file_rounded, size: 18, color: pal.textSecondary),
+              const SizedBox(width: 8),
+              Text(
+                loc.escalateAttachPdf,
+                style: TextStyle(
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w700,
+                  color: pal.textSecondary,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

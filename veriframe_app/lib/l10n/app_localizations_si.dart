@@ -2266,6 +2266,13 @@ class AppLocalizationsSi extends AppLocalizations {
   String get sendViaLabel => 'යවන්නේ මගින්';
 
   @override
+  String get escalateAttachPdf => 'වාර්තාවට PDF ඇමතුරු කරන්න';
+
+  @override
+  String get escalateSendFailed =>
+      'WhatsApp හෝ ඊමේල් විවෘත කළ නොහැක. යෙදුම ස්ථාපනය කර ඇත්දැයි පරීක්ෂා කරන්න.';
+
+  @override
   String get slThreatRadarTitle => 'SL තර්ජන බුද්ධි මානදඩුව';
 
   @override

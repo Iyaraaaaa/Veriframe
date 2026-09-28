@@ -81,29 +81,26 @@ class VerifyBackendService {
     return headers;
   }
 
-  /// Retrieve the base URL, with auto-detection for Android Emulator
+  static const String defaultRemoteUrl = 'https://veriframe-backend-x3fn.onrender.com';
+
+  /// Retrieve the base URL, defaulting to Render cloud backend
   Future<String> getBaseUrl() async {
     final prefs = await SharedPreferences.getInstance();
     final saved = prefs.getString(_kBackendKey);
     if (saved != null && saved.isNotEmpty) {
+      // Any explicitly saved URL is returned verbatim.
+      //
+      // Do NOT silently substitute the Render default when a local address looks
+      // unreachable: that made the app talk to an older cloud deployment which has
+      // no /verify/image or /verify/audio route (HTTP 404), hiding the real cause
+      // of a local backend failure. Let the request fail loudly instead — the
+      // caller already surfaces "Backend server is unreachable."
       return saved.replaceAll(RegExp(r'/$'), '');
     }
 
-    const activeTunnelUrl = 'https://veriframe-backend-x3fn.onrender.com';
-    if (await isBackendAvailable(activeTunnelUrl)) {
-      return activeTunnelUrl;
-    }
-
-    if (Platform.isAndroid) {
-      // Auto-detect standard loopback configuration for emulators
-      const emulatorUrl = 'http://10.0.2.2:8000';
-      if (await isBackendAvailable(emulatorUrl)) {
-        await prefs.setString(_kBackendKey, emulatorUrl);
-        return emulatorUrl;
-      }
-    }
-
-    return activeTunnelUrl;
+    // Nothing saved yet: a LAN/emulator address is a better dev default than the
+    // cloud deployment, since the cloud backend may lag the local code.
+    return defaultRemoteUrl;
   }
 
   /// Save base URL configured by user
@@ -168,6 +165,92 @@ class VerifyBackendService {
       throw BackendOfflineException('Backend server is unreachable.');
     } on TimeoutException catch (_) {
       throw ConnectionTimeoutException('Request timed out. Please check network connection.');
+    } on FormatException catch (_) {
+      throw InvalidResponseException('Failed to parse backend response JSON.');
+    }
+  }
+
+  /// POST /verify/image - verifies local image with ensemble model
+  Future<Map<String, dynamic>> verifyImage(
+    String baseUrl,
+    File file, {
+    void Function(double progress)? onProgress,
+  }) async {
+    final uri = Uri.parse('$baseUrl/verify/image');
+
+    try {
+      final request = MultipartRequestWithProgress('POST', uri, onProgress: onProgress);
+      request.headers.addAll(_headers());
+      request.files.add(await http.MultipartFile.fromPath('file', file.path));
+
+      final streamedResponse = await _client.send(request).timeout(const Duration(seconds: 120));
+      final response = await http.Response.fromStream(streamedResponse);
+
+      if (response.statusCode != 200) {
+        throw ServerException(_parseErrorDetail(response.body, response.statusCode));
+      }
+
+      final data = jsonDecode(response.body);
+      return Map<String, dynamic>.from(data);
+    } on SocketException catch (_) {
+      throw BackendOfflineException('Backend server is unreachable.');
+    } on TimeoutException catch (_) {
+      throw ConnectionTimeoutException('Image analysis timed out.');
+    } on FormatException catch (_) {
+      throw InvalidResponseException('Failed to parse backend response JSON.');
+    }
+  }
+
+  /// POST /verify/image/link - verifies image link with ensemble model
+  Future<Map<String, dynamic>> verifyImageLink(String baseUrl, String url) async {
+    final uri = Uri.parse('$baseUrl/verify/image/link');
+
+    try {
+      final response = await _client.post(
+        uri,
+        headers: _headers({'Content-Type': 'application/json'}),
+        body: jsonEncode({'url': url}),
+      ).timeout(const Duration(seconds: 40));
+
+      if (response.statusCode != 200) {
+        throw ServerException(_parseErrorDetail(response.body, response.statusCode));
+      }
+
+      final data = jsonDecode(response.body);
+      return Map<String, dynamic>.from(data);
+    } on SocketException catch (_) {
+      throw BackendOfflineException('Backend server is unreachable.');
+    } on TimeoutException catch (_) {
+      throw ConnectionTimeoutException('Image link verification timed out.');
+    }
+  }
+
+  /// POST /verify/audio - verifies audio file with ensemble voice AI model
+  Future<Map<String, dynamic>> verifyAudio(
+    String baseUrl,
+    File file, {
+    void Function(double progress)? onProgress,
+  }) async {
+    final uri = Uri.parse('$baseUrl/verify/audio');
+
+    try {
+      final request = MultipartRequestWithProgress('POST', uri, onProgress: onProgress);
+      request.headers.addAll(_headers());
+      request.files.add(await http.MultipartFile.fromPath('file', file.path));
+
+      final streamedResponse = await _client.send(request).timeout(const Duration(seconds: 120));
+      final response = await http.Response.fromStream(streamedResponse);
+
+      if (response.statusCode != 200) {
+        throw ServerException(_parseErrorDetail(response.body, response.statusCode));
+      }
+
+      final data = jsonDecode(response.body);
+      return Map<String, dynamic>.from(data);
+    } on SocketException catch (_) {
+      throw BackendOfflineException('Backend server is unreachable.');
+    } on TimeoutException catch (_) {
+      throw ConnectionTimeoutException('Audio analysis timed out.');
     } on FormatException catch (_) {
       throw InvalidResponseException('Failed to parse backend response JSON.');
     }
@@ -346,6 +429,9 @@ class VerifyBackendService {
 
   /// Parses detail error from server responses
   String _parseErrorDetail(String responseBody, int statusCode) {
+    if (statusCode == 404) {
+      return 'Endpoint not found (HTTP 404). The currently connected backend does not have this feature deployed yet. Please tap the server settings icon (top-right) and switch to your local backend.';
+    }
     try {
       final data = jsonDecode(responseBody);
       if (data is Map && data.containsKey('detail')) {
@@ -353,5 +439,50 @@ class VerifyBackendService {
       }
     } catch (_) {}
     return 'Server error (HTTP $statusCode).';
+  }
+
+  /// POST /ai/explain - generate Gemini AI forensic narrative for a report payload
+  Future<Map<String, dynamic>> getAiExplanation(
+    String baseUrl, {
+    required String verdict,
+    String? fineVerdict,
+    required double fakeProbability,
+    required double authenticityScore,
+    String mediaType = 'media',
+    String source = 'upload',
+    List<String>? detectedEvidence,
+    List<String>? forensicObservations,
+  }) async {
+    final uri = Uri.parse('$baseUrl/ai/explain');
+
+    try {
+      final response = await _client.post(
+        uri,
+        headers: _headers({'Content-Type': 'application/json'}),
+        body: jsonEncode({
+          'verdict': verdict,
+          'fineVerdict': fineVerdict ?? verdict,
+          'fakeProbability': fakeProbability,
+          'authenticityScore': authenticityScore,
+          'mediaType': mediaType,
+          'source': source,
+          'detectedEvidence': detectedEvidence ?? [],
+          'forensicObservations': forensicObservations ?? [],
+        }),
+      ).timeout(const Duration(seconds: 20));
+
+      if (response.statusCode != 200) {
+        throw ServerException(_parseErrorDetail(response.body, response.statusCode));
+      }
+
+      final data = jsonDecode(response.body);
+      return Map<String, dynamic>.from(data);
+    } on SocketException catch (_) {
+      throw BackendOfflineException('Backend server is unreachable.');
+    } on TimeoutException catch (_) {
+      throw ConnectionTimeoutException('Gemini AI explanation timed out.');
+    } on FormatException catch (_) {
+      throw InvalidResponseException('Failed to parse AI explanation response.');
+    }
   }
 }

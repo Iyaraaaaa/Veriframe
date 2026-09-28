@@ -1,3 +1,5 @@
+// ignore_for_file: avoid_print
+// Standalone codegen script: run with `dart run`, not part of the app bundle.
 import 'dart:io';
 
 void main() {

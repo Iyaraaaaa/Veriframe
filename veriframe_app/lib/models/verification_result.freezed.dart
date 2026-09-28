@@ -56,7 +56,9 @@ mixin _$VerificationResult {
   double? get processingTimeSec => throw _privateConstructorUsedError;
   List<Map<String, dynamic>>? get suspiciousFrames =>
       throw _privateConstructorUsedError;
-  List<String>? get timelineLogs => throw _privateConstructorUsedError;
+  List<String>? get timelineLogs =>
+      throw _privateConstructorUsedError; // Gemini AI forensic explanation
+  Map<String, dynamic>? get aiExplanation => throw _privateConstructorUsedError;
 
   /// Serializes this VerificationResult to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -109,6 +111,7 @@ abstract class $VerificationResultCopyWith<$Res> {
     double? processingTimeSec,
     List<Map<String, dynamic>>? suspiciousFrames,
     List<String>? timelineLogs,
+    Map<String, dynamic>? aiExplanation,
   });
 }
 
@@ -160,6 +163,7 @@ class _$VerificationResultCopyWithImpl<$Res, $Val extends VerificationResult>
     Object? processingTimeSec = freezed,
     Object? suspiciousFrames = freezed,
     Object? timelineLogs = freezed,
+    Object? aiExplanation = freezed,
   }) {
     return _then(
       _value.copyWith(
@@ -295,6 +299,10 @@ class _$VerificationResultCopyWithImpl<$Res, $Val extends VerificationResult>
                 ? _value.timelineLogs
                 : timelineLogs // ignore: cast_nullable_to_non_nullable
                       as List<String>?,
+            aiExplanation: freezed == aiExplanation
+                ? _value.aiExplanation
+                : aiExplanation // ignore: cast_nullable_to_non_nullable
+                      as Map<String, dynamic>?,
           )
           as $Val,
     );
@@ -344,6 +352,7 @@ abstract class _$$VerificationResultImplCopyWith<$Res>
     double? processingTimeSec,
     List<Map<String, dynamic>>? suspiciousFrames,
     List<String>? timelineLogs,
+    Map<String, dynamic>? aiExplanation,
   });
 }
 
@@ -394,6 +403,7 @@ class __$$VerificationResultImplCopyWithImpl<$Res>
     Object? processingTimeSec = freezed,
     Object? suspiciousFrames = freezed,
     Object? timelineLogs = freezed,
+    Object? aiExplanation = freezed,
   }) {
     return _then(
       _$VerificationResultImpl(
@@ -529,6 +539,10 @@ class __$$VerificationResultImplCopyWithImpl<$Res>
             ? _value._timelineLogs
             : timelineLogs // ignore: cast_nullable_to_non_nullable
                   as List<String>?,
+        aiExplanation: freezed == aiExplanation
+            ? _value._aiExplanation
+            : aiExplanation // ignore: cast_nullable_to_non_nullable
+                  as Map<String, dynamic>?,
       ),
     );
   }
@@ -571,10 +585,12 @@ class _$VerificationResultImpl implements _VerificationResult {
     this.processingTimeSec,
     final List<Map<String, dynamic>>? suspiciousFrames,
     final List<String>? timelineLogs,
+    final Map<String, dynamic>? aiExplanation,
   }) : _detectedEvidence = detectedEvidence,
        _forensicObservations = forensicObservations,
        _suspiciousFrames = suspiciousFrames,
-       _timelineLogs = timelineLogs;
+       _timelineLogs = timelineLogs,
+       _aiExplanation = aiExplanation;
 
   factory _$VerificationResultImpl.fromJson(Map<String, dynamic> json) =>
       _$$VerificationResultImplFromJson(json);
@@ -678,9 +694,21 @@ class _$VerificationResultImpl implements _VerificationResult {
     return EqualUnmodifiableListView(value);
   }
 
+  // Gemini AI forensic explanation
+  final Map<String, dynamic>? _aiExplanation;
+  // Gemini AI forensic explanation
+  @override
+  Map<String, dynamic>? get aiExplanation {
+    final value = _aiExplanation;
+    if (value == null) return null;
+    if (_aiExplanation is EqualUnmodifiableMapView) return _aiExplanation;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableMapView(value);
+  }
+
   @override
   String toString() {
-    return 'VerificationResult(verificationId: $verificationId, verifiedAt: $verifiedAt, mediaType: $mediaType, source: $source, authenticityScore: $authenticityScore, fakeProbability: $fakeProbability, confidence: $confidence, metadataScore: $metadataScore, frameConsistency: $frameConsistency, ocrConfidence: $ocrConfidence, trackingConfidence: $trackingConfidence, manipulationScore: $manipulationScore, verdict: $verdict, riskLevel: $riskLevel, detectedEvidence: $detectedEvidence, forensicObservations: $forensicObservations, reportHash: $reportHash, mediaName: $mediaName, mediaPath: $mediaPath, pdfPath: $pdfPath, pdfUrl: $pdfUrl, videoStoragePath: $videoStoragePath, thumbnailBase64: $thumbnailBase64, videoUrl: $videoUrl, platform: $platform, videoLength: $videoLength, resolution: $resolution, framesAnalysedCount: $framesAnalysedCount, suspiciousFramesCount: $suspiciousFramesCount, faceDetectionRate: $faceDetectionRate, processingTimeSec: $processingTimeSec, suspiciousFrames: $suspiciousFrames, timelineLogs: $timelineLogs)';
+    return 'VerificationResult(verificationId: $verificationId, verifiedAt: $verifiedAt, mediaType: $mediaType, source: $source, authenticityScore: $authenticityScore, fakeProbability: $fakeProbability, confidence: $confidence, metadataScore: $metadataScore, frameConsistency: $frameConsistency, ocrConfidence: $ocrConfidence, trackingConfidence: $trackingConfidence, manipulationScore: $manipulationScore, verdict: $verdict, riskLevel: $riskLevel, detectedEvidence: $detectedEvidence, forensicObservations: $forensicObservations, reportHash: $reportHash, mediaName: $mediaName, mediaPath: $mediaPath, pdfPath: $pdfPath, pdfUrl: $pdfUrl, videoStoragePath: $videoStoragePath, thumbnailBase64: $thumbnailBase64, videoUrl: $videoUrl, platform: $platform, videoLength: $videoLength, resolution: $resolution, framesAnalysedCount: $framesAnalysedCount, suspiciousFramesCount: $suspiciousFramesCount, faceDetectionRate: $faceDetectionRate, processingTimeSec: $processingTimeSec, suspiciousFrames: $suspiciousFrames, timelineLogs: $timelineLogs, aiExplanation: $aiExplanation)';
   }
 
   @override
@@ -757,6 +785,10 @@ class _$VerificationResultImpl implements _VerificationResult {
             const DeepCollectionEquality().equals(
               other._timelineLogs,
               _timelineLogs,
+            ) &&
+            const DeepCollectionEquality().equals(
+              other._aiExplanation,
+              _aiExplanation,
             ));
   }
 
@@ -797,6 +829,7 @@ class _$VerificationResultImpl implements _VerificationResult {
     processingTimeSec,
     const DeepCollectionEquality().hash(_suspiciousFrames),
     const DeepCollectionEquality().hash(_timelineLogs),
+    const DeepCollectionEquality().hash(_aiExplanation),
   ]);
 
   /// Create a copy of VerificationResult
@@ -851,6 +884,7 @@ abstract class _VerificationResult implements VerificationResult {
     final double? processingTimeSec,
     final List<Map<String, dynamic>>? suspiciousFrames,
     final List<String>? timelineLogs,
+    final Map<String, dynamic>? aiExplanation,
   }) = _$VerificationResultImpl;
 
   factory _VerificationResult.fromJson(Map<String, dynamic> json) =
@@ -921,7 +955,9 @@ abstract class _VerificationResult implements VerificationResult {
   @override
   List<Map<String, dynamic>>? get suspiciousFrames;
   @override
-  List<String>? get timelineLogs;
+  List<String>? get timelineLogs; // Gemini AI forensic explanation
+  @override
+  Map<String, dynamic>? get aiExplanation;
 
   /// Create a copy of VerificationResult
   /// with the given fields replaced by the non-null parameter values.

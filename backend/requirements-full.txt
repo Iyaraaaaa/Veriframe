@@ -1,0 +1,4 @@
+-r requirements.txt
+insightface
+onnxruntime
+facenet-pytorch

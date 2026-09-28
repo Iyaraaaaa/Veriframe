@@ -4190,6 +4190,18 @@ abstract class AppLocalizations {
   /// **'SEND VIA'**
   String get sendViaLabel;
 
+  /// No description provided for @escalateAttachPdf.
+  ///
+  /// In en, this message translates to:
+  /// **'Attach PDF to the report'**
+  String get escalateAttachPdf;
+
+  /// No description provided for @escalateSendFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t open WhatsApp or email. Check the app is installed.'**
+  String get escalateSendFailed;
+
   /// No description provided for @slThreatRadarTitle.
   ///
   /// In en, this message translates to:

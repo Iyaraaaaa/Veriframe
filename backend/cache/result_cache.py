@@ -9,13 +9,23 @@ from config import config as app_config
 
 logger = logging.getLogger("veriframe.cache")
 
+# Keys that are not plain hex digests (e.g. the source URL used by
+# /verify/link and /detect/video?video_url=) cannot be used verbatim as a
+# filename: they contain ':' and '/', which is invalid on Windows and would
+# make every write fail. Those keys are hashed to a stable, safe name.
+_SAFE_KEY_CHARS = set("0123456789abcdef")
+
+
 class ResultCache:
     def __init__(self, cache_dir: Optional[str] = None):
         self.cache_dir = cache_dir or app_config.CACHE_DIR
         os.makedirs(self.cache_dir, exist_ok=True)
 
     def _get_cache_path(self, video_hash: str) -> str:
-        return os.path.join(self.cache_dir, f"{video_hash}.json")
+        key = str(video_hash)
+        if not key or not set(key.lower()) <= _SAFE_KEY_CHARS or len(key) > 64:
+            key = hashlib.sha256(key.encode("utf-8")).hexdigest()
+        return os.path.join(self.cache_dir, f"{key}.json")
 
     def get(self, video_hash: str) -> Optional[Dict[str, Any]]:
         if not app_config.CACHE_ENABLED:

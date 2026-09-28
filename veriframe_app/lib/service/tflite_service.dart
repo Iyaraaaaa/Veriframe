@@ -10,16 +10,23 @@ class InferenceResult {
   final double confidence;
   final List<double> rawOutput;
   final int inferenceMs;
+  final bool reverseLabels;
 
   const InferenceResult({
     required this.label,
     required this.confidence,
     required this.rawOutput,
     required this.inferenceMs,
+    this.reverseLabels = false,
   });
 
-  double get fakeProbability =>
-      rawOutput.isNotEmpty ? rawOutput.first : (label.toLowerCase() == 'fake' ? confidence : 1.0 - confidence);
+  double get fakeProbability {
+    if (rawOutput.isNotEmpty) {
+      final score = rawOutput.first;
+      return reverseLabels ? (1.0 - score) : score;
+    }
+    return label.toLowerCase() == 'fake' ? confidence : 1.0 - confidence;
+  }
 }
 
 abstract class TFLiteService {

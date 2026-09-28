@@ -146,6 +146,65 @@ class SceneForensicsAnalyzer:
             logger.debug(f"[SceneForensics] Noise residual error: {e}")
             return {"noise_std": 0.0, "noise_kurtosis": 3.0, "noise_synthetic_score": 0.5}
 
+    def analyze_frame(self, frame: np.ndarray) -> Dict[str, Any]:
+        """
+        Single-image analysis based on the 2D FFT frequency-spectrum check.
+
+        analyze_motion_physics is not used here because it requires two consecutive
+        frames, which a still image does not have.
+
+        analyze_noise_residual is ALSO excluded from the aggregate on stills. Its
+        score is computed as clip((|kurtosis - 4.5| - 2.5) / 5.0, 0, 1), which
+        saturates at 1.0 for kurtosis >= 12. On JPEG-compressed photographs the
+        high-pass residual is dominated by compression blocking rather than sensor
+        PRNU, and measured kurtosis runs 12-185, so the metric reads 1.0000 on
+        19 of 20 sample assets. Including it contributed a constant +0.25 to every
+        score and compressed the usable range into roughly 0.24-0.36. The
+        underlying method is left untouched for the video path; recalibrating it
+        against uncompressed captures is a separate decision.
+
+        Returns a dict carrying "fake_probability" (0.0-1.0) to satisfy the
+        contract in pipelines/image_pipeline.py, plus metrics and evidence.
+        """
+        try:
+            freq_res = self.analyze_frequency_spectrum(frame)
+        except Exception as e:
+            logger.warning(f"[SceneForensics] analyze_frame failed: {e}")
+            return {
+                "fake_probability": 0.5,
+                "frequency_score": 0.5,
+                "high_low_ratio": 0.0,
+                "peak_disparity": 0.0,
+                "observations": ["Scene forensics unavailable for this image."],
+                "evidence": [],
+            }
+
+        avg_freq = float(np.clip(freq_res.get("frequency_synthetic_score", 0.5), 0.0, 1.0))
+
+        observations = [
+            f"Single-image 2D FFT Frequency Grid Anomaly Index: {round(avg_freq * 100, 1)}%.",
+            f"High/Low spectral energy ratio: {freq_res.get('high_low_ratio', 0.0)}, "
+            f"peak disparity: {freq_res.get('peak_disparity', 0.0)}.",
+        ]
+
+        evidence = []
+        if avg_freq >= 0.60:
+            evidence.append("High-frequency checkerboard upsampling spikes detected in 2D Fourier domain.")
+            evidence.append("Synthetic spectral grid harmonics consistent with generative upsampling.")
+        elif avg_freq >= 0.30:
+            evidence.append("Borderline synthetic spectral grid indicators in still image.")
+        else:
+            evidence.append("Natural optical camera frequency distribution verified in still image.")
+
+        return {
+            "fake_probability": round(avg_freq, 4),
+            "frequency_score": round(avg_freq, 4),
+            "high_low_ratio": freq_res.get("high_low_ratio", 0.0),
+            "peak_disparity": freq_res.get("peak_disparity", 0.0),
+            "observations": observations,
+            "evidence": evidence,
+        }
+
     def evaluate_scene_frames(self, frames: List[np.ndarray]) -> Dict[str, Any]:
         """
         Evaluates a sequence of video scene frames across spectral, motion, and sensor noise domains.

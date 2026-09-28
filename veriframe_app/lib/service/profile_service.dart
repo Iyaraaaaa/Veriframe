@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 
 class UserProfile {
   final String uid;
@@ -37,7 +38,7 @@ class ProfileService {
       if (!doc.exists) return null;
       return UserProfile.fromFirestore(doc);
     } catch (e) {
-      print('Error fetching user profile: $e');
+      debugPrint('Error fetching user profile: $e');
       return null;
     }
   }

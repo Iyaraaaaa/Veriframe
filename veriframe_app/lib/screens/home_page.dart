@@ -20,6 +20,8 @@ import 'package:veriframe_app/widgets/home_top_bar.dart';
 import 'package:veriframe_app/service/user_profile_cache.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:veriframe_app/widgets/safe_avatar_widget.dart';
+import 'package:veriframe_app/widgets/elegant_verify_modal.dart';
+import 'package:veriframe_app/screens/media_modality_selection_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -233,7 +235,14 @@ class _HomePageState extends State<HomePage> {
 
   void _onItemTapped(int index) => setState(() => _selectedIndex = index);
 
-  void _navigateToAnalyze() => Navigator.pushNamed(context, '/analyze');
+  void _navigateToAnalyze() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const MediaModalitySelectionPage(),
+      ),
+    );
+  }
 
   Future<void> _openNotifications() async {
     await Navigator.push(
@@ -806,8 +815,11 @@ class _HomePageState extends State<HomePage> {
         onPressed: _navigateToAnalyze,
         backgroundColor: VFColors.blue600,
         foregroundColor: VFColors.white,
-        icon: const Icon(Icons.play_arrow),
-        label: Text(loc.analyzeVideo),
+        icon: const Icon(Icons.shield_outlined),
+        label: const Text(
+          'Verify Media',
+          style: TextStyle(fontWeight: FontWeight.w800, letterSpacing: 0.3),
+        ),
       ),
     );
   }

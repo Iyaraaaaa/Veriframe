@@ -16,6 +16,7 @@ from filters.quality_filter import QualityFilter, FaceQualityConfig
 from calibration.temporal_filter import TemporalFilter
 from calibration.confidence_calibration import ConfidenceCalibrator
 from preprocessing.preprocessor import FramePreprocessor
+from filters.scene_forensics import SceneForensicsAnalyzer
 
 class DummyInterpreter:
     def __init__(self, val: float = 0.88):
@@ -59,6 +60,24 @@ class TestLinkV2Verification(unittest.TestCase):
         self.calibrator = ConfidenceCalibrator(temperature=1.0)
         self.preprocessor = FramePreprocessor(target_size=(224, 224))
 
+        self.scene_analyzer_real = MagicMock(spec=SceneForensicsAnalyzer)
+        self.scene_analyzer_real.evaluate_scene_frames.return_value = {
+            "scene_fake_prob": 0.12,
+            "frequency_score": 0.1,
+            "motion_score": 0.1,
+            "noise_score": 0.1,
+            "evidence": [],
+        }
+
+        self.scene_analyzer_fake = MagicMock(spec=SceneForensicsAnalyzer)
+        self.scene_analyzer_fake.evaluate_scene_frames.return_value = {
+            "scene_fake_prob": 0.88,
+            "frequency_score": 0.9,
+            "motion_score": 0.9,
+            "noise_score": 0.9,
+            "evidence": [],
+        }
+
         self.tmp_video = tempfile.NamedTemporaryFile(suffix=".mp4", delete=False)
         fourcc = cv2.VideoWriter_fourcc(*"mp4v")
         out = cv2.VideoWriter(self.tmp_video.name, fourcc, 10.0, (320, 240))
@@ -85,6 +104,7 @@ class TestLinkV2Verification(unittest.TestCase):
             frame_sampler=self.frame_sampler,
             quality_filter=self.quality_filter,
             preprocessor=self.preprocessor,
+            scene_analyzer=self.scene_analyzer_real,
         )
         v2_real.download_video = MagicMock(return_value={"success": True, "video_path": self.tmp_video.name, "content_length_mb": 1.0, "reason": None})
         res_real_link = v2_real.process("https://example.com/real_video.mp4")
@@ -98,6 +118,7 @@ class TestLinkV2Verification(unittest.TestCase):
             frame_sampler=self.frame_sampler,
             quality_filter=self.quality_filter,
             preprocessor=self.preprocessor,
+            scene_analyzer=self.scene_analyzer_fake,
         )
         v2_fake.download_video = MagicMock(return_value={"success": True, "video_path": self.tmp_video.name, "content_length_mb": 1.0, "reason": None})
         res_fake_link = v2_fake.process("https://example.com/fake_video.mp4")

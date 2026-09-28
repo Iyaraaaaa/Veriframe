@@ -12,6 +12,7 @@ from calibration.temporal_filter import TemporalFilter
 from calibration.confidence_calibration import ConfidenceCalibrator
 from preprocessing.preprocessor import FramePreprocessor
 from utils.video import decode_base64_frame
+from utils.transparency import THRESHOLDS_STREAM
 
 logger = logging.getLogger("veriframe.pipelines.stream")
 
@@ -205,13 +206,13 @@ class StreamPipeline:
             2
         )
 
-        if fake_probability > 65.0:
+        if fake_probability > THRESHOLDS_STREAM["manipulated_above_pct"]:
             legacy_verdict = "MANIPULATED"
-            verdict = "FAKE" if fake_probability >= 85.0 else "LIKELY_FAKE"
+            verdict = "FAKE" if fake_probability >= THRESHOLDS_STREAM["fake_confirmed_at_or_above_pct"] else "LIKELY_FAKE"
             risk_level = "HIGH"
-        elif fake_probability < 35.0:
+        elif fake_probability < THRESHOLDS_STREAM["authentic_below_pct"]:
             legacy_verdict = "AUTHENTIC"
-            verdict = "REAL" if fake_probability <= 15.0 else "LIKELY_REAL"
+            verdict = "REAL" if fake_probability <= THRESHOLDS_STREAM["real_confirmed_at_or_below_pct"] else "LIKELY_REAL"
             risk_level = "LOW"
         else:
             legacy_verdict = "INCONCLUSIVE"
@@ -263,24 +264,47 @@ class StreamPipeline:
 
     def _build_frame_response(self, session: Dict[str, Any]) -> Dict[str, Any]:
         if not session["scores"]:
+            # No frame has passed biometric detection + quality scoring yet.
+            # "UNCERTAIN" is mapped to "authentic" by the /analyze/stream/frame
+            # contract, which would present a firm AUTHENTIC verdict derived
+            # from zero evidence, so this state is reported distinctly.
             return {
                 "session_confidence_score": 0.0,
-                "verdict": "UNCERTAIN",
+                "verdict": "INSUFFICIENT_DATA",
                 "model_used": "Veriframe Live Stream Detector",
                 "frames_processed": session["frame_count"],
                 "faces_detected": session["faces_detected"],
+                "scored_frames": 0,
+                "scene_frames_scored": len(session["scene_scores"]),
             }
 
         rolling = session["scores"][-30:]
-        avg_score = float(np.mean(rolling))
-        verdict = "AUTHENTIC" if avg_score >= 0.5 else "MANIPULATED"
+        avg_fake_prob = float(np.mean(rolling))
+        # session["scores"] holds FAKE probabilities. The endpoint contract
+        # (and the mobile client, which computes fakeProbability as
+        # 100 - session_confidence_score) treats session_confidence_score as an
+        # AUTHENTICITY score, so the conversion happens here. It also used to
+        # report verdict = AUTHENTIC for a *high* fake probability, i.e. the
+        # exact inverse of the session summary produced by get_session_summary.
+        fake_probability = round(avg_fake_prob * 100.0, 2)
+        authenticity_score = round((1.0 - avg_fake_prob) * 100.0, 2)
+
+        if fake_probability > THRESHOLDS_STREAM["manipulated_above_pct"]:
+            verdict = "MANIPULATED"
+        elif fake_probability < THRESHOLDS_STREAM["authentic_below_pct"]:
+            verdict = "AUTHENTIC"
+        else:
+            verdict = "UNCERTAIN"
 
         return {
-            "session_confidence_score": round(avg_score * 100.0, 2),
+            "session_confidence_score": authenticity_score,
             "verdict": verdict,
+            "authenticity_score": authenticity_score,
+            "fake_probability": fake_probability,
             "model_used": "Veriframe Live Stream Detector",
             "frames_processed": session["frame_count"],
             "faces_detected": session["faces_detected"],
+            "scored_frames": len(session["scores"]),
             "rolling_window": len(rolling),
         }
 

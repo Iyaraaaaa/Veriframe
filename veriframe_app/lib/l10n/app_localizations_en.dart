@@ -2247,6 +2247,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get sendViaLabel => 'SEND VIA';
 
   @override
+  String get escalateAttachPdf => 'Attach PDF to the report';
+
+  @override
+  String get escalateSendFailed =>
+      'Couldn\'t open WhatsApp or email. Check the app is installed.';
+
+  @override
   String get slThreatRadarTitle => 'SL Threat Intelligence Radar';
 
   @override

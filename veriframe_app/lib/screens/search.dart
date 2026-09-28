@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:veriframe_app/l10n/app_localizations.dart';
+import 'package:veriframe_app/widgets/main_scaffold.dart';
 
 class SearchPage extends StatefulWidget {
   const SearchPage({super.key});
@@ -48,8 +49,13 @@ class _SearchPageState extends State<SearchPage> {
     final loc = AppLocalizations.of(context)!;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return Scaffold(
+    return MainScaffold(
       backgroundColor: isDark ? Colors.black : Colors.grey[100],
+      showBack: true,
+      title: Text(
+        loc.getYourInformation,
+        style: const TextStyle(fontWeight: FontWeight.w800, letterSpacing: -0.5),
+      ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: SingleChildScrollView(

@@ -681,6 +681,8 @@
     "escalateReportSubtitle":  "இந்த கண்டுபிடிப்பை ஒரு தேசிய அதிகாரத்திற்கு அனுப்பவும்",
     "authoritySectionLabel":  "அதிகாரம்",
     "sendViaLabel":  "அனுப்புவது",
+    "escalateAttachPdf":  "அறிக்கையுடன் PDF இணைக்கவும்",
+    "escalateSendFailed":  "WhatsApp அல்லது மின்னஞ்சலைத் திறக்க முடியவில்லை. செயலி நிறுவப்பட்டுள்ளதா என்பதைச் சரிபார்க்கவும்.",
     "slThreatRadarTitle":  "SL தarer நிலைநாட்டு ரேடார்",
     "slThreatRadarSubtitle":  "இலங்கையில் பரவிய டீப்ஃபேக் மோஷம் மற்றும் குரல் நகல்களைக் கண்காணிக்கவும்.",
     "slThreatRadarLiveSoon":  "நேரடி கண்காணிப்பு விரைவில் வரும்",

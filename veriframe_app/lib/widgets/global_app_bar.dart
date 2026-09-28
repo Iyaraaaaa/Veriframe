@@ -7,11 +7,16 @@ import 'package:veriframe_app/utils/theme.dart';
 /// Keeps the VERIFRAME logo, title and navigation styling identical across
 /// the whole app and provides the global language picker and theme toggle.
 /// Brand name "VERIFRAME" is intentionally never translated.
+///
+/// [bottom] is an optional slot for page specific app bar content such as a
+/// [TabBar], so pages that need it still get the shared app bar instead of
+/// building their own.
 PreferredSizeWidget globalAppBar(
   BuildContext context, {
   bool showBack = false,
   List<Widget>? extraActions,
   Widget? title,
+  PreferredSizeWidget? bottom,
 }) {
   final controller = SettingsScope.of(context);
   final scheme = Theme.of(context).colorScheme;
@@ -61,7 +66,10 @@ PreferredSizeWidget globalAppBar(
     backgroundColor: scheme.primary,
     foregroundColor: scheme.onPrimary,
     elevation: 0,
+    scrolledUnderElevation: 0,
+    surfaceTintColor: Colors.transparent,
     centerTitle: false,
+    bottom: bottom,
     iconTheme: IconThemeData(color: scheme.onPrimary),
     actions: [
       ...?extraActions,

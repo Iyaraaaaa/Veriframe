@@ -12,9 +12,11 @@ import time
 import base64
 import logging
 import io
-from concurrent.futures import ThreadPoolExecutor, as_completed
+from urllib.parse import urlparse
+from concurrent.futures import ThreadPoolExecutor, as_completed, TimeoutError as FuturesTimeoutError
 from typing import Dict, Any, Optional
 import requests
+from starlette.concurrency import run_in_threadpool
 
 from config import config as app_config
 from utils.logger import setup_logger
@@ -28,12 +30,17 @@ from pipelines.link_pipeline import LinkPipeline
 from pipelines.link_verification_v2 import LinkVerificationV2
 from pipelines.stream_pipeline import StreamPipeline
 from pipelines.offline_pipeline import OfflinePipeline
+from pipelines.image_pipeline import ImagePipeline
+from pipelines.audio_pipeline import AudioPipeline
+from services.reality_defender_service import RealityDefenderService
+from services.gemini_service import GeminiService
 from preprocessing.preprocessor import FramePreprocessor
 from cache.result_cache import ResultCache
 from database.connection import init_db, upsert_job, insert_report, insert_history, get_report_by_hash, list_reports
 from database.models import JobRecord, ReportRecord, CacheEntry, AnalysisHistory
 from utils.video import get_video_metadata, decode_base64_frame
 from utils.image import compute_face_quality_score, pad_to_square
+from utils.transparency import attach_engine_transparency, engine_transparency
 
 logger = setup_logger()
 app = FastAPI(title="Veriframe API", version="2.0.0")
@@ -60,10 +67,43 @@ try:
     interpreter.allocate_tensors()
     input_details = interpreter.get_input_details()
     output_details = interpreter.get_output_details()
-    logger.info(f"[Main] Model loaded: {model_path}")
+    logger.info(f"[Main] Video model loaded: {model_path}")
 except Exception as e:
     logger.error(f"[Main] Model load failed: {e}")
     raise RuntimeError(f"Failed to load TFLite model: {e}")
+
+_BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+# ---- Load dedicated Image.tflite (input [1,224,224,3] → output [1,2] softmax [real,fake]) ----
+_image_model_path = os.path.join(_BASE_DIR, "Image.tflite")
+try:
+    img_interpreter = tf.lite.Interpreter(model_path=_image_model_path)
+    img_interpreter.allocate_tensors()
+    img_input_details = img_interpreter.get_input_details()
+    img_output_details = img_interpreter.get_output_details()
+    image_model_name = "image"
+    logger.info(f"[Main] Image.tflite loaded: {_image_model_path}")
+except Exception as _img_err:
+    logger.warning(f"[Main] Image.tflite not loaded ({_img_err}), falling back to video model.")
+    img_interpreter = interpreter
+    img_input_details = input_details
+    img_output_details = output_details
+    image_model_name = "video-model fallback"
+
+# ---- Load dedicated Audio.tflite (input [1,1536] spectral projection -> output [1,1] sigmoid) ----
+_audio_model_path = os.path.join(_BASE_DIR, "Audio.tflite")
+try:
+    aud_interpreter = tf.lite.Interpreter(model_path=_audio_model_path)
+    aud_interpreter.allocate_tensors()
+    aud_input_details = aud_interpreter.get_input_details()
+    aud_output_details = aud_interpreter.get_output_details()
+    logger.info(f"[Main] Audio.tflite loaded: {_audio_model_path}")
+except Exception as _aud_err:
+    logger.warning(f"[Main] Audio.tflite not loaded ({_aud_err}), skipping on-device audio TFLite.")
+    aud_interpreter = None
+    aud_input_details = None
+    aud_output_details = None
+
 
 INPUT_SIZE = app_config.INPUT_SIZE
 preprocessor = FramePreprocessor(target_size=INPUT_SIZE)
@@ -86,6 +126,9 @@ quality_filter = QualityFilter(config=FaceQualityConfig(
 temporal_filter = TemporalFilter(window_size=app_config.TEMPORAL_WINDOW_SIZE)
 calibrator = ConfidenceCalibrator(temperature=app_config.CONFIDENCE_CALIBRATION_TEMP)
 
+rd_service = RealityDefenderService()
+gemini_service = GeminiService()
+
 video_pipeline = VideoPipeline(
     interpreter=interpreter,
     input_details=input_details,
@@ -96,6 +139,7 @@ video_pipeline = VideoPipeline(
     temporal_filter=temporal_filter,
     calibrator=calibrator,
     preprocessor=preprocessor,
+    rd_service=rd_service,
 )
 
 link_pipeline = LinkPipeline(
@@ -108,6 +152,26 @@ link_pipeline = LinkPipeline(
     temporal_filter=TemporalFilter(window_size=app_config.TEMPORAL_WINDOW_SIZE),
     calibrator=calibrator,
     preprocessor=preprocessor,
+)
+
+image_pipeline = ImagePipeline(
+    interpreter=img_interpreter,
+    input_details=img_input_details,
+    output_details=img_output_details,
+    face_detector=face_detector,
+    calibrator=calibrator,
+    preprocessor=preprocessor,
+    rd_service=rd_service,
+    model_used=image_model_name,
+)
+
+
+audio_pipeline = AudioPipeline(
+    calibrator=calibrator,
+    rd_service=rd_service,
+    aud_interpreter=aud_interpreter,
+    aud_input_details=aud_input_details,
+    aud_output_details=aud_output_details,
 )
 
 stream_pipeline = StreamPipeline(
@@ -135,10 +199,64 @@ active_stream_workers: Dict[str, Any] = {}
 class LinkVerifyRequest(BaseModel):
     url: str
 
+class ImageLinkVerifyRequest(BaseModel):
+    url: str
+
 class StreamVerifyRequest(BaseModel):
     stream_url: str
 
 # ---- Utility functions ----
+
+def _attach_engine(result, kind: str):
+    """Stamp the engine-transparency block onto any verification result.
+
+    The Reality Defender sub-result is read straight off the payload so the
+    block always reflects the engine that actually produced this verdict,
+    including rd_partial and the request id.
+
+    Job/session envelopes wrap the verdict in a ``result`` key; those get the
+    block on both the envelope and the inner verdict, so a client reading
+    either shape finds it.
+    """
+def _append_gemini_engine(result: Any, ai_explanation: Any) -> None:
+    if isinstance(result, dict) and isinstance(ai_explanation, dict):
+        if ai_explanation.get("status") == "success":
+            engines = result.setdefault("engines_used", ["local"])
+            if "gemini" not in engines:
+                engines.append("gemini")
+
+
+def _attach_engine(result: Any, kind: str) -> Any:
+    """Enrich the given verification result with the engine transparency block."""
+    if not isinstance(result, dict):
+        return result
+    inner = result.get("result")
+    rd_result = result.get("reality_defender")
+    if rd_result is None and isinstance(inner, dict):
+        rd_result = inner.get("reality_defender")
+    attach_engine_transparency(result, kind=kind, rd_result=rd_result)
+    if isinstance(inner, dict) and "engine" not in inner:
+        attach_engine_transparency(inner, kind=kind, rd_result=rd_result)
+
+    # Ensure transparency fields are present on top-level result
+    if "engines_used" not in result:
+        engines = ["local"]
+        if rd_result and rd_result.get("status") == "success" and not rd_result.get("partial"):
+            engines.append("reality_defender")
+        result["engines_used"] = engines
+
+    if "face_detector_used" not in result and kind in ("image", "video", "link"):
+        result["face_detector_used"] = (
+            face_detector.loaded_detectors[0].lower() if getattr(face_detector, "loaded_detectors", None) else "none"
+        )
+
+    if "degraded" not in result:
+        rd_failed = bool(rd_result and (rd_result.get("status") != "success" or rd_result.get("partial")))
+        result["degraded"] = rd_failed
+
+    return result
+
+
 
 def get_file_hash(file_path: str) -> str:
     h = hashlib.sha256()
@@ -286,17 +404,77 @@ def download_and_verify_task(job_id: str, url: str):
     try:
         # Patch link_pipeline to emit status updates into jobs_db
         def _on_status(status: str, progress: float):
+            # The pipeline emits its own terminal "completed" the moment the
+            # verdict exists, which is *before* the result is stored here and
+            # before the AI narrative is generated. Publish it as a
+            # non-terminal state instead, otherwise a client polling
+            # /analysis/{id} observes status=completed with result=null and
+            # reads a null result as a failed analysis.
+            if status == "completed":
+                status = "analyzing"
             jobs_db[job_id]["status"] = status
-            jobs_db[job_id]["progress"] = progress
+            jobs_db[job_id]["progress"] = min(float(progress), 0.99)
 
         jobs_db[job_id]["status"] = "downloading"
         jobs_db[job_id]["progress"] = 0.1
-        result = link_pipeline.process(url, source="Video Link", status_cb=_on_status)
+
+        # Safety-net: hard wall-clock timeout around the entire pipeline so a
+        # hung yt-dlp/analysis can never leave the job stuck in "downloading".
+        # The download step already enforces URL_DOWNLOAD_TIMEOUT; this margin
+        # covers frame extraction + inference.
+        overall_timeout = app_config.URL_DOWNLOAD_TIMEOUT + 180
+        with ThreadPoolExecutor(max_workers=1) as executor:
+            future = executor.submit(link_pipeline.process, url, source="Video Link", status_cb=_on_status)
+            try:
+                result = future.result(timeout=overall_timeout)
+            except FuturesTimeoutError:
+                logger.error(
+                    f"[download_and_verify_task] job_id={job_id} pipeline exceeded "
+                    f"{overall_timeout}s wall-clock limit for URL: {url}"
+                )
+                jobs_db[job_id]["status"] = "failed"
+                jobs_db[job_id]["error"] = (
+                    f"Analysis timed out after {overall_timeout}s. The video may be "
+                    f"too large, the server may be under heavy load, or the platform "
+                    f"is blocking automated downloads. Try a direct video link or "
+                    f"upload the file directly."
+                )
+                return
+
+        # If the pipeline returned a failed report (download blocked, media
+        # decode error, etc.) propagate it as a "failed" job so the UI surfaces
+        # a clear error instead of an INCONCLUSIVE verdict with all-zero scores.
+        failed_statuses = ("DOWNLOAD_FAILED", "PROCESSING_ERROR", "UNSUPPORTED")
+        if result.get("analysis_status") in failed_statuses or result.get("video_retrieved") is False:
+            reason = result.get("reason") or "Unable to retrieve the video from this link."
+            jobs_db[job_id]["result"] = result
+            jobs_db[job_id]["progress"] = 1.0
+            jobs_db[job_id]["status"] = "failed"
+            jobs_db[job_id]["error"] = reason
+            logger.warning(
+                f"[download_and_verify_task] job_id={job_id} link verification failed: "
+                f"{result.get('analysis_status')} — {reason}"
+            )
+            return
+
+        # Append Gemini AI forensic explanation to result
+        try:
+            ai_explanation = gemini_service.generate_forensic_explanation(result)
+            result["aiExplanation"] = ai_explanation
+            _append_gemini_engine(result, ai_explanation)
+        except Exception as ai_err:
+            logger.warning(f"[download_and_verify_task] Gemini AI explanation failed: {ai_err}")
+
+
+        _attach_engine(result, "link")
         cache.set(url, result)
 
-        jobs_db[job_id]["status"] = "completed"
-        jobs_db[job_id]["progress"] = 1.0
+        # Publish the payload *before* flipping status: a client polling
+        # /analysis/{id} would otherwise observe status=completed with
+        # result=null in the window between the two assignments.
         jobs_db[job_id]["result"] = result
+        jobs_db[job_id]["progress"] = 1.0
+        jobs_db[job_id]["status"] = "completed"
     except Exception as e:
         jobs_db[job_id]["status"] = "failed"
         jobs_db[job_id]["error"] = str(e)
@@ -325,6 +503,8 @@ def health():
         "retinaface_available": face_detector.retinaface is not None,
         "scrfd_available": face_detector.scrfd is not None,
         "cache_entries": cache.stats()["entries"],
+        "gemini_configured": gemini_service.is_configured(),
+        "engine": engine_transparency(kind="video", rd_result=None),
     }
 
 @app.get("/version")
@@ -341,6 +521,7 @@ def version():
         "max_frames": app_config.MAX_FRAMES,
         "target_frames": app_config.TARGET_FRAMES,
         "input_size": list(app_config.INPUT_SIZE),
+        "engine": engine_transparency(kind="video", rd_result=None),
     }
 
 @app.post("/predict")
@@ -351,8 +532,13 @@ async def predict(file: UploadFile = File(...)):
         video_path = tmp.name
 
     try:
-        result = run_full_pipeline(video_path, source="Local Upload")
-        return result
+        result = await run_in_threadpool(run_full_pipeline, video_path, "Local Upload")
+        try:
+            result["aiExplanation"] = await run_in_threadpool(gemini_service.generate_forensic_explanation, result)
+            _append_gemini_engine(result, result["aiExplanation"])
+        except Exception as ai_err:
+            logger.warning(f"[predict] Gemini AI explanation failed: {ai_err}")
+        return _attach_engine(result, "video")
     except HTTPException as he:
         raise he
     except Exception as e:
@@ -361,42 +547,181 @@ async def predict(file: UploadFile = File(...)):
         if os.path.exists(video_path):
             os.remove(video_path)
 
+
+@app.post("/verify/image")
+async def verify_image(file: UploadFile = File(...)):
+    suffix = os.path.splitext(file.filename or "")[1] or ".jpg"
+    with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
+        tmp.write(await file.read())
+        tmp_path = tmp.name
+
+    try:
+        # The pipeline is CPU/TFLite bound and may call out to Reality Defender.
+        # Running it in a threadpool keeps the event loop free.
+        result = await run_in_threadpool(image_pipeline.process, tmp_path, "Local Image")
+        try:
+            result["aiExplanation"] = await run_in_threadpool(gemini_service.generate_forensic_explanation, result)
+            _append_gemini_engine(result, result["aiExplanation"])
+        except Exception as ai_err:
+            logger.warning(f"[verify_image] Gemini AI explanation failed: {ai_err}")
+        return _attach_engine(result, "image")
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"[verify_image] Error: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to process image: {str(e)}")
+    finally:
+        if os.path.exists(tmp_path):
+            os.remove(tmp_path)
+
+@app.post("/verify/image/link")
+async def verify_image_link(request: ImageLinkVerifyRequest):
+    headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
+    try:
+        # requests.get is blocking: called directly from an async endpoint it
+        # would stall the whole event loop for up to the 25s timeout. Fetch in
+        # the threadpool instead.
+        resp = await run_in_threadpool(
+            requests.get, request.url, headers=headers, timeout=25
+        )
+        if resp.status_code != 200:
+            raise HTTPException(status_code=400, detail=f"Failed to fetch image from URL: HTTP {resp.status_code}")
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Unable to download image: {str(e)}")
+
+    suffix = ".jpg"
+    with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
+        tmp.write(resp.content)
+        tmp_path = tmp.name
+
+    try:
+        result = await run_in_threadpool(image_pipeline.process, tmp_path, "Image Link")
+        result["imageUrl"] = request.url
+        try:
+            result["aiExplanation"] = await run_in_threadpool(gemini_service.generate_forensic_explanation, result)
+            _append_gemini_engine(result, result["aiExplanation"])
+        except Exception as ai_err:
+            logger.warning(f"[verify_image_link] Gemini AI explanation failed: {ai_err}")
+        return _attach_engine(result, "image")
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"[verify_image_link] Error: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to analyze image link: {str(e)}")
+    finally:
+        if os.path.exists(tmp_path):
+            os.remove(tmp_path)
+
+@app.post("/verify/audio")
+async def verify_audio(file: UploadFile = File(...)):
+    suffix = os.path.splitext(file.filename or "")[1] or ".mp3"
+    with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
+        tmp.write(await file.read())
+        tmp_path = tmp.name
+
+    try:
+        result = await run_in_threadpool(audio_pipeline.process, tmp_path, "Local Audio")
+        try:
+            result["aiExplanation"] = await run_in_threadpool(gemini_service.generate_forensic_explanation, result)
+            _append_gemini_engine(result, result["aiExplanation"])
+        except Exception as ai_err:
+            logger.warning(f"[verify_audio] Gemini AI explanation failed: {ai_err}")
+        return _attach_engine(result, "audio")
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"[verify_audio] Error: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to process audio: {str(e)}")
+
+    finally:
+        if os.path.exists(tmp_path):
+            os.remove(tmp_path)
+
+class AiExplainRequest(BaseModel):
+    """Accepts a partial or full verification result and returns a Gemini AI explanation."""
+    verdict: str = "INCONCLUSIVE"
+    fineVerdict: Optional[str] = None
+    fakeProbability: float = 0.0
+    authenticityScore: float = 100.0
+    mediaType: Optional[str] = "media"
+    source: Optional[str] = "upload"
+    detectedEvidence: Optional[list] = None
+    forensicObservations: Optional[list] = None
+
+@app.post("/ai/explain")
+async def ai_explain(request: AiExplainRequest):
+    """Standalone endpoint: generate Gemini AI forensic narrative for any verification payload."""
+    report = {
+        "verdict": request.verdict,
+        "fineVerdict": request.fineVerdict or request.verdict,
+        "fakeProbability": request.fakeProbability,
+        "authenticityScore": request.authenticityScore,
+        "mediaType": request.mediaType,
+        "source": request.source,
+        "detectedEvidence": request.detectedEvidence or [],
+        "forensicObservations": request.forensicObservations or [],
+    }
+    try:
+        explanation = await run_in_threadpool(gemini_service.generate_forensic_explanation, report)
+        return {"status": "success", "explanation": explanation}
+    except Exception as e:
+        logger.error(f"[ai_explain] Error: {e}")
+        raise HTTPException(status_code=500, detail=f"AI explanation failed: {str(e)}")
+
+
+
 @app.post("/verify/link")
 def verify_link(request: LinkVerifyRequest, background_tasks: BackgroundTasks):
     job_id = f"job-{int(time.time() * 1000)}"
     jobs_db[job_id] = {"status": "pending", "progress": 0.0, "result": None}
     background_tasks.add_task(download_and_verify_task, job_id, request.url)
-    return {"job_id": job_id}
+    # The real engine block is attached once the job completes (see
+    # download_and_verify_task); this ack reports which engine will run.
+    return {"job_id": job_id, "engine": engine_transparency(kind="link", rd_result=None)}
 
 @app.post("/verify/stream")
 def verify_stream(request: StreamVerifyRequest):
     session_id = f"stream-{int(time.time() * 1000)}"
     streams_db[session_id] = stream_pipeline.create_session(request.stream_url)
-    return {"session_id": session_id}
+    return {"session_id": session_id, "engine": engine_transparency(kind="stream", rd_result=None)}
 
 @app.post("/analyze/stream/frame")
-async def analyze_stream_frame(frame_base64: str = File(...), session_id: str = File(...)):
+async def analyze_stream_frame(frame_base64: str = Form(...), session_id: str = Form(...)):
     if session_id not in streams_db:
         raise HTTPException(status_code=404, detail="Stream session not found.")
 
     session = streams_db[session_id]
-    result = stream_pipeline.process_frame(session, frame_base64)
+    result = await run_in_threadpool(stream_pipeline.process_frame, session, frame_base64)
 
     legacy_verdict = result["verdict"]
-    if legacy_verdict == "AUTHENTIC":
+    if legacy_verdict == "INSUFFICIENT_DATA":
+        # No frame has been scored yet. The legacy contract maps UNCERTAIN to
+        # "authentic", which would report a firm AUTHENTIC verdict derived from
+        # no evidence at all, so this state is surfaced as "unknown".
+        legacy_prediction = "unknown"
+    elif legacy_verdict == "AUTHENTIC":
         legacy_prediction = "authentic"
     elif legacy_verdict == "LIKELY_AUTHENTIC":
         legacy_prediction = "authentic"
     elif legacy_verdict == "UNCERTAIN":
-        legacy_prediction = "authentic"
+        # Reported as its own state: mapping an uncertain score to "authentic"
+        # would present a firm AUTHENTIC verdict the backend never made.
+        legacy_prediction = "inconclusive"
     else:
         legacy_prediction = "manipulated"
 
-    return {
+    return _attach_engine({
         "session_confidence_score": result["session_confidence_score"],
         "verdict": legacy_prediction,
-        "model_used": "MobileNet Ensemble (Cloud Stream)"
-    }
+        "model_used": "MobileNet Ensemble (Cloud Stream)",
+        "authenticity_score": result.get("authenticity_score"),
+        "fake_probability": result.get("fake_probability"),
+        "frames_processed": result.get("frames_processed"),
+        "faces_detected": result.get("faces_detected"),
+        "scored_frames": result.get("scored_frames"),
+    }, "stream")
 
 @app.get("/analysis/{id}")
 def get_analysis(id: str):
@@ -408,7 +733,7 @@ def get_analysis(id: str):
         if len(session["scores"]) == 0:
             return {"status": "failed", "error": "No biometric frames analyzed in the active stream session."}
         try:
-            return stream_pipeline.get_session_summary(session)
+            return _attach_engine(stream_pipeline.get_session_summary(session), "stream")
         except ValueError as ve:
             return {"status": "failed", "error": str(ve)}
 
@@ -422,7 +747,7 @@ def report_create(request: dict):
     if job_id and job_id in jobs_db:
         job = jobs_db[job_id]
         if job["status"] == "completed":
-            return job["result"]
+            return _attach_engine(job["result"], "link")
         raise HTTPException(status_code=400, detail=f"Job analysis in status: {job['status']}")
 
     if session_id and session_id in streams_db:
@@ -431,7 +756,7 @@ def report_create(request: dict):
             raise HTTPException(status_code=400, detail="Biometric stream analysis failed: No frames with faces detected.")
         try:
             summary = stream_pipeline.get_session_summary(session)
-            return summary["result"]
+            return _attach_engine(summary["result"], "stream")
         except ValueError as ve:
             raise HTTPException(status_code=400, detail=str(ve))
 
@@ -538,7 +863,8 @@ async def detect_video(request: DetectVideoRequest):
                 video_path = tmp.name
 
             try:
-                result = video_pipeline.process(video_path, source="Base64 Upload")
+                result = await run_in_threadpool(video_pipeline.process, video_path, "Base64 Upload")
+                _attach_engine(result, "video")
                 cache.set(video_hash, result)
                 return JSONResponse(content={"cached": False, "result": result})
             finally:
@@ -546,7 +872,8 @@ async def detect_video(request: DetectVideoRequest):
                     os.remove(video_path)
 
         elif request.video_url:
-            result = link_pipeline.process(request.video_url, source="URL Upload")
+            result = await run_in_threadpool(link_pipeline.process, request.video_url, "URL Upload")
+            _attach_engine(result, "link")
             cache.set(request.video_url, result)
             return JSONResponse(content={"cached": False, "result": result})
         else:
@@ -561,13 +888,13 @@ def detect_url(request: DetectUrlRequest, background_tasks: BackgroundTasks):
     job_id = f"detect-url-{int(time.time() * 1000)}"
     jobs_db[job_id] = {"status": "pending", "progress": 0.0, "result": None}
     background_tasks.add_task(download_and_verify_task, job_id, request.url)
-    return {"job_id": job_id}
+    return {"job_id": job_id, "engine": engine_transparency(kind="link", rd_result=None)}
 
 @app.post("/detect/stream")
 def detect_stream(request: DetectStreamRequest):
     session_id = f"detect-stream-{int(time.time() * 1000)}"
     streams_db[session_id] = stream_pipeline.create_session(request.stream_url)
-    return {"session_id": session_id}
+    return {"session_id": session_id, "engine": engine_transparency(kind="stream", rd_result=None)}
 
 @app.post("/detect/stream/frame")
 async def detect_stream_frame(frame: UploadFile = File(...), session_id: str = Form(...)):
@@ -578,11 +905,11 @@ async def detect_stream_frame(frame: UploadFile = File(...), session_id: str = F
     frame_base64 = f"data:image/jpeg;base64,{base64.b64encode(contents).decode()}"
 
     session = streams_db[session_id]
-    result = stream_pipeline.process_frame(session, frame_base64)
+    result = await run_in_threadpool(stream_pipeline.process_frame, session, frame_base64)
 
-    return {
+    return _attach_engine({
         "session_confidence_score": result["session_confidence_score"],
         "verdict": result["verdict"],
         "frames_processed": session["frame_count"],
         "faces_detected": session["faces_detected"],
-    }
+    }, "stream")

@@ -6,6 +6,7 @@ import 'package:video_player/video_player.dart';
 import 'package:veriframe_app/models/verification_result.dart';
 import 'package:veriframe_app/l10n/app_localizations.dart';
 import 'package:veriframe_app/widgets/escalate_bottom_sheet.dart';
+import 'package:veriframe_app/widgets/main_scaffold.dart';
 
 class EvidenceVideoPlayerScreen extends StatefulWidget {
   final VerificationResult report;
@@ -102,42 +103,39 @@ class _EvidenceVideoPlayerScreenState extends State<EvidenceVideoPlayerScreen> {
     final hasCloudUrl =
         r.videoUrl != null && r.videoUrl!.trim().isNotEmpty;
 
-    return Scaffold(
+    return MainScaffold(
       backgroundColor: Colors.black,
-      appBar: AppBar(
-        backgroundColor: Colors.black,
-        elevation: 0,
-        foregroundColor: Colors.white,
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              loc.evidenceVideoTitle,
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 16,
-                fontWeight: FontWeight.w700,
-              ),
+      showBack: true,
+      title: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(
+            loc.evidenceVideoTitle,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
             ),
-            Text(
-              r.mediaName ?? 'Evidence',
-              style: TextStyle(
-                color: Colors.white.withValues(alpha: 0.7),
-                fontSize: 11,
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
+          ),
+          Text(
+            r.mediaName ?? 'Evidence',
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.7),
+              fontSize: 11,
             ),
-          ],
-        ),
-        actions: [
-          IconButton(
-            icon: Icon(Icons.report_gmailerrorred_rounded, size: 22),
-            tooltip: loc.verifyReportMedia,
-            onPressed: _reportMedia,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
         ],
       ),
+      extraActions: [
+        IconButton(
+          icon: const Icon(Icons.report_gmailerrorred_rounded, size: 22),
+          tooltip: loc.verifyReportMedia,
+          onPressed: _reportMedia,
+        ),
+      ],
       body: _errorMessage != null
           ? _buildErrorView(accentColor)
           : !_isInitialized

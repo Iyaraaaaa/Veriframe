@@ -41,6 +41,8 @@ class VerificationResult with _$VerificationResult {
     double? processingTimeSec,
     List<Map<String, dynamic>>? suspiciousFrames,
     List<String>? timelineLogs,
+    // Gemini AI forensic explanation
+    Map<String, dynamic>? aiExplanation,
   }) = _VerificationResult;
 
   factory VerificationResult.fromJson(Map<String, dynamic> json) =>

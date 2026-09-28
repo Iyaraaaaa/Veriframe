@@ -50,6 +50,7 @@ _$VerificationResultImpl _$$VerificationResultImplFromJson(
   timelineLogs: (json['timelineLogs'] as List<dynamic>?)
       ?.map((e) => e as String)
       .toList(),
+  aiExplanation: json['aiExplanation'] as Map<String, dynamic>?,
 );
 
 Map<String, dynamic> _$$VerificationResultImplToJson(
@@ -88,4 +89,5 @@ Map<String, dynamic> _$$VerificationResultImplToJson(
   'processingTimeSec': instance.processingTimeSec,
   'suspiciousFrames': instance.suspiciousFrames,
   'timelineLogs': instance.timelineLogs,
+  'aiExplanation': instance.aiExplanation,
 };

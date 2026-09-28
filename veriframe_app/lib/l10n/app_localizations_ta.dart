@@ -2292,6 +2292,13 @@ class AppLocalizationsTa extends AppLocalizations {
   String get sendViaLabel => 'அனுப்புவது';
 
   @override
+  String get escalateAttachPdf => 'அறிக்கையுடன் PDF இணைக்கவும்';
+
+  @override
+  String get escalateSendFailed =>
+      'WhatsApp அல்லது மின்னஞ்சலைத் திறக்க முடியவில்லை. செயலி நிறுவப்பட்டுள்ளதா என்பதைச் சரிபார்க்கவும்.';
+
+  @override
   String get slThreatRadarTitle => 'SL தarer நிலைநாட்டு ரேடார்';
 
   @override

@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import 'package:veriframe_app/service/notification_service.dart';
 import 'package:veriframe_app/service/user_profile_cache.dart';
 
@@ -133,7 +134,7 @@ class UserService {
         }
       }
     } catch (e) {
-      print('Error fetching user data from Firestore: $e');
+      debugPrint('Error fetching user data from Firestore: $e');
     }
 
     // Fallback to SharedPreferences
@@ -193,7 +194,7 @@ class UserService {
       final userDoc = await usersCollection.doc(uid).get();
       return userDoc.exists;
     } catch (e) {
-      print('Error checking if user exists: $e');
+      debugPrint('Error checking if user exists: $e');
       return false;
     }
   }
@@ -291,7 +292,7 @@ class UserService {
       // 8. Cancel all local (system-tray) notifications & clear app badge
       await NotificationService.instance.cancelAllLocalNotifications();
     } catch (e) {
-      print('Error deleting user: $e');
+      debugPrint('Error deleting user: $e');
       rethrow;
     }
   }
@@ -303,7 +304,7 @@ class UserService {
         'lastActiveAt': Timestamp.now(),
       });
     } catch (e) {
-      print('Error updating last active: $e');
+      debugPrint('Error updating last active: $e');
     }
   }
 
@@ -315,7 +316,7 @@ class UserService {
       final futures = uids.map((uid) => usersCollection.doc(uid).get());
       return await Future.wait(futures);
     } catch (e) {
-      print('Error fetching multiple users: $e');
+      debugPrint('Error fetching multiple users: $e');
       return [];
     }
   }
@@ -352,7 +353,7 @@ class UserService {
       
       return allDocs;
     } catch (e) {
-      print('Error searching users: $e');
+      debugPrint('Error searching users: $e');
       return [];
     }
   }

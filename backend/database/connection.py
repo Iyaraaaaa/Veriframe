@@ -54,6 +54,7 @@ def init_db():
                 is_fake INTEGER DEFAULT 0,
                 confidence_label TEXT,
                 model_used TEXT,
+                thumbnail_base64 TEXT,
                 created_at TEXT NOT NULL
             );
             CREATE TABLE IF NOT EXISTS cache_entries (
@@ -80,6 +81,12 @@ def init_db():
             CREATE INDEX IF NOT EXISTS idx_reports_created ON reports(created_at);
             CREATE INDEX IF NOT EXISTS idx_history_verification ON analysis_history(verification_id);
         """)
+        # Migration: add thumbnail_base64 column if it doesn't exist
+        try:
+            conn.execute("ALTER TABLE reports ADD COLUMN thumbnail_base64 TEXT")
+        except sqlite3.OperationalError:
+            # Column already exists
+            pass
         conn.commit()
     finally:
         conn.close()
@@ -118,8 +125,8 @@ def insert_report(report: Dict[str, Any]):
                 detected_evidence, forensic_observations, report_hash,
                 frames_analyzed, frames_skipped, processing_time_sec,
                 average_score, inference_time_ms, is_fake, confidence_label,
-                model_used, created_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                model_used, thumbnail_base64, created_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, (
             report.get("verificationId"),
             report.get("verificationId"),
@@ -143,6 +150,7 @@ def insert_report(report: Dict[str, Any]):
             1 if report.get("is_fake") else 0,
             report.get("confidence_label"),
             report.get("_model_used", "veriframe_model"),
+            report.get("thumbnailBase64"),
             now,
         ))
         conn.commit()

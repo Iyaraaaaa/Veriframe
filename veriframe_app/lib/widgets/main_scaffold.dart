@@ -17,6 +17,13 @@ class MainScaffold extends StatelessWidget {
   final Widget? title;
   final PreferredSizeWidget? appBar;
 
+  /// Page background, for screens that need a bespoke canvas colour.
+  final Color? backgroundColor;
+
+  /// Optional app bar bottom widget (e.g. a `TabBar`) rendered underneath the
+  /// shared app bar.
+  final PreferredSizeWidget? appBarBottom;
+
   const MainScaffold({
     super.key,
     required this.body,
@@ -27,17 +34,21 @@ class MainScaffold extends StatelessWidget {
     this.extraActions,
     this.title,
     this.appBar,
+    this.backgroundColor,
+    this.appBarBottom,
   });
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: backgroundColor,
       appBar: appBar ??
           globalAppBar(
             context,
             showBack: showBack,
             extraActions: extraActions,
             title: title,
+            bottom: appBarBottom,
           ),
       drawer: drawer,
       body: body,

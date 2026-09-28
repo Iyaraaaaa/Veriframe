@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 
 class UserService {
   static final CollectionReference usersCollection =
@@ -63,7 +64,7 @@ class UserService {
       // Save to SharedPreferences for immediate access
       await _saveToSharedPreferences(uid, email, finalName, finalImageUrl);
     } catch (e) {
-      print('Error creating user: $e');
+      debugPrint('Error creating user: $e');
       rethrow;
     }
   }
@@ -139,7 +140,7 @@ class UserService {
         }
       }
     } catch (e) {
-      print('Error updating user profile: $e');
+      debugPrint('Error updating user profile: $e');
       rethrow;
     }
   }
@@ -149,7 +150,7 @@ class UserService {
     try {
       return await usersCollection.doc(uid).get();
     } catch (e) {
-      print('Error fetching user from Firestore: $e');
+      debugPrint('Error fetching user from Firestore: $e');
       rethrow;
     }
   }
@@ -175,7 +176,7 @@ class UserService {
         return await getCurrentUserData(); // Recursive call after creation
       }
     } catch (e) {
-      print('Error fetching user data from Firestore: $e');
+      debugPrint('Error fetching user data from Firestore: $e');
     }
 
     // Fallback to SharedPreferences
@@ -244,7 +245,7 @@ class UserService {
 
       return result;
     } catch (e) {
-      print('Error processing user data: $e');
+      debugPrint('Error processing user data: $e');
       // Return safe defaults
       return {
         'userId': currentUser.uid,
@@ -270,7 +271,7 @@ class UserService {
         isGoogleSignIn: signInMethod == 'google.com',
       );
     } catch (e) {
-      print('Error creating user from Firebase Auth: $e');
+      debugPrint('Error creating user from Firebase Auth: $e');
       rethrow;
     }
   }
@@ -293,7 +294,7 @@ class UserService {
       }
       return 'User';
     } catch (e) {
-      print('Error extracting name from email: $e');
+      debugPrint('Error extracting name from email: $e');
       return 'User';
     }
   }
@@ -318,7 +319,7 @@ class UserService {
         await prefs.remove('userImage');
       }
     } catch (e) {
-      print('Error saving to SharedPreferences: $e');
+      debugPrint('Error saving to SharedPreferences: $e');
     }
   }
 
@@ -339,7 +340,7 @@ class UserService {
         'userImage': prefs.getString('userImage') ?? '', // FIXED: Always return empty string instead of null
       };
     } catch (e) {
-      print('Error loading from SharedPreferences: $e');
+      debugPrint('Error loading from SharedPreferences: $e');
       return {
         'userId': '',
         'userName': 'User',
@@ -359,7 +360,7 @@ class UserService {
       final prefs = await SharedPreferences.getInstance();
       await prefs.clear();
     } catch (e) {
-      print('Error clearing user data: $e');
+      debugPrint('Error clearing user data: $e');
       rethrow;
     }
   }
@@ -374,7 +375,7 @@ class UserService {
       final userDoc = await usersCollection.doc(currentUser.uid).get();
       return userDoc.exists;
     } catch (e) {
-      print('Error checking login status: $e');
+      debugPrint('Error checking login status: $e');
       return FirebaseAuth.instance.currentUser != null;
     }
   }
@@ -399,7 +400,7 @@ class UserService {
         return await getCurrentUserData();
       }
     } catch (e) {
-      print('Error refreshing user data: $e');
+      debugPrint('Error refreshing user data: $e');
     }
 
     // Fallback to SharedPreferences
@@ -419,7 +420,7 @@ class UserService {
         'updatedAt': FieldValue.serverTimestamp(),
       });
     } catch (e) {
-      print('Error updating last active: $e');
+      debugPrint('Error updating last active: $e');
     }
   }
 
@@ -438,7 +439,7 @@ class UserService {
       }
       return {};
     } catch (e) {
-      print('Error fetching user stats: $e');
+      debugPrint('Error fetching user stats: $e');
       return {};
     }
   }
@@ -456,7 +457,7 @@ class UserService {
           .map((doc) => doc.data() as Map<String, dynamic>)
           .toList();
     } catch (e) {
-      print('Error searching users: $e');
+      debugPrint('Error searching users: $e');
       return [];
     }
   }
@@ -476,7 +477,7 @@ class UserService {
       }
       return false;
     } catch (e) {
-      print('Error checking profile completeness: $e');
+      debugPrint('Error checking profile completeness: $e');
       return false;
     }
   }
@@ -503,7 +504,7 @@ class UserService {
       }
       return false;
     } catch (e) {
-      print('Error checking profile image: $e');
+      debugPrint('Error checking profile image: $e');
       return false;
     }
   }

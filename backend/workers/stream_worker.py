@@ -6,6 +6,7 @@ import threading
 from typing import Dict, Any, Optional, Callable
 from dataclasses import dataclass
 from queue import Queue
+from collections import deque
 
 from detectors.face_detector import FaceDetector, FaceDetectionResult
 from filters.quality_filter import QualityFilter, FaceQualityConfig
@@ -13,6 +14,8 @@ from calibration.temporal_filter import TemporalFilter
 from calibration.confidence_calibration import ConfidenceCalibrator
 from preprocessing.preprocessor import FramePreprocessor
 from utils.video import decode_base64_frame
+from utils.image import pad_to_square
+
 
 logger = logging.getLogger("veriframe.workers")
 
@@ -53,15 +56,16 @@ class StreamWorker:
         self.on_error = on_error
 
         self.session: Dict[str, Any] = {
-            "scores": [],
-            "boxes": [],
-            "quality_scores": [],
-            "detectors": [],
+            "scores": deque(maxlen=300),
+            "boxes": deque(maxlen=300),
+            "quality_scores": deque(maxlen=300),
+            "detectors": deque(maxlen=300),
             "last_frame_time": time.time(),
             "created_at": time.time(),
             "stream_url": "",
             "frame_count": 0,
             "faces_detected": 0,
+            "status": "streaming",
         }
 
         self._queue: Queue = Queue(maxsize=self.config.max_queue_size)
@@ -76,6 +80,8 @@ class StreamWorker:
                 logger.error(f"[StreamWorker] Failed to open RTSP stream: {rtsp_url}")
                 return False
             self.session["stream_url"] = rtsp_url
+            self.session["status"] = "streaming"
+            self.session["last_frame_time"] = time.time()
             self._running = True
             self._thread = threading.Thread(target=self._capture_loop, daemon=True)
             self._thread.start()
@@ -108,9 +114,15 @@ class StreamWorker:
         logger.info(f"[StreamWorker] Stopped session {self.session_id}")
 
     def get_status(self) -> Dict[str, Any]:
+        now = time.time()
+        if self.config.auto_stop_timeout_sec > 0 and (now - self.session["last_frame_time"]) > self.config.auto_stop_timeout_sec:
+            self.session["status"] = "timed_out"
+            self.stop()
+
+        status = self.session.get("status", "streaming")
         if not self.session["scores"]:
             return {
-                "status": "streaming",
+                "status": status,
                 "session_confidence_score": 0.0,
                 "verdict": "UNCERTAIN",
                 "frames_processed": self.session["frame_count"],
@@ -122,7 +134,7 @@ class StreamWorker:
         verdict = self._adaptive_verdict(avg_score)
 
         return {
-            "status": "streaming",
+            "status": status,
             "session_confidence_score": round((1.0 - avg_score) * 100.0, 2),
             "verdict": verdict,
             "frames_processed": self.session["frame_count"],
@@ -134,11 +146,17 @@ class StreamWorker:
         frame_interval = self.config.frame_interval_ms / 1000.0
         last_capture = 0.0
         while self._running:
+            now = time.time()
+            if self.config.auto_stop_timeout_sec > 0 and (now - self.session["last_frame_time"]) > self.config.auto_stop_timeout_sec:
+                logger.info(f"[StreamWorker] Session {self.session_id} timed out after {self.config.auto_stop_timeout_sec}s of inactivity")
+                self.session["status"] = "timed_out"
+                self.stop()
+                break
+
             if self._cap is None or not self._cap.isOpened():
                 time.sleep(0.1)
                 continue
 
-            now = time.time()
             if now - last_capture < frame_interval:
                 time.sleep(0.01)
                 continue
@@ -161,7 +179,16 @@ class StreamWorker:
         logger.info(f"[StreamWorker] Capture loop ended for session {self.session_id}")
 
     def _process_frame(self, frame: np.ndarray) -> Dict[str, Any]:
-        self.session["last_frame_time"] = time.time()
+        now = time.time()
+        if self.config.auto_stop_timeout_sec > 0 and (now - self.session["last_frame_time"]) > self.config.auto_stop_timeout_sec:
+            logger.info(f"[StreamWorker] Session {self.session_id} timed out after {self.config.auto_stop_timeout_sec}s of inactivity")
+            self.session["status"] = "timed_out"
+            self.stop()
+            res = self._build_response()
+            res["status"] = "timed_out"
+            return res
+
+        self.session["last_frame_time"] = now
         self.session["frame_count"] += 1
 
         detections = self.face_detector.detect(frame)
@@ -176,7 +203,8 @@ class StreamWorker:
         try:
             processed = self.preprocessor.preprocess_for_tflite(best_det.face_crop)
         except Exception:
-            resized = cv2.resize(best_det.face_crop, (224, 224))
+            padded = pad_to_square(best_det.face_crop)
+            resized = cv2.resize(padded, (224, 224))
             processed = resized.astype(np.float32)
             processed = np.expand_dims(processed, axis=0)
 
@@ -197,8 +225,10 @@ class StreamWorker:
         return self._build_response()
 
     def _build_response(self) -> Dict[str, Any]:
+        status = self.session.get("status", "streaming")
         if not self.session["scores"]:
             return {
+                "status": status,
                 "session_confidence_score": 0.0,
                 "verdict": "UNCERTAIN",
                 "frames_processed": self.session["frame_count"],
@@ -210,12 +240,14 @@ class StreamWorker:
         verdict = self._adaptive_verdict(avg_score)
 
         return {
+            "status": status,
             "session_confidence_score": round((1.0 - avg_score) * 100.0, 2),
             "verdict": verdict,
             "frames_processed": self.session["frame_count"],
             "faces_detected": self.session["faces_detected"],
             "rolling_window": len(rolling),
         }
+
 
     def _adaptive_verdict(self, score: float) -> str:
         if score >= 0.8:

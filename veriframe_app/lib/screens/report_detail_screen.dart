@@ -9,6 +9,8 @@ import 'package:veriframe_app/l10n/app_localizations.dart';
 import 'package:veriframe_app/models/verification_result.dart';
 import 'package:veriframe_app/screens/evidence_video_player_screen.dart';
 import 'package:veriframe_app/service/pdf_service.dart';
+import 'package:veriframe_app/service/verify_backend_service.dart';
+import 'package:veriframe_app/widgets/main_scaffold.dart';
 
 // ─────────────────────────────────────────────────────────────────────────
 // Local palette — restrained forensic-document styling.
@@ -68,6 +70,46 @@ class ReportDetailPage extends StatefulWidget {
 
 class _ReportDetailPageState extends State<ReportDetailPage> {
   _Pal get _pal => _Pal(Theme.of(context).brightness == Brightness.dark);
+  Map<String, dynamic>? _aiExplanation;
+  bool _isLoadingAi = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _aiExplanation = widget.report.aiExplanation;
+  }
+
+  Future<void> _fetchAiExplanation() async {
+    setState(() => _isLoadingAi = true);
+    try {
+      final backend = VerifyBackendService.instance;
+      final baseUrl = await backend.getBaseUrl();
+      final r = widget.report;
+      final res = await backend.getAiExplanation(
+        baseUrl,
+        verdict: r.verdict,
+        fakeProbability: r.fakeProbability,
+        authenticityScore: r.authenticityScore,
+        mediaType: r.mediaType,
+        source: r.source,
+        detectedEvidence: r.detectedEvidence,
+        forensicObservations: r.forensicObservations,
+      );
+      if (res['explanation'] != null && mounted) {
+        setState(() {
+          _aiExplanation = Map<String, dynamic>.from(res['explanation']);
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to generate Gemini AI explanation: $e')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoadingAi = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -95,23 +137,16 @@ class _ReportDetailPageState extends State<ReportDetailPage> {
               ? pal.risk
               : (r.riskLevel.toUpperCase() == 'UNKNOWN' ? const Color(0xFF64748B) : pal.manipulated));
 
-    return Scaffold(
+    return MainScaffold(
       backgroundColor: pal.bg,
-      appBar: AppBar(
-        title: Text(
-          loc.reportDetailTitle,
-          style: TextStyle(
-            color: pal.textPrimary,
-            fontWeight: FontWeight.w700,
-            fontSize: 16.5,
-          ),
+      showBack: true,
+      title: Text(
+        loc.reportDetailTitle,
+        style: TextStyle(
+          color: Theme.of(context).colorScheme.onPrimary,
+          fontWeight: FontWeight.w700,
+          fontSize: 16.5,
         ),
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        backgroundColor: pal.bg,
-        surfaceTintColor: Colors.transparent,
-        foregroundColor: pal.textPrimary,
-        centerTitle: false,
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
@@ -124,6 +159,13 @@ class _ReportDetailPageState extends State<ReportDetailPage> {
               verdictColor: verdictColor,
               verdictBg: verdictBg,
               riskColor: riskColor,
+            ),
+            const SizedBox(height: 14),
+            _AiExplanationCard(
+              aiData: _aiExplanation,
+              isLoading: _isLoadingAi,
+              onGenerate: _fetchAiExplanation,
+              verdictColor: verdictColor,
             ),
             const SizedBox(height: 14),
             _ConfidenceCard(
@@ -141,6 +183,7 @@ class _ReportDetailPageState extends State<ReportDetailPage> {
     );
   }
 }
+
 
 // ─────────────────────────────────────────────────────────────────────────
 // Shared card shell
@@ -203,7 +246,7 @@ class _CardHeader extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────
-// Hero section — stamped verdict + custody-line accent
+// Hero section — stamped verdict + custody-line accent + media preview
 // ─────────────────────────────────────────────────────────────────────────
 
 class _HeroCard extends StatelessWidget {
@@ -227,23 +270,33 @@ class _HeroCard extends StatelessWidget {
     final loc = AppLocalizations.of(context)!;
     final r = report;
 
-    Widget thumb;
+    // Media preview thumbnail - prominently displayed
+    Widget mediaPreview;
     if (r.thumbnailBase64 != null && r.thumbnailBase64!.isNotEmpty) {
       try {
-        thumb = ClipRRect(
-          borderRadius: BorderRadius.circular(10),
-          child: Image.memory(
-            base64Decode(r.thumbnailBase64!),
-            width: 46,
-            height: 46,
-            fit: BoxFit.cover,
+        mediaPreview = Container(
+          width: double.infinity,
+          height: 160,
+          margin: const EdgeInsets.only(bottom: 12),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: pal.border, width: 1),
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: Image.memory(
+              base64Decode(r.thumbnailBase64!),
+              width: double.infinity,
+              height: 160,
+              fit: BoxFit.cover,
+            ),
           ),
         );
       } catch (_) {
-        thumb = _placeholderThumb();
+        mediaPreview = _placeholderMediaPreview(pal, verdictColor);
       }
     } else {
-      thumb = _placeholderThumb();
+      mediaPreview = _placeholderMediaPreview(pal, verdictColor);
     }
 
     return _CardShell(
@@ -274,10 +327,12 @@ class _HeroCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // Media preview at the top - before source/risk info
+                mediaPreview,
+                const SizedBox(height: 8),
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    thumb,
                     const SizedBox(width: 12),
                     Expanded(
                       child: Column(
@@ -369,17 +424,35 @@ class _HeroCard extends StatelessWidget {
     );
   }
 
-  Widget _placeholderThumb() => Container(
-    width: 46,
-    height: 46,
+  Widget _placeholderMediaPreview(_Pal pal, Color verdictColor) => Container(
+    width: double.infinity,
+    height: 160,
+    margin: const EdgeInsets.only(bottom: 12),
     decoration: BoxDecoration(
       color: verdictColor.withValues(alpha: 0.12),
-      borderRadius: BorderRadius.circular(10),
+      borderRadius: BorderRadius.circular(12),
+      border: Border.all(color: verdictColor.withValues(alpha: 0.3), width: 1),
     ),
-    child: Icon(
-      isReal ? Icons.verified_user_rounded : Icons.gavel_rounded,
-      color: verdictColor,
-      size: 22,
+    child: Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            isReal ? Icons.verified_user_rounded : Icons.gavel_rounded,
+            color: verdictColor,
+            size: 36,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Media Preview',
+            style: TextStyle(
+              fontSize: 12,
+              color: verdictColor.withValues(alpha: 0.7),
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
     ),
   );
 
@@ -993,3 +1066,238 @@ class _ActionButton extends StatelessWidget {
     );
   }
 }
+
+class _AiExplanationCard extends StatelessWidget {
+  const _AiExplanationCard({
+    required this.aiData,
+    required this.isLoading,
+    required this.onGenerate,
+    required this.verdictColor,
+  });
+
+  final Map<String, dynamic>? aiData;
+  final bool isLoading;
+  final VoidCallback onGenerate;
+  final Color verdictColor;
+
+  @override
+  Widget build(BuildContext context) {
+    final pal = _Pal(Theme.of(context).brightness == Brightness.dark);
+
+    final summary = aiData?['ai_summary'] as String?;
+    final threatLevel = (aiData?['threat_level'] as String?)?.toUpperCase() ?? 'MEDIUM';
+    final threatContext = aiData?['threat_context'] as String?;
+    final recommendedAction = aiData?['recommended_action'] as String?;
+    final modelUsed = aiData?['model_used'] as String? ?? 'Gemini 3.5 Flash';
+
+    Color threatColor;
+    if (threatLevel == 'HIGH' || threatLevel == 'CRITICAL') {
+      threatColor = pal.manipulated;
+    } else if (threatLevel == 'LOW') {
+      threatColor = pal.authentic;
+    } else {
+      threatColor = pal.risk;
+    }
+
+    return _CardShell(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(7),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF6366F1).withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(9),
+                ),
+                child: const Icon(
+                  Icons.auto_awesome_rounded,
+                  size: 18,
+                  color: Color(0xFF6366F1),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Gemini AI Forensic Narrative',
+                      style: TextStyle(
+                        fontSize: 14.5,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: -0.2,
+                      ),
+                    ),
+                    Text(
+                      'Contextual explanation & threat analysis',
+                      style: TextStyle(
+                        fontSize: 11.5,
+                        color: pal.textSubtle,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              if (aiData != null)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: threatColor.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(color: threatColor.withValues(alpha: 0.3)),
+                  ),
+                  child: Text(
+                    threatLevel,
+                    style: TextStyle(
+                      fontSize: 10.5,
+                      fontWeight: FontWeight.w800,
+                      color: threatColor,
+                      letterSpacing: 0.4,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          if (isLoading) ...[
+            Container(
+              padding: const EdgeInsets.all(20),
+              alignment: Alignment.center,
+              child: Column(
+                children: [
+                  const SizedBox(
+                    width: 26,
+                    height: 26,
+                    child: CircularProgressIndicator(strokeWidth: 2.5),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    'Generating AI forensic narrative with Google Gemini...',
+                    style: TextStyle(fontSize: 12, color: pal.textSecondary),
+                  ),
+                ],
+              ),
+            ),
+          ] else if (aiData == null) ...[
+            Text(
+              'Analyze this verification with Google Gemini to generate an executive threat summary, forensic explanation, and actionable next steps.',
+              style: TextStyle(fontSize: 12.5, color: pal.textSecondary, height: 1.4),
+            ),
+            const SizedBox(height: 14),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: onGenerate,
+                icon: const Icon(Icons.auto_awesome_rounded, size: 16),
+                label: const Text('Generate Gemini Forensic Narrative'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF6366F1),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+              ),
+            ),
+          ] else ...[
+            if (summary != null && summary.isNotEmpty) ...[
+              Text(
+                summary,
+                style: TextStyle(
+                  fontSize: 13,
+                  color: pal.textPrimary,
+                  height: 1.45,
+                ),
+              ),
+              const SizedBox(height: 12),
+            ],
+            if (threatContext != null && threatContext.isNotEmpty) ...[
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: threatColor.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: threatColor.withValues(alpha: 0.2)),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(Icons.shield_outlined, size: 16, color: threatColor),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        threatContext,
+                        style: TextStyle(
+                          fontSize: 11.5,
+                          color: pal.textPrimary,
+                          height: 1.35,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 10),
+            ],
+            if (recommendedAction != null && recommendedAction.isNotEmpty) ...[
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: pal.surfaceMuted,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: pal.border),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(Icons.lightbulb_outline_rounded, size: 16, color: pal.textSecondary),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        recommendedAction,
+                        style: TextStyle(
+                          fontSize: 11.5,
+                          color: pal.textSecondary,
+                          height: 1.35,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 10),
+            ],
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Engine: $modelUsed',
+                  style: TextStyle(
+                    fontSize: 10.5,
+                    color: pal.textSubtle,
+                    fontStyle: FontStyle.italic,
+                  ),
+                ),
+                InkWell(
+                  onTap: onGenerate,
+                  child: const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                    child: Text(
+                      'Regenerate',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: Color(0xFF6366F1),
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}

@@ -672,6 +672,8 @@
     "escalateReportSubtitle":  "මෙම සොයාගැනීම ජාතික බලාත්මක ආයතනයක් වෙත යොමු කරන්න",
     "authoritySectionLabel":  "බලාත්මක ආයතනය",
     "sendViaLabel":  "යවන්නේ මගින්",
+    "escalateAttachPdf":  "වාර්තාවට PDF ඇමතුරු කරන්න",
+    "escalateSendFailed":  "WhatsApp හෝ ඊමේල් විවෘත කළ නොහැක. යෙදුම ස්ථාපනය කර ඇත්දැයි පරීක්ෂා කරන්න.",
     "slThreatRadarTitle":  "SL තර්ජන බුද්ධි මානදඩුව",
     "slThreatRadarSubtitle":  "ශ්‍රී ලංකාවේ පැතිරිඳින ගැඹුරු බොරු ම-work scams හා හඬ පිටපත් හඳුනාගන්න.",
     "slThreatRadarLiveSoon":  "නේවාසික නිරීක්ෂණය මත්තෙන් පැමිණෙනු ඇත",

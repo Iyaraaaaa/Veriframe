@@ -74,7 +74,7 @@ class _LoginPageState extends State<LoginPage> {
         }
       }
     } catch (e) {
-      print('Error loading saved credentials: $e');
+      debugPrint('Error loading saved credentials: $e');
     }
   }
 
@@ -92,7 +92,7 @@ class _LoginPageState extends State<LoginPage> {
         await prefs.setBool('remember_me', false);
       }
     } catch (e) {
-      print('Error saving credentials: $e');
+      debugPrint('Error saving credentials: $e');
     }
   }
 

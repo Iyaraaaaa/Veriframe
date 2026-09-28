@@ -11,3 +11,4 @@ reportlab
 pydantic-settings
 python-dotenv
 yt-dlp
+realitydefender

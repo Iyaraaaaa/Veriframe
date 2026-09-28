@@ -8,6 +8,8 @@ import 'package:veriframe_app/screens/login_page.dart';
 import 'package:veriframe_app/screens/signup_page.dart';
 import 'package:veriframe_app/screens/forgot_password.dart';
 import 'package:veriframe_app/screens/verify.dart';
+import 'package:veriframe_app/screens/image_page.dart';
+import 'package:veriframe_app/screens/audio_page.dart';
 import 'package:veriframe_app/screens/contact_us.dart';
 import 'package:veriframe_app/screens/privacy.dart';
 import 'package:veriframe_app/screens/settings_page.dart';
@@ -17,6 +19,9 @@ import 'package:veriframe_app/screens/splash_screen.dart';
 import 'package:veriframe_app/service/user_profile_cache.dart';
 import 'package:veriframe_app/theme/app_theme.dart';
 import 'package:veriframe_app/utils/navigator_key.dart';
+import 'package:veriframe_app/screens/video_link_verification_page.dart';
+import 'package:veriframe_app/screens/download_analysis_page.dart';
+import 'package:veriframe_app/screens/media_modality_selection_page.dart';
 import 'package:veriframe_app/widgets/error_screen.dart';
 
 Future<void> _initializeApp() async {
@@ -77,11 +82,20 @@ class MyApp extends StatelessWidget {
             '/forgot_password': (_) => const ForgetPasswordPage(),
             '/home': (_) => const HomePage(),
             '/analyze': (_) => const VerifyPage(),
+            '/image': (_) => const ImagePage(),
+            '/audio': (_) => const AudioPage(),
             '/privacy': (_) => const PrivacyPage(),
             '/contact': (_) => const ContactUsPage(),
             '/settings': (_) => const SettingsPage(),
             '/reports': (_) => const ReportsPage(),
             '/tech_stack': (_) => const TechnologyStackPage(),
+            '/video_link': (_) => const VideoLinkVerificationPage(),
+            '/download_analysis': (context) => DownloadAnalysisPage(
+              videoUrl: ModalRoute.of(context)?.settings.arguments as String? ?? '',
+            ),
+            '/media_selection': (_) => const MediaModalitySelectionPage(),
+            '/modality_selection': (_) => const MediaModalitySelectionPage(),
+            '/model_selection': (_) => const MediaModalitySelectionPage(),
           },
         ),
       ),

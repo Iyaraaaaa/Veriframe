@@ -105,15 +105,17 @@ class TFLiteServiceMobile implements TFLiteService {
     String label;
     double confidence;
     List<double> rawValues;
+    const bool reverseLabels = true;
 
     if (isSigmoid) {
       final sigmoidScore = outputBuffer[0][0];
       // Model training class order: real=0 (low score), fake=1 (high score)
+      // Reverse: swap so high score = real, low score = fake
       if (sigmoidScore >= 0.5) {
-        label = "fake";
+        label = "real";
         confidence = sigmoidScore;
       } else {
-        label = "real";
+        label = "fake";
         confidence = 1.0 - sigmoidScore;
       }
       rawValues = [sigmoidScore];
@@ -127,7 +129,9 @@ class TFLiteServiceMobile implements TFLiteService {
           bestIdx = i;
         }
       }
-      label = bestIdx < _labels.length ? _labels[bestIdx] : 'unknown';
+      // Swap index mapping: 0=fake, 1=real
+      final swappedIdx = bestIdx == 0 ? 1 : 0;
+      label = swappedIdx < _labels.length ? _labels[swappedIdx] : 'unknown';
       confidence = bestScore;
       rawValues = values;
     }
@@ -137,6 +141,7 @@ class TFLiteServiceMobile implements TFLiteService {
       confidence: confidence.clamp(0.0, 1.0),
       rawOutput: rawValues,
       inferenceMs: sw.elapsedMilliseconds,
+      reverseLabels: reverseLabels,
     );
   }
 
