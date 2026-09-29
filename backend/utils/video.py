@@ -83,8 +83,15 @@ def compute_frame_diff_hist(frame1: np.ndarray, frame2: np.ndarray) -> float:
     return float(corr)
 
 def compute_optical_flow_magnitude(frame1: np.ndarray, frame2: np.ndarray) -> float:
+    # Downscale for memory-safe and efficient optical flow computation
+    h, w = frame1.shape[:2]
+    if max(h, w) > 256:
+        scale = 256.0 / max(h, w)
+        frame1 = cv2.resize(frame1, (int(w * scale), int(h * scale)), interpolation=cv2.INTER_AREA)
+        frame2 = cv2.resize(frame2, (int(w * scale), int(h * scale)), interpolation=cv2.INTER_AREA)
     gray1 = cv2.cvtColor(frame1, cv2.COLOR_BGR2GRAY)
     gray2 = cv2.cvtColor(frame2, cv2.COLOR_BGR2GRAY)
     flow = cv2.calcOpticalFlowFarneback(gray1, gray2, None, 0.5, 3, 15, 3, 5, 1.2, 0)
     magnitude = np.sqrt(flow[..., 0]**2 + flow[..., 1]**2)
     return float(np.mean(magnitude))
+

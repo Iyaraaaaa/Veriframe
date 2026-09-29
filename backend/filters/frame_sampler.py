@@ -68,6 +68,12 @@ class AdaptiveFrameSampler:
             if not ret or frame is None:
                 continue
 
+            # Downscale frame for fast, low-memory candidate scoring
+            h, w = frame.shape[:2]
+            if max(h, w) > 360:
+                scale = 360.0 / max(h, w)
+                frame = cv2.resize(frame, (int(w * scale), int(h * scale)), interpolation=cv2.INTER_AREA)
+
             is_blurry = self._is_blurry(frame)
             is_dark = self._is_dark(frame)
             if is_blurry or is_dark:

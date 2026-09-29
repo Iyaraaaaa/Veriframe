@@ -283,6 +283,14 @@ class LinkVerificationV2:
                 f"{now_clock} - Final verdict: {fine_verdict}"
             ]
 
+            face_detector_used = (
+                self.face_detector.loaded_detectors[0].lower() if getattr(self.face_detector, "loaded_detectors", None) else (
+                    getattr(self.face_detector, "backend_name", None)
+                    or getattr(self.face_detector, "engine_name", None)
+                    or type(self.face_detector).__name__
+                ) if self.face_detector else "none"
+            )
+
             return {
                 # Legacy / standard API contract fields
                 "verificationId": f"VRF-LNK-V2-{int(time.time() * 1000)}",
@@ -476,7 +484,14 @@ class LinkVerificationV2:
             if not ret or frame is None:
                 continue
 
-            raw_scene_frames.append(frame)
+            if len(raw_scene_frames) < 32:
+                h, w = frame.shape[:2]
+                if max(h, w) > 360:
+                    scale = 360.0 / max(h, w)
+                    scene_frame = cv2.resize(frame, (int(w * scale), int(h * scale)), interpolation=cv2.INTER_AREA)
+                else:
+                    scene_frame = frame.copy()
+                raw_scene_frames.append(scene_frame)
 
             detections = self.face_detector.detect(frame)
             if not detections:

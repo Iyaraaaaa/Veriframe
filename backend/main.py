@@ -16,6 +16,7 @@ from urllib.parse import urlparse
 from concurrent.futures import ThreadPoolExecutor, as_completed, TimeoutError as FuturesTimeoutError
 from typing import Dict, Any, Optional
 import requests
+import re
 from starlette.concurrency import run_in_threadpool
 
 from config import config as app_config
@@ -576,14 +577,21 @@ async def verify_image(file: UploadFile = File(...)):
 
 @app.post("/verify/image/link")
 async def verify_image_link(request: ImageLinkVerifyRequest):
-    headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
+        "Accept-Language": "en-US,en;q=0.9",
+    }
+    target_url = request.url.strip()
     try:
-        # requests.get is blocking: called directly from an async endpoint it
-        # would stall the whole event loop for up to the 25s timeout. Fetch in
-        # the threadpool instead.
         resp = await run_in_threadpool(
-            requests.get, request.url, headers=headers, timeout=25
+            requests.get, target_url, headers=headers, timeout=25
         )
+        if resp.status_code == 429:
+            # Retry with mobile identifier in case of rate limit
+            headers["User-Agent"] = "VeriFrame-Mobile/2.0 (Forensics Verification)"
+            resp = await run_in_threadpool(requests.get, target_url, headers=headers, timeout=25)
+
         if resp.status_code != 200:
             raise HTTPException(status_code=400, detail=f"Failed to fetch image from URL: HTTP {resp.status_code}")
     except HTTPException:
@@ -591,20 +599,41 @@ async def verify_image_link(request: ImageLinkVerifyRequest):
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Unable to download image: {str(e)}")
 
+    content_type = resp.headers.get("content-type", "").lower()
+    raw_content = resp.content
+
+    # If the user pasted a webpage link, try to extract the OpenGraph / Twitter meta image
+    if "text/html" in content_type or raw_content.startswith(b"<!DOCTYPE") or raw_content.startswith(b"<html"):
+        html_text = raw_content.decode("utf-8", errors="ignore")
+        match = re.search(r'<meta[^>]+property=["\']og:image["\'][^>]+content=["\']([^"\']+)["\']', html_text, re.I)
+        if not match:
+            match = re.search(r'<meta[^>]+name=["\']twitter:image["\'][^>]+content=["\']([^"\']+)["\']', html_text, re.I)
+        if match:
+            extracted_url = match.group(1).replace("&amp;", "&")
+            try:
+                img_resp = await run_in_threadpool(requests.get, extracted_url, headers=headers, timeout=25)
+                if img_resp.status_code == 200:
+                    raw_content = img_resp.content
+                    target_url = extracted_url
+            except Exception as e:
+                logger.warning(f"[verify_image_link] Failed to download extracted og:image: {e}")
+
     suffix = ".jpg"
     with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
-        tmp.write(resp.content)
+        tmp.write(raw_content)
         tmp_path = tmp.name
 
     try:
         result = await run_in_threadpool(image_pipeline.process, tmp_path, "Image Link")
-        result["imageUrl"] = request.url
+        result["imageUrl"] = target_url
         try:
             result["aiExplanation"] = await run_in_threadpool(gemini_service.generate_forensic_explanation, result)
             _append_gemini_engine(result, result["aiExplanation"])
         except Exception as ai_err:
             logger.warning(f"[verify_image_link] Gemini AI explanation failed: {ai_err}")
         return _attach_engine(result, "image")
+    except ValueError as ve:
+        raise HTTPException(status_code=400, detail=f"The URL does not contain a valid image: {str(ve)}")
     except HTTPException:
         raise
     except Exception as e:
@@ -613,6 +642,7 @@ async def verify_image_link(request: ImageLinkVerifyRequest):
     finally:
         if os.path.exists(tmp_path):
             os.remove(tmp_path)
+
 
 @app.post("/verify/audio")
 async def verify_audio(file: UploadFile = File(...)):
